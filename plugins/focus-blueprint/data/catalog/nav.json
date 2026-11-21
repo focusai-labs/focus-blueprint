@@ -1,0 +1,53 @@
+[
+ {
+  "id": "top-bar",
+  "name_he": "סרגל עליון",
+  "term_en": "Top navigation bar",
+  "example": "nav-top-bar.html",
+  "fits": "אתר עם מעט אזורים, שמבקרים בו גם מהמחשב.",
+  "less": "הרבה אזורים, או שימוש בעיקר בטלפון.",
+  "default_for": [
+   "static"
+  ]
+ },
+ {
+  "id": "side-bar",
+  "name_he": "תפריט צד",
+  "term_en": "Sidebar navigation",
+  "example": "nav-side-bar.html",
+  "fits": "מערכת עבודה עם הרבה אזורים, בעיקר במחשב.",
+  "less": "טלפון, כי התפריט נסגר ומסתתר.",
+  "default_for": [
+   "supabase-app"
+  ]
+ },
+ {
+  "id": "bottom-tabs",
+  "name_he": "לשוניות בתחתית",
+  "term_en": "Bottom tab bar",
+  "example": "nav-bottom-tabs.html",
+  "fits": "שימוש בעיקר בטלפון, עם מעט אזורים קבועים.",
+  "less": "מערכת עם הרבה אזורים.",
+  "default_for": []
+ },
+ {
+  "id": "hub",
+  "name_he": "מסך בית עם כרטיסים",
+  "term_en": "Hub and spoke",
+  "example": "nav-hub.html",
+  "fits": "משתמש שבא לעשות משימה אחת בכל פעם, וחוזר לבית.",
+  "less": "עבודה שעוברת הרבה בין אזורים.",
+  "default_for": [
+   "n8n-engine"
+  ]
+ },
+ {
+  "id": "wizard",
+  "name_he": "צעד אחרי צעד",
+  "term_en": "Wizard",
+  "example": "nav-wizard.html",
+  "fits": "תהליך שיש בו סדר מחייב, כמו הרשמה או הזמנה.",
+  "less": "עבודה חופשית, שבה המשתמש בוחר מה לעשות.",
+  "default_for": []
+ }
+]

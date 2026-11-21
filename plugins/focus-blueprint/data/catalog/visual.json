@@ -1,0 +1,61 @@
+[
+ {
+  "id": "minimal",
+  "name_he": "נקייה ומינימלית",
+  "term_en": "Clean minimal",
+  "example": "visual-minimal.html",
+  "fits": "מערכת עבודה יומיומית, שבה התוכן חשוב יותר מהעיצוב.",
+  "less": "מותג שרוצה להרשים כבר מהשנייה הראשונה.",
+  "default_for": [
+   "supabase-app",
+   "n8n-engine"
+  ]
+ },
+ {
+  "id": "glass",
+  "name_he": "שכבות שקופות",
+  "term_en": "Glassmorphism",
+  "example": "visual-glass.html",
+  "fits": "דף נחיתה או מוצר צרכני שרוצה תחושה מודרנית.",
+  "less": "מסכים עם הרבה טקסט, כי השקיפות פוגעת בניגודיות.",
+  "default_for": []
+ },
+ {
+  "id": "neumorphism",
+  "name_he": "בליטות רכות",
+  "term_en": "Neumorphism",
+  "example": "visual-neumorphism.html",
+  "fits": "אפליקציה קטנה עם מעט פעולות גדולות.",
+  "less": "טפסים ורשימות, כי קשה לראות מה לחיץ.",
+  "default_for": []
+ },
+ {
+  "id": "bento",
+  "name_he": "אריחים",
+  "term_en": "Bento grid",
+  "example": "visual-bento.html",
+  "fits": "לוח מחוונים או דף בית שמציג הרבה סוגי מידע במבט אחד.",
+  "less": "תהליך של צעד אחרי צעד.",
+  "default_for": []
+ },
+ {
+  "id": "brutalism",
+  "name_he": "גסה ובולטת",
+  "term_en": "Brutalism",
+  "example": "visual-brutalism.html",
+  "fits": "מותג צעיר ונועז, שרוצה לבלוט.",
+  "less": "קהל מבוגר, או מערכת שעובדים בה שעות.",
+  "default_for": []
+ },
+ {
+  "id": "magazine",
+  "name_he": "מגזין",
+  "term_en": "Editorial",
+  "example": "visual-magazine.html",
+  "fits": "תוכן לקריאה: בלוג, מגזין, או אתר תדמית עם סיפור.",
+  "less": "מערכת עם הרבה פעולות וטפסים.",
+  "default_for": [
+   "static"
+  ]
+ }
+]

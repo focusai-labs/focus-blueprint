@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="blueprint:screen" content="structure-single-page">
+<title>דף אחד</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;font:16px/1.5 system-ui,sans-serif;color:#1a1a1a;background:#fff}
+a,button,input,select{font:inherit}
+a,button{min-height:44px;min-width:44px}
+a{color:#0b3d91}
+label{display:block;font-size:14px;margin-bottom:4px}
+input,select{display:block;width:100%;min-height:44px;padding:6px 10px}
+ul{list-style:none;margin:0;padding:0}
+h1{font-size:22px;margin:0 0 4px}
+p{margin:0 0 12px}
+:focus-visible{outline:3px solid #0b3d91;outline-offset:2px}
+button:hover,a:hover{filter:brightness(.92)}
+button:active{filter:brightness(.85)}
+main{max-width:420px;margin:0 auto;padding:16px}
+section{padding:14px 0;border-bottom:1px solid #d8d8d8}
+h2{font-size:18px;margin:0 0 8px}
+.list li{display:flex;justify-content:space-between;padding:6px 0}
+[data-primary]{background:#0b3d91;color:#fff;border:0;border-radius:6px;padding:8px 24px}
+.hint{font-size:13px;color:#545454}
+</style>
+</head>
+<body>
+<main>
+<p><a data-anchor href="#">לדף הבית</a></p>
+<p class="hint">הכול בדף אחד, מגלגלים למטה</p>
+<section><h2>מסמכים</h2><ul class="list"><li><span>לקוח א</span><span>קבלה 1041</span></li><li><span>לקוח ב</span><span>קבלה 1042</span></li><li><span>לקוח ג</span><span>קבלה 1043</span></li></ul></section>
+<section><h2>לקוחות</h2><ul class="list"><li><span>לקוח א</span></li><li><span>לקוח ב</span></li></ul></section>
+<section><h2>הגדרות</h2><label for="m">חודש נוכחי</label><select id="m"><option>נובמבר</option><option>דצמבר</option></select></section>
+<p style="margin-top:16px"><button type="button" data-primary>העלאה</button></p>
+</main>
+</body>
+</html>

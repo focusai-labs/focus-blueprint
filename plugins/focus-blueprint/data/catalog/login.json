@@ -1,0 +1,31 @@
+[
+ {
+  "id": "centered-card",
+  "name_he": "כרטיס במרכז",
+  "term_en": "Centered card",
+  "example": "login-centered-card.html",
+  "fits": "רוב המערכות, כי הוא פשוט וברור.",
+  "less": "מותג שרוצה לספר משהו כבר במסך הכניסה.",
+  "default_for": [
+   "supabase-app"
+  ]
+ },
+ {
+  "id": "split-image",
+  "name_he": "תמונה וטופס",
+  "term_en": "Split screen",
+  "example": "login-split-image.html",
+  "fits": "מוצר עם מותג חזק, שרוצה להרשים בכניסה.",
+  "less": "טלפון, כי התמונה נדחקת או נעלמת.",
+  "default_for": []
+ },
+ {
+  "id": "inline",
+  "name_he": "התחברות בדף הבית",
+  "term_en": "Inline sign-in",
+  "example": "login-inline.html",
+  "fits": "אתר שרוב התוכן בו פתוח, וההתחברות היא תוספת.",
+  "less": "מערכת שכולה מאחורי התחברות.",
+  "default_for": []
+ }
+]

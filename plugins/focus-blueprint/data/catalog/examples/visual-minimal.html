@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="blueprint:screen" content="visual-minimal">
+<title>נקייה ומינימלית</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;font:16px/1.5 system-ui,sans-serif;color:#1a1a1a;background:#fff}
+a,button,input,select{font:inherit}
+a,button{min-height:44px;min-width:44px}
+a{color:#0b3d91}
+label{display:block;font-size:14px;margin-bottom:4px}
+input,select{display:block;width:100%;min-height:44px;padding:6px 10px}
+ul{list-style:none;margin:0;padding:0}
+h1{font-size:22px;margin:0 0 4px}
+p{margin:0 0 12px}
+:focus-visible{outline:3px solid #0b3d91;outline-offset:2px}
+button:hover,a:hover{filter:brightness(.92)}
+button:active{filter:brightness(.85)}
+.wrap{max-width:420px;margin:0 auto;padding:16px}
+.list li{display:flex;justify-content:space-between;padding:12px 4px}
+.sub{font-size:14px}
+body{background:#fff;color:#1a1a1a}
+.sub{color:#545454}
+.card{margin:0 0 16px}
+.list li{border-bottom:1px solid #d8d8d8}
+input{border:1px solid #8a8a8a;border-radius:4px;background:#fff}
+[data-primary]{background:#0b3d91;color:#fff;border:0;border-radius:4px;padding:8px 24px}
+</style>
+</head>
+<body>
+<main class="wrap">
+<p><a data-anchor href="#">לדף הבית</a></p>
+<h1>מסמכים</h1>
+<p class="sub">הקבלות של נובמבר</p>
+<div class="card"><label for="q">חיפוש לקוח</label><input id="q" type="search"></div>
+<ul class="list card"><li><span>לקוח א</span><span>קבלה 1041</span></li><li><span>לקוח ב</span><span>קבלה 1042</span></li><li><span>לקוח ג</span><span>קבלה 1043</span></li></ul>
+<button type="button" data-primary>העלאה</button>
+</main>
+</body>
+</html>

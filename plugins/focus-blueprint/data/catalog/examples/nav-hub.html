@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="blueprint:screen" content="nav-hub">
+<title>מסך בית עם כרטיסים</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;font:16px/1.5 system-ui,sans-serif;color:#1a1a1a;background:#fff}
+a,button,input,select{font:inherit}
+a,button{min-height:44px;min-width:44px}
+a{color:#0b3d91}
+label{display:block;font-size:14px;margin-bottom:4px}
+input,select{display:block;width:100%;min-height:44px;padding:6px 10px}
+ul{list-style:none;margin:0;padding:0}
+h1{font-size:22px;margin:0 0 4px}
+p{margin:0 0 12px}
+:focus-visible{outline:3px solid #0b3d91;outline-offset:2px}
+button:hover,a:hover{filter:brightness(.92)}
+button:active{filter:brightness(.85)}
+.list li{display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid #d8d8d8}
+.list{margin-bottom:16px}
+[data-primary]{background:#0b3d91;color:#fff;border:0;border-radius:6px;padding:8px 24px}
+[aria-current]{font-weight:700}
+nav a{display:flex;align-items:center;text-decoration:none;color:#1a1a1a}
+main{padding:16px}
+.hub{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:0 0 16px}
+.hub a{display:flex;align-items:center;min-height:88px;padding:12px;background:#f1f3f8;border:1px solid #c9cfdd;border-radius:12px;font-weight:700;justify-content:center;text-align:center}
+.hub li:last-child{grid-column:1/-1}
+.hub li:first-child a{background:#dce6ff}
+</style>
+</head>
+<body>
+<main>
+<p><a data-anchor href="#">לדף הבית</a></p>
+<h1>מה עושים היום?</h1>
+<p>בחרו אזור, ובסיום חוזרים לכאן.</p>
+<ul class="hub"><li><a href="#">מסמכים</a></li><li><a href="#">לקוחות</a></li><li><a href="#">העלאה</a></li><li><a href="#">הגדרות</a></li><li><a href="#">חודש נוכחי</a></li></ul>
+<button type="button" data-primary>הוספת מסמך</button>
+</main>
+</body>
+</html>

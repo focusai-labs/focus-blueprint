@@ -1,0 +1,25 @@
+[
+ {
+  "id": "single-page",
+  "name_he": "דף אחד",
+  "term_en": "Single page",
+  "example": "structure-single-page.html",
+  "fits": "סיפור קצר, דף נחיתה או תפריט.",
+  "less": "מערכת שמתחברים אליה ועובדים בה.",
+  "default_for": [
+   "static"
+  ]
+ },
+ {
+  "id": "multi-page",
+  "name_he": "כמה דפים",
+  "term_en": "Multi-page",
+  "example": "structure-multi-page.html",
+  "fits": "מערכת עם תפקידים, נתונים והתחברות.",
+  "less": "דף נחיתה פשוט.",
+  "default_for": [
+   "supabase-app",
+   "n8n-engine"
+  ]
+ }
+]

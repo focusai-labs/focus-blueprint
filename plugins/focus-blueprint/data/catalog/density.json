@@ -1,0 +1,24 @@
+[
+ {
+  "id": "comfortable",
+  "name_he": "מרווח",
+  "term_en": "Comfortable",
+  "example": "density-comfortable.html",
+  "fits": "רוב המשתמשים, ובמיוחד בטלפון.",
+  "less": "מי שעובר על מאות שורות ביום.",
+  "default_for": [
+   "static",
+   "supabase-app",
+   "n8n-engine"
+  ]
+ },
+ {
+  "id": "compact",
+  "name_he": "צפוף",
+  "term_en": "Compact",
+  "example": "density-compact.html",
+  "fits": "עובדים שעוברים על הרבה פריטים ביום, במחשב.",
+  "less": "טלפון, ומשתמשים מזדמנים.",
+  "default_for": []
+ }
+]

@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="blueprint:screen" content="client-documents">
+<meta name="blueprint:persona" content="office-manager">
+<title>מסמכי לקוח</title>
+<style>body{font-family:system-ui,sans-serif;margin:24px;color:#222}main{max-width:720px}section{margin:20px 0}label{display:block;margin-top:8px}button{margin:4px}</style>
+</head>
+<body>
+<nav>
+  <a data-anchor href="index.html">חזרה לבית</a>
+  <a href="clients.html">רשימת לקוחות</a>
+</nav>
+<main>
+  <h1>מסמכי הלקוח</h1>
+
+  <section data-entity="client">
+    <p>לקוח: <span data-field="name">דנה לוי</span></p>
+    <p>טלפון: <span data-field="phone">050-1234567</span></p>
+    <p>חברה: <span data-field="company">לוי חשבונאות</span></p>
+  </section>
+
+  <section>
+    <h2>מסמכים שהתקבלו</h2>
+    <ul data-entity="document">
+      <li>תעודת זהות - התקבלה</li>
+      <li>אישור ניהול ספרים - התקבל</li>
+      <li>דוח רווח והפסד - חסר</li>
+    </ul>
+  </section>
+
+  <section>
+    <form id="request-form" novalidate>
+      <label for="full-name">שם מלא</label>
+      <input id="full-name" name="full_name" type="text" required aria-describedby="full-name-error">
+      <small class="error" id="full-name-error"></small>
+      <label for="email">אימייל</label>
+      <input id="email" name="email" type="email">
+      <label for="note">הערה למשרד</label>
+      <textarea id="note" name="note"></textarea>
+      <button type="submit">שלח בקשה</button>
+    </form>
+  </section>
+
+  <section>
+    <label for="doc-file">צירוף קובץ סרוק</label>
+    <input id="doc-file" name="scan" type="file" accept=".pdf,.jpg">
+    <button type="button" data-primary>העלה מסמכים</button>
+    <button type="button" data-confirm="המסמך ייעלם מהתיק של הלקוח">מחק מסמך</button>
+  </section>
+
+  <section>
+    <iframe src="about:blank" title="מדריך סריקת מסמכים" width="300" height="120"></iframe>
+  </section>
+
+  <section>
+    <div data-payment>תשלום מקדמה: 150 ש"ח</div>
+  </section>
+
+  <dialog id="confirm-dialog">
+    <p>המסמך ייעלם מהתיק של הלקוח.</p>
+    <button type="button" data-primary>השאר מסמך</button>
+    <button type="button">מחק בכל זאת</button>
+  </dialog>
+</main>
+</body>
+</html>

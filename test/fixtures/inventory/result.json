@@ -1,0 +1,94 @@
+{
+  "url": "file://<fixtures>/screen.html",
+  "screen": "client-documents",
+  "persona": "office-manager",
+  "links": [
+    "index.html",
+    "clients.html"
+  ],
+  "actions": [
+    {
+      "text": "שלח בקשה",
+      "type": "submit",
+      "destructive": false,
+      "primary": false,
+      "confirm": null
+    },
+    {
+      "text": "העלה מסמכים",
+      "type": "button",
+      "destructive": false,
+      "primary": true,
+      "confirm": null
+    },
+    {
+      "text": "מחק מסמך",
+      "type": "button",
+      "destructive": true,
+      "primary": false,
+      "confirm": "המסמך ייעלם מהתיק של הלקוח"
+    }
+  ],
+  "forms": [
+    {
+      "id": "request-form",
+      "fields": [
+        {
+          "name": "full_name",
+          "label": "שם מלא",
+          "type": "text",
+          "required": true
+        },
+        {
+          "name": "email",
+          "label": "אימייל",
+          "type": "email",
+          "required": false
+        },
+        {
+          "name": "note",
+          "label": "הערה למשרד",
+          "type": "textarea",
+          "required": false
+        }
+      ]
+    }
+  ],
+  "dataItems": [
+    {
+      "entity": "client",
+      "field": "name",
+      "sample": "דנה לוי"
+    },
+    {
+      "entity": "client",
+      "field": "phone",
+      "sample": "050-1234567"
+    },
+    {
+      "entity": "client",
+      "field": "company",
+      "sample": "לוי חשבונאות"
+    }
+  ],
+  "lists": [
+    {
+      "entity": "document",
+      "rows": 3
+    }
+  ],
+  "externals": [
+    {
+      "kind": "upload",
+      "detail": "scan"
+    },
+    {
+      "kind": "iframe",
+      "detail": "מדריך סריקת מסמכים"
+    },
+    {
+      "kind": "payment",
+      "detail": "תשלום מקדמה: 150 ש\"ח"
+    }
+  ]
+}

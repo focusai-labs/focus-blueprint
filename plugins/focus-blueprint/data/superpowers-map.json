@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "slots": {
+    "test-first": { "superpowers": "superpowers:test-driven-development", "ours": "focus-blueprint:stage-12-capability", "tested": { "min": "7.0.2", "max": "7.0.2" } },
+    "debugging": { "superpowers": "superpowers:systematic-debugging", "ours": "focus-blueprint:debug", "tested": { "min": "7.0.2", "max": "7.0.2" } },
+    "verification": { "superpowers": "superpowers:verification-before-completion", "ours": "focus-blueprint:verify", "tested": { "min": "7.0.2", "max": "7.0.2" } },
+    "review": { "superpowers": "superpowers:requesting-code-review", "ours": "focus-blueprint:review", "tested": { "min": "7.0.2", "max": "7.0.2" } }
+  },
+  "checkedAt": "2026-11-21",
+  "note": "the range widens only through the compatibility run (Task 20b), with a dated line in traps.md"
+}

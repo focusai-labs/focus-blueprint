@@ -31,7 +31,7 @@ or
 ## עמידה באפיון: יש ממצאים
 - חסר: <file>:<line>, <what>
 - עודף: <file>:<line>, <what>
-- לא הובן: <file>:<line>, <what>
+- הובן לא נכון: <file>:<line>, <what>
 
 ## איכות: עבר
 or

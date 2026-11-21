@@ -1,7 +1,7 @@
 {
   "id": "static",
   "name": "אתר סטטי",
-  "when": "זה מתאים כשהאתר רק מציג תוכן: אין כניסה של משתמשים, אין נתונים שמשתנים מהצד של הגולשים, ואין תשלום.",
+  "when": "המסלול מתאים כשהאתר רק מציג תוכן, בלי כניסה של משתמשים, בלי נתונים שהגולשים משנים ובלי תשלום.",
   "needs": ["github", "playwright", "vercel"],
   "steps": [
     {
@@ -9,21 +9,21 @@
       "stage": 7,
       "intent": "תיקיית ה-mockup עולה ל-Vercel כפרויקט שמחובר ל-repo, וכל דחיפה חדשה מעדכנת את הקישור",
       "docs": ["https://vercel.com/docs/git"],
-      "safety": "לא מחברים ל-Vercel repo שיש בו קבצי סודות, ובודקים לפני החיבור שאין ב-Git קובץ env",
+      "safety": "לא מחברים ל-Vercel repo שיש בו קבצים עם סודות, ולפני החיבור בודקים שקובץ ה-env לא נמצא ב-Git",
       "proof": "curl -s -o /dev/null -w '%{http_code}' $(node -e \"console.log(require('./.blueprint/state.json').where.mockupUrl)\") prints 200"
     },
     {
       "id": "st-clean-urls",
       "stage": 11,
-      "intent": "ה-mockup הופך לאתר עצמו, וקובץ vercel.json עם cleanUrls מסיר את הסיומת html מכל כתובת",
+      "intent": "ה-mockup הופך לאתר עצמו, וההגדרה cleanUrls בקובץ vercel.json מסירה את הסיומת html מכל כתובת",
       "docs": ["https://vercel.com/docs/project-configuration/vercel-json"],
-      "safety": "לא מוחקים את ה-mockup הישן עד שהאתר החי נפתח ושכל הקישורים הפנימיים עובדים",
+      "safety": "לא מוחקים את ה-mockup הישן לפני שהאתר החי נפתח וכל הקישורים הפנימיים בו עובדים",
       "proof": "node -e with fetch of <live-url>/about prints 200 for every path in map.screens"
     },
     {
       "id": "st-domain",
       "stage": 13,
-      "intent": "הדומיין של הלקוח מחובר לפרויקט, והערכים ל-DNS מועתקים בדיוק כפי ש-Vercel מציגה: רשומת A לדומיין הראשי ו-CNAME לתת-דומיין",
+      "intent": "הדומיין של הלקוח מחובר לפרויקט, ורשומות ה-DNS מועתקות בדיוק כמו ש-Vercel מציגה אותן: רשומת A לדומיין הראשי ורשומת CNAME לתת-דומיין",
       "docs": ["https://vercel.com/docs/domains/working-with-domains/add-a-domain"],
       "safety": "לא מעבירים את הדומיין החי לשרתים אחרים לפני שהאתר החדש נפתח בכתובת הזמנית, ולא מוחקים רשומות מייל קיימות",
       "proof": "curl -sI https://<domain> returns 200 and the certificate is valid"
@@ -39,9 +39,9 @@
     {
       "id": "st-analytics",
       "stage": 13,
-      "intent": "הבעלים מחליט אם למדוד כניסות לאתר, ואם כן נבחר כלי אחד והמדידה נרשמת בהחלטות",
+      "intent": "הבעלים מחליט אם למדוד את הכניסות לאתר. אם כן, בוחרים כלי אחד ורושמים את ההחלטה בקובץ ההחלטות",
       "docs": ["https://vercel.com/docs/analytics"],
-      "safety": "לא מפעילים מדידה שאוספת פרטים אישיים בלי שהבעלים אישר ובלי הודעה לגולשים",
+      "safety": "לא מפעילים מדידה שאוספת פרטים אישיים בלי אישור של הבעלים ובלי להודיע על כך לגולשים",
       "proof": "spec/decisions.md holds the analytics decision, and when on, the dashboard shows a visit from the test"
     }
   ]

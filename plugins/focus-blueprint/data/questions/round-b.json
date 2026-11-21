@@ -6,7 +6,7 @@
    "id": "b-01",
    "round": "b",
    "block": "סגנון",
-   "text": "אילו נכסי מותג כבר יש?",
+   "text": "אילו נכסי מותג כבר יש לכם?",
    "type": "multi",
    "options": [
     {
@@ -34,21 +34,21 @@
    "default": null,
    "decideButton": true,
    "prefillable": true,
-   "why": "מה שכבר קיים נכנס למערכת העיצוב, ולא ממציאים אותו מחדש.",
+   "why": "מה שכבר קיים נכנס כמו שהוא למערכת העיצוב, ולא צריך להמציא אותו מחדש.",
    "writes": "spec.brand.assets"
   },
   {
    "id": "b-02",
    "round": "b",
    "block": "סגנון",
-   "text": "לאילו אתרים או אפליקציות אתם רוצים שזה ירגיש קרוב, ולמה?",
+   "text": "אילו אתרים או אפליקציות קרובים למה שאתם רוצים, ולמה?",
    "type": "open",
    "options": [],
    "allowOther": false,
    "default": null,
    "decideButton": true,
    "prefillable": false,
-   "why": "דוגמה חיה מסבירה טעם טוב יותר מכל תיאור.",
+   "why": "קל יותר להסביר טעם עם דוגמה אמיתית מאשר במילים.",
    "writes": "spec.brand.references"
   },
   {
@@ -87,7 +87,7 @@
    "default": "minimal",
    "decideButton": true,
    "prefillable": false,
-   "why": "שפה חזותית אחת שומרת על המסכים עקביים זה עם זה.",
+   "why": "כשכל המסכים באותה שפה חזותית, הם נראים כמו חלקים של אותה מערכת.",
    "writes": "spec.style.visual",
    "source": [
     "D28"
@@ -97,7 +97,7 @@
    "id": "b-04",
    "round": "b",
    "block": "סגנון",
-   "text": "איך זזים בין המסכים?",
+   "text": "איך עוברים בין המסכים?",
    "type": "single",
    "options": [
     {
@@ -125,7 +125,7 @@
    "default": "top-bar",
    "decideButton": true,
    "prefillable": true,
-   "why": "הניווט קובע איך מגיעים לכל מסך, ואיך חוזרים לדף הבית.",
+   "why": "הניווט קובע איך מגיעים לכל מסך ואיך חוזרים לדף הבית.",
    "writes": "spec.style.nav",
    "source": [
     "S3",
@@ -136,7 +136,7 @@
    "id": "b-05",
    "round": "b",
    "block": "סגנון",
-   "text": "כמה צפוף המסך?",
+   "text": "כמה צפופים יהיו המסכים?",
    "type": "single",
    "options": [
     {
@@ -162,7 +162,7 @@
    "id": "b-06",
    "round": "b",
    "block": "סגנון",
-   "text": "האם האתר הוא דף אחד ארוך, או כמה דפים?",
+   "text": "האתר הוא דף אחד ארוך או כמה דפים?",
    "type": "single",
    "options": [
     {
@@ -178,7 +178,7 @@
    "default": "multi-page",
    "decideButton": true,
    "prefillable": true,
-   "why": "דף אחד מתאים לסיפור קצר. כמה דפים מתאימים למערכת שעובדים בה.",
+   "why": "דף אחד מתאים לסיפור קצר, וכמה דפים מתאימים למערכת שעובדים בה.",
    "writes": "spec.style.structure",
    "source": [
     "S2"
@@ -188,7 +188,7 @@
    "id": "b-07",
    "round": "b",
    "block": "סגנון",
-   "text": "איך נראה מסך ההתחברות?",
+   "text": "איך ייראה מסך ההתחברות?",
    "type": "single",
    "options": [
     {
@@ -240,7 +240,7 @@
    "default": "light-toggle",
    "decideButton": true,
    "prefillable": true,
-   "why": "רוב השימוש הוא ביום, ומי שעובד בלילה צריך מתג.",
+   "why": "רוב האנשים משתמשים במערכת ביום, ומי שעובד בלילה צריך מתג.",
    "writes": "spec.style.theme",
    "source": [
     "S5"
@@ -287,7 +287,7 @@
    "default": null,
    "decideButton": true,
    "prefillable": false,
-   "why": "קל יותר לתקן כיוון לפני שבונים שלוש גרסאות.",
+   "why": "קל יותר לשנות כיוון לפני שבונים שלוש גרסאות עיצוב.",
    "writes": "spec.brand.never"
   }
  ]

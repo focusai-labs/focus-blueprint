@@ -9,10 +9,10 @@ if (!project) process.exit(0);
 
 const { state } = project;
 const stage = stageInfo(state.stage);
-const lines = [`Focus Blueprint: שלב ${state.stage}, ${stage ? stage.name : '?'}. שינוי בהיקף עובר דרך /blueprint.`];
+const lines = [`הכלי Focus Blueprint: שלב ${state.stage}, ${stage ? stage.name : '?'}. כל שינוי בהיקף עובר דרך /blueprint.`];
 if (state.stage >= 9 && state.stage <= 12) {
   lines.push(
-    'בשלב הזה לא שואלים אם להמשיך. מכריעים, ורושמים כל הכרעה ב-bp.mjs ruling add. עוצרים ושואלים רק לפני מחיקת נתונים, לפני שינוי בהרשאות או במפתחות, לפני פעולה שעולה כסף או עולה לאוויר, או כשכל דרך בתוכנית היא ניחוש.'
+    'בשלב הזה לא שואלים את הסטודנט אם להמשיך, אלא מכריעים ורושמים כל הכרעה ב-bp.mjs ruling add. עוצרים ושואלים רק לפני מחיקת נתונים, לפני שינוי בהרשאות או במפתחות, לפני פעולה שעולה כסף או מעלה משהו לאוויר וכשאי אפשר להמשיך בלי לנחש.'
   );
 }
 for (const item of haltedItems(project)) lines.push(haltedLine(item));

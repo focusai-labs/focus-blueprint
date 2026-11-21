@@ -172,7 +172,7 @@ test('rule 10: evidence', () => {
   assert.ok(has(run((c) => { c.cap.evidence.red = null; }), 10, 'היכולת upload-docs מסומנת כאמיתית בלי ראיה שהבדיקה נכשלה לפני הבנייה.'));
   assert.ok(has(run((c) => { c.cap.evidence.green = null; }), 10, 'היכולת upload-docs מסומנת כאמיתית בלי ראיה שהבדיקה עוברת אחרי הבנייה.'));
   assert.ok(has(run((c) => { c.files['evals/evidence/upload-docs.red.txt'] = 'tampered'; }), 10, 'קובץ הראיה של upload-docs השתנה מאז שנרשם.'));
-  assert.ok(has(run((c) => { c.cap.evidence.red.at = '2026-11-21T12:00:00.000Z'; }), 10, 'סדר הראיות של upload-docs לא נכון: ההצלחה נרשמה לפני הכישלון.'));
+  assert.ok(has(run((c) => { c.cap.evidence.red.at = '2026-11-21T12:00:00.000Z'; }), 10, 'בראיות של upload-docs ההצלחה נרשמה לפני הכישלון, אבל הכישלון צריך לבוא קודם.'));
   assert.ok(has(run((c) => { c.cap.evidence.red.exit = 0; }), 10, 'נכשלה'));
   assert.ok(has(run((c) => { c.cap.evidence.green.exit = 1; }), 10, 'עוברת'));
   assert.ok(has(run((c) => { c.cap.catches = 'משהו אחר'; }), 10, 'upload-docs'));

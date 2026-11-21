@@ -35,7 +35,7 @@ function lastClose(state) {
   return closed.length ? { n: Number(closed[0]), close: st[closed[0]].close } : null;
 }
 
-const lines = ['[Focus Blueprint] קובץ המצב השתנה מאז הסיכום האחרון. לפני שמסיימים, כתבו את .blueprint/last-session.md בעברית, עד שלושים שורות, בשלושה חלקים: מה נעשה, מה פתוח, והצעד הבא.'];
+const lines = ['הכלי Focus Blueprint: קובץ המצב השתנה מאז הסיכום האחרון. לפני שמסיימים, כתבו את .blueprint/last-session.md בעברית, עד 30 שורות, בשלושה חלקים: מה נעשה, מה פתוח ומה הצעד הבא.'];
 
 const last = lastClose(project.state);
 if (last) {
@@ -53,7 +53,7 @@ const build = (shown) => {
   } else {
     out.push(`הכרעות שעוד לא הוצגו לסטודנט (${rulings.length}):`);
     for (const r of rulings.slice(0, shown)) {
-      out.push(`- ${cut(r.decision, 100)}. למה: ${cut(r.why, 100)}. המחיר אם זה שגוי: ${cut(r.priceIfWrong, 100)}. שלב ${r.stage}.`);
+      out.push(`- הוחלט: ${cut(r.decision, 100)}. למה: ${cut(r.why, 100)}. המחיר אם זה שגוי: ${cut(r.priceIfWrong, 100)}. שלב ${r.stage}.`);
     }
     if (rulings.length > shown) out.push(`יש עוד ${rulings.length - shown} הכרעות שלא מוצגות כאן.`);
     out.push('כוללים אותן בסיכום, ואחרי שהסטודנט ראה אותן מריצים bp.mjs ruling report.');

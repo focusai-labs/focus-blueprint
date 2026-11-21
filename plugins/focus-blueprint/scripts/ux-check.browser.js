@@ -39,7 +39,7 @@
       const size = parseFloat(s.fontSize); const bold = parseInt(s.fontWeight, 10) >= 700;
       const large = size >= 24 || (bold && size >= 18.66);
       const r = ratio(fg.rgb, bgOf(el)); const need = large ? 3 : 4.5;
-      if (r < need) bad.push(`${desc(el)} יחס ${r.toFixed(2)} (נדרש ${need})`);
+      if (r < need) bad.push(`יחס ניגודיות ${r.toFixed(2)} (נדרש ${need}) ב-${desc(el)}`);
     }
     add('contrast-text', 'D7', bad.length === 0, bad);
   }
@@ -51,7 +51,7 @@
     const roots = mains.length ? mains : [document.body];
     roots.forEach((m, i) => {
       const ps = [...m.querySelectorAll('[data-primary]')].filter((e) => visible(e) && !inDialog(e));
-      if (ps.length > 1) bad.push(`main ${i + 1}: ${ps.length} כפתורים ראשיים: ${ps.map(desc).join(' | ')}`);
+      if (ps.length > 1) bad.push(`ב-main מספר ${i + 1} יש ${ps.length} כפתורים ראשיים: ${ps.map(desc).join(' | ')}`);
     });
     add('primary-count', 'D7', bad.length === 0, bad);
   }
@@ -77,7 +77,7 @@
           if (Math.hypot(dx, dy) < 12) { clash = o; break; }
         }
       }
-      if (clash) bad.push(`${desc(t.el)} ${Math.round(t.r.width)}x${Math.round(t.r.height)} קרוב ל-${desc(clash.el)}`);
+      if (clash) bad.push(`היעד ${desc(t.el)}, בגודל ${Math.round(t.r.width)}x${Math.round(t.r.height)}, קרוב ל-${desc(clash.el)}`);
     }
     add('target-size', 'D12', bad.length === 0, bad);
   } else skip('target-size', 'D12', 'phone only');
@@ -85,8 +85,8 @@
   // --- tab-order (D15, desktop only): every real control focusable, and a :focus / :focus-visible style exists
   if (!VIEWPORT.phone) {
     const bad = [];
-    document.querySelectorAll('a[href], button, input:not([type=hidden]), select, textarea').forEach((el) => { if (el.getAttribute('tabindex') === '-1' && visible(el)) bad.push(`tabindex=-1 על ${desc(el)}`); });
-    document.querySelectorAll('div[onclick], span[onclick]').forEach((el) => { if (!el.hasAttribute('tabindex') && visible(el)) bad.push(`לחיץ בלי tabindex: ${desc(el)}`); });
+    document.querySelectorAll('a[href], button, input:not([type=hidden]), select, textarea').forEach((el) => { if (el.getAttribute('tabindex') === '-1' && visible(el)) bad.push(`יש tabindex=-1 על ${desc(el)}`); });
+    document.querySelectorAll('div[onclick], span[onclick]').forEach((el) => { if (!el.hasAttribute('tabindex') && visible(el)) bad.push(`רכיב לחיץ בלי tabindex: ${desc(el)}`); });
     let focusRule = false;
     walkRules((rule) => { if (rule.selectorText && /:focus-visible|:focus/.test(rule.selectorText)) focusRule = true; });
     if (!focusRule) bad.push('אין כלל :focus או :focus-visible');
@@ -113,7 +113,7 @@
       if (!f.querySelector('[required]')) return;
       const subs = [...f.querySelectorAll('button:not([type=button]):not([type=reset]), input[type=submit]')];
       const gated = subs.length > 0 && subs.every((b) => b.disabled);
-      if (!gated && f.hasAttribute('novalidate')) bad.push(`טופס ${f.id || '(ללא id)'}: novalidate וכפתור שליחה פעיל`);
+      if (!gated && f.hasAttribute('novalidate')) bad.push(`בטופס ${f.id || '(בלי id)'} יש novalidate, וכפתור השליחה פעיל`);
     });
     add('required-gate', 'D40', bad.length === 0, bad, 'warn');
   }
@@ -138,7 +138,7 @@
     for (const d of destructive.filter(visible)) {
       for (const p of primaries) {
         if (p === d) continue;
-        if (gap(d.getBoundingClientRect(), p.getBoundingClientRect()) < 48) bad.push(`${desc(d)} צמוד ל-${desc(p)}`);
+        if (gap(d.getBoundingClientRect(), p.getBoundingClientRect()) < 48) bad.push(`הפעולה ההרסנית ${desc(d)} צמודה ל-${desc(p)}`);
       }
     }
     add('destructive-adjacency', 'D43', bad.length === 0, bad);
@@ -163,7 +163,7 @@
     document.querySelectorAll('p, li').forEach((el) => {
       if (el.textContent.trim().length <= 120 || !visible(el)) return;
       const cpl = el.getBoundingClientRect().width / (parseFloat(getComputedStyle(el).fontSize) * 0.5);
-      if (cpl > 90) bad.push(`${desc(el)} ~${Math.round(cpl)} תווים בשורה`);
+      if (cpl > 90) bad.push(`בערך ${Math.round(cpl)} תווים בשורה ב-${desc(el)}`);
     });
     add('line-length', 'D4', bad.length === 0, bad, 'warn');
   } else skip('line-length', 'D4', 'desktop only');
@@ -218,7 +218,7 @@
       const s = getComputedStyle(el);
       if (!s.animationName || s.animationName === 'none') return;
       anyAnim = true;
-      if (s.animationIterationCount.split(',').some((c) => c.trim() === 'infinite') && !el.closest('.spinner, [data-loading]')) bad.push(`אנימציה אינסופית: ${desc(el)}`);
+      if (s.animationIterationCount.split(',').some((c) => c.trim() === 'infinite') && !el.closest('.spinner, [data-loading]')) bad.push(`אנימציה שרצה בלי סוף: ${desc(el)}`);
     });
     let reduced = false;
     walkRules((rule, media) => { if (rule.type === 7) anyAnim = true; if (/prefers-reduced-motion/.test(media || '')) reduced = true; });

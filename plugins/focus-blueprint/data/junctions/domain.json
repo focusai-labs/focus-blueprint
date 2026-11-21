@@ -10,8 +10,8 @@
     {
       "id": "cloudflare-vercel",
       "name": "רישום ב-Cloudflare וחיבור ל-Vercel",
-      "fits": "אתם רוצים לשלם מחיר עלות ולנהל את ה-DNS במקום אחד, גם אם האתר יעבור פלטפורמה.",
-      "less": "צריך להעתיק רשומות DNS ל-Vercel ביד.",
+      "fits": "אתם רוצים לשלם על הדומיין מחיר עלות ולנהל את ה-DNS במקום אחד, גם אם בעתיד תעבירו את האתר לפלטפורמה אחרת.",
+      "less": "צריך להעתיק ביד את רשומות ה-DNS ל-Vercel.",
       "cost": {
         "text": "השירות Cloudflare Registrar מוכר דומיינים במחיר עלות, בלי עמלה נוספת.",
         "source": "https://developers.cloudflare.com/registrar/",
@@ -39,6 +39,6 @@
   "recommend": {
     "option": "cloudflare-vercel",
     "why": "הדומיין נשאר בידיכם, והמחיר הוא מחיר עלות.",
-    "unless": "אם אתם רוצים הגדרה בלי לגעת ב-DNS, קנו ב-Vercel."
+    "unless": "אם אתם רוצים הגדרה בלי לגעת ב-DNS, קנו את הדומיין ב-Vercel."
   }
 }

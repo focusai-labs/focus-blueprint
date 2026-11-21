@@ -162,7 +162,7 @@ const rules = [
       };
       check(ev.red, noRed, (x) => x !== 0);
       check(ev.green, noGreen, (x) => x === 0);
-      if (ev.red && ev.green && !(ev.red.at < ev.green.at)) err('10', c.id, `סדר הראיות של ${c.id} לא נכון: ההצלחה נרשמה לפני הכישלון.`);
+      if (ev.red && ev.green && !(ev.red.at < ev.green.at)) err('10', c.id, `בראיות של ${c.id} ההצלחה נרשמה לפני הכישלון, אבל הכישלון צריך לבוא קודם.`);
       const text = c.test ? ctx.read(c.test) : null;
       const sentence = text ? catchesOf(text) : null;
       if (sentence && c.catches !== sentence) err('10', c.id, `היכולת ${c.id} מסומנת כאמיתית, והמשפט של מה הבדיקה תופסת לא תואם לקובץ הבדיקה.`);
@@ -226,7 +226,7 @@ export function checkMap(projectDir) {
   try { map = JSON.parse(fs.readFileSync(ctx.p('.blueprint/map.json'), 'utf8')); } catch { /* reported below */ }
   try { state = JSON.parse(fs.readFileSync(ctx.p('.blueprint/state.json'), 'utf8')); } catch { /* optional */ }
   if (!map) {
-    errors.push({ rule: '0', item: '.blueprint/map.json', message: 'הקובץ .blueprint/map.json חסר או שאינו קובץ JSON תקין.' });
+    errors.push({ rule: '0', item: '.blueprint/map.json', message: 'הקובץ .blueprint/map.json חסר, או שהוא לא קובץ JSON תקין.' });
     return { ok: false, errors, warnings };
   }
   map.capabilities = map.capabilities || []; map.screens = map.screens || [];

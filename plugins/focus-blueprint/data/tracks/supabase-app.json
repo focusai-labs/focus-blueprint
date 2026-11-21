@@ -1,23 +1,23 @@
 {
   "id": "supabase-app",
   "name": "אפליקציה עם משתמשים",
-  "when": "זה מתאים כשאנשים נכנסים עם חשבון, כל אחד רואה את הנתונים שלו, והמידע משתנה כל הזמן.",
+  "when": "המסלול מתאים כשאנשים נכנסים עם חשבון, כל אחד רואה את הנתונים שלו והמידע משתנה כל הזמן.",
   "needs": ["github", "playwright", "supabase", "vercel"],
   "steps": [
     {
       "id": "sb-create-project",
       "stage": 10,
-      "intent": "יש פרויקט Supabase חדש בחשבון של מי שיהיה הבעלים, באזור הקרוב, והמפתחות שמורים ב-.env.local בלבד",
+      "intent": "פרויקט Supabase חדש נפתח בחשבון של מי שיהיה הבעלים ובאזור הקרוב, והמפתחות שמורים רק ב-.env.local",
       "docs": ["https://supabase.com/docs/guides/getting-started", "https://supabase.com/docs/guides/platform"],
-      "safety": "לא מקימים פרויקט לפני שבדקנו שיש מקום בתוכנית החינמית, ולא מדביקים מפתח סודי לשום קובץ שעולה ל-Git",
+      "safety": "לא פותחים פרויקט לפני שבודקים שיש מקום בתוכנית החינמית, ולא מדביקים מפתח סודי בשום קובץ שעולה ל-Git",
       "proof": "node -e one-liner that reads the URL from .env.local and gets 200 from /rest/v1/"
     },
     {
       "id": "sb-migrations",
       "stage": 10,
-      "intent": "כל שינוי במסד הנתונים נכתב כקובץ migration בתיקיית db, ורק אחר כך מופעל דרך apply_migration",
+      "intent": "כל שינוי במסד הנתונים נכתב כקובץ migration בתיקיית db, ורק אחר כך מריצים אותו עם apply_migration",
       "docs": ["https://supabase.com/docs/guides/deployment/database-migrations"],
-      "safety": "לא מריצים שינוי ישיר במסד בלי קובץ, ולא מוחקים טבלה או עמודה בלי שבדקנו מי משתמש בהן",
+      "safety": "לא משנים את המסד ישירות בלי קובץ, ולא מוחקים טבלה או עמודה לפני שבודקים מי משתמש בהן",
       "proof": "every file in db/migrations appears in list_migrations and the order matches"
     },
     {
@@ -25,23 +25,23 @@
       "stage": 10,
       "intent": "כל טבלה מוגנת בהרשאות ברמת השורה, כך שכל משתמש רואה רק את השורות שלו",
       "docs": ["https://supabase.com/docs/guides/database/postgres/row-level-security"],
-      "safety": "לא משאירים טבלה בלי הרשאות גם לרגע, ולא נותנים הרשאה רחבה כדי שמשהו יתחיל לעבוד",
+      "safety": "אף טבלה לא נשארת בלי הרשאות, אפילו לרגע, ולא נותנים הרשאה רחבה רק כדי שמשהו יעבוד",
       "proof": "select * from pg_tables where schemaname='public' and not rowsecurity returns zero rows"
     },
     {
       "id": "sb-advisors",
       "stage": 10,
-      "intent": "אחרי כל שינוי בנתונים מריצים את בדיקות האבטחה של Supabase וסוגרים כל ממצא חמור",
+      "intent": "אחרי כל שינוי בנתונים מריצים את בדיקות האבטחה של Supabase ומתקנים כל ממצא חמור",
       "docs": ["https://supabase.com/docs/guides/observability/advisors"],
-      "safety": "לא מתעלמים מממצא אבטחה כי האפליקציה עובדת, ולא מכבים בדיקה כדי שתעבור",
+      "safety": "לא מתעלמים מממצא אבטחה רק כי האפליקציה עובדת, ולא מכבים בדיקה כדי שהיא תעבור",
       "proof": "get_advisors(security) returns no ERROR level item"
     },
     {
       "id": "sb-template",
       "stage": 11,
-      "intent": "השלד החי נבנה מתבנית with-supabase, עם כניסה ועוגיות מוכנות, והמסכים מהמפה נכנסים אליו",
+      "intent": "השלד החי נבנה מהתבנית with-supabase, שבה ההתחברות והעוגיות כבר מוכנות, ואליו מכניסים את המסכים מהמפה",
       "docs": ["https://supabase.com/docs/guides/getting-started/quickstarts/nextjs"],
-      "safety": "לא משנים את זרימת ההתחברות של התבנית לפני שהיא עובדת כמו שהיא, ולא מעלים את קובץ ה-env",
+      "safety": "לא משנים את תהליך ההתחברות של התבנית לפני שהוא עובד כמו שהוא, ולא מעלים את קובץ ה-env",
       "proof": "the dev server starts and a test user signs in and reaches a protected page"
     },
     {
@@ -63,7 +63,7 @@
     {
       "id": "sb-cap-policy",
       "stage": 12,
-      "intent": "לכל יכולת יש מדיניות הרשאות, ובדיקה כמשתמש שני מוכיחה שהוא לא רואה את הנתונים של הראשון",
+      "intent": "לכל יכולת יש מדיניות הרשאות, ובדיקה שנכנסת כמשתמש שני מראה שהוא לא רואה את הנתונים של המשתמש הראשון",
       "docs": ["https://supabase.com/docs/guides/database/postgres/row-level-security"],
       "safety": "לא בודקים הרשאות רק כבעלים של המסד, כי הוא עוקף אותן",
       "proof": "a select as user B returns zero rows of user A, quoted from the test output"
@@ -71,7 +71,7 @@
     {
       "id": "sb-cap-screen",
       "stage": 12,
-      "intent": "המסך של היכולת מחובר לנתונים אמיתיים, ובדיקת Playwright עוברת בו ממצב ריק ועד תוצאה",
+      "intent": "המסך של היכולת מחובר לנתונים אמיתיים, ובדיקת Playwright עוברת עליו מהמצב הריק ועד התוצאה",
       "docs": ["https://supabase.com/docs/guides/getting-started/quickstarts/nextjs"],
       "safety": "בדיקת הדפדפן רצה על נתוני בדיקה בלבד, ולא על חשבון של משתמש אמיתי",
       "proof": "the Playwright test file for the capability exits 0 and the red run before it exits non-zero"
@@ -79,23 +79,23 @@
     {
       "id": "sb-cap-automation",
       "stage": 12,
-      "intent": "כשליכולת יש פעולה אוטומטית, היא רצה מ-webhook של מסד הנתונים או ממשימה מתוזמנת, או מ-workflow ב-n8n",
+      "intent": "כשיש ליכולת פעולה אוטומטית, היא מופעלת מ-webhook של מסד הנתונים, ממשימה מתוזמנת או מ-workflow ב-n8n",
       "docs": ["https://supabase.com/docs/guides/database/webhooks", "https://supabase.com/docs/guides/cron"],
-      "safety": "לא שולחים הודעה החוצה מהאוטומציה בלי אישור אנושי, וכל כתובת webhook מוגנת בסוד",
+      "safety": "האוטומציה לא שולחת הודעה החוצה בלי אישור של אדם, וכל כתובת webhook מוגנת בסוד",
       "proof": "one triggering event produces exactly one run, shown in the logs"
     },
     {
       "id": "sb-second-user",
       "stage": 13,
-      "intent": "לפני ההשקה אדם אחר נכנס עם חשבון חדש, עובר את הזרימה המרכזית ולא רואה נתונים שאינם שלו",
+      "intent": "לפני ההשקה אדם אחר נכנס עם חשבון חדש ועובר את התהליך המרכזי, ולא רואה נתונים שאינם שלו",
       "docs": ["https://supabase.com/docs/guides/database/postgres/row-level-security"],
-      "safety": "לא משתמשים בחשבון של הבונה לבדיקה הזאת",
+      "safety": "לבדיקה הזאת לא משתמשים בחשבון של מי שבנה את המערכת",
       "proof": "docs/launch-checklist.md holds the second-user run with an evidence line"
     },
     {
       "id": "sb-launch-advisors",
       "stage": 13,
-      "intent": "בדיקות האבטחה והביצועים של Supabase נקיות לפני עלייה לאוויר, וכל חריגה מוסברת",
+      "intent": "לפני העלייה לאוויר, בדיקות האבטחה והביצועים של Supabase עוברות בלי ממצאים, וכל חריגה מוסברת",
       "docs": ["https://supabase.com/docs/guides/observability/advisors"],
       "safety": "לא עולים לאוויר עם ממצא אבטחה פתוח",
       "proof": "get_advisors(security) is clean, quoted in docs/launch-checklist.md"
@@ -103,7 +103,7 @@
     {
       "id": "sb-domain",
       "stage": 13,
-      "intent": "הדומיין של הלקוח מחובר ל-Vercel, והערכים ל-DNS מועתקים כפי ש-Vercel מציגה",
+      "intent": "הדומיין של הלקוח מחובר ל-Vercel, ורשומות ה-DNS מועתקות כמו ש-Vercel מציגה אותן",
       "docs": ["https://vercel.com/docs/domains/working-with-domains/add-a-domain"],
       "safety": "לא מוחקים רשומות מייל קיימות, ולא מעבירים דומיין חי לפני שהאתר החדש נבדק",
       "proof": "curl -sI https://<domain> returns 200 with a valid certificate"
@@ -111,7 +111,7 @@
     {
       "id": "sb-alert",
       "stage": 13,
-      "intent": "כשמשהו נשבר, מישהו מקבל הודעה: התראה של Vercel על פריסה שנכשלה או בדיקת בריאות ב-n8n",
+      "intent": "כשמשהו מפסיק לעבוד, מישהו מקבל הודעה, דרך התראה של Vercel על פריסה שנכשלה או דרך בדיקת תקינות ב-n8n",
       "docs": ["https://vercel.com/docs/notifications", "https://docs.n8n.io/build/flow-logic/handle-errors-gracefully"],
       "safety": "ההתראה נשלחת רק לכתובת שהבעלים אישר, ובלי פרטי משתמשים בגוף ההודעה",
       "proof": "a deliberate failure produces a message in the owner inbox, quoted in the launch checklist"

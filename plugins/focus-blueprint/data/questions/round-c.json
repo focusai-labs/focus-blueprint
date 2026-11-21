@@ -47,7 +47,7 @@
    "default": null,
    "decideButton": true,
    "prefillable": true,
-   "why": "כל שליחה החוצה צריכה לדעת אם היא רצה לבד או עוברת דרך אדם.",
+   "why": "לכל שליחה החוצה צריך להחליט מראש אם היא יוצאת לבד או עוברת קודם דרך אדם.",
    "writes": "spec.screens.{screen}.sends",
    "source": [
     "D45"
@@ -64,7 +64,7 @@
    "default": null,
    "decideButton": true,
    "prefillable": true,
-   "why": "תקלה בלי התנהגות מוגדרת היא חור באפיון.",
+   "why": "אם לא כתבתם מה המשתמש רואה בתקלה, חסר משהו באפיון.",
    "writes": "spec.screens.{screen}.onFailure",
    "source": [
     "D49"
@@ -81,7 +81,7 @@
    "default": null,
    "decideButton": true,
    "prefillable": true,
-   "why": "מה שצריך לזכור, המסך מציג שוב.",
+   "why": "המסך מציג שוב את מה שהמשתמש צריך לזכור, כדי שלא יצטרך להחזיק את זה בראש.",
    "writes": "spec.screens.{screen}.carryOver",
    "source": [
     "D20"
@@ -98,7 +98,7 @@
    "default": null,
    "decideButton": true,
    "prefillable": true,
-   "why": "מה שאסור לאבד נשמר ברקע, כבר מהגרסה הראשונה.",
+   "why": "מה שאסור לאבד צריך להישמר ברקע כבר בגרסה הראשונה.",
    "writes": "spec.screens.{screen}.mustKeep",
    "source": [
     "S14"
@@ -132,7 +132,7 @@
    "default": null,
    "decideButton": true,
    "prefillable": true,
-   "why": "לחיצה כפולה יכולה ליצור כפילות, או לשלוח פעמיים.",
+   "why": "לחיצה כפולה יכולה ליצור רשומה כפולה או לשלוח את אותו דבר פעמיים.",
    "writes": "spec.screens.{screen}.doubleSubmit",
    "source": [
     "D40"
@@ -149,7 +149,7 @@
    "default": null,
    "decideButton": true,
    "prefillable": true,
-   "why": "דרך חזרה ברורה מחזירה את הביטחון.",
+   "why": "כשברור איך חוזרים לדף הבית, המשתמש מרגיש בטוח יותר.",
    "writes": "spec.screens.{screen}.anchor",
    "source": [
     "S13"
@@ -166,7 +166,7 @@
    "default": null,
    "decideButton": true,
    "prefillable": true,
-   "why": "בטלפון האגודל קובע מה קל להשיג ומה רחוק.",
+   "why": "בטלפון, מה שהאגודל מגיע אליו בקלות נוח ללחיצה, ומה שרחוק ממנו קשה.",
    "writes": "spec.screens.{screen}.phone",
    "source": [
     "D11",
@@ -184,7 +184,7 @@
    "default": null,
    "decideButton": true,
    "prefillable": true,
-   "why": "שקט בזמן המתנה נקרא ככישלון.",
+   "why": "כשהמסך לא מראה כלום בזמן ההמתנה, המשתמש חושב שמשהו נכשל.",
    "writes": "spec.screens.{screen}.waiting",
    "source": [
     "D18",
@@ -202,7 +202,7 @@
    "default": null,
    "decideButton": true,
    "prefillable": true,
-   "why": "פעולה בלתי הפיכה צריכה אישור, ועדיף גם דרך חזרה.",
+   "why": "לפני פעולה שאי אפשר לבטל צריך לבקש אישור, ועדיף שתהיה גם דרך לחזור ממנה.",
    "writes": "spec.screens.{screen}.irreversible",
    "source": [
     "D47",
@@ -220,7 +220,7 @@
    "default": null,
    "decideButton": true,
    "prefillable": true,
-   "why": "כל שדה שלא צריך להקליד בו הוא טעות שלא תקרה.",
+   "why": "בשדה שבוחרים בו במקום להקליד יש פחות מקום לטעויות.",
    "writes": "spec.screens.{screen}.inputs",
    "source": [
     "D13",
@@ -231,14 +231,14 @@
    "id": "c-state-{screen}",
    "round": "c",
    "block": "מול המסך",
-   "text": "איזה מצב המשתמש צריך לראות כל הזמן במסך {screen}? למשל מה כבר נשמר, ומה עוד חסר.",
+   "text": "איזה מצב המשתמש צריך לראות כל הזמן במסך {screen}? למשל מה כבר נשמר ומה עוד חסר.",
    "type": "open",
    "options": [],
    "allowOther": false,
    "default": null,
    "decideButton": true,
    "prefillable": true,
-   "why": "מצב שלא רואים גורם לפעולות שגויות.",
+   "why": "כשהמשתמש לא רואה מה המצב, הוא עושה פעולות שגויות.",
    "writes": "spec.screens.{screen}.state",
    "source": [
     "D16"
@@ -272,7 +272,7 @@
    "default": null,
    "decideButton": true,
    "prefillable": true,
-   "why": "בצמתי החלטה משתמשים נכשלים, אם אין עזרה.",
+   "why": "כשמשתמש צריך להחליט ואין לו עזרה, שם הוא נוטה לטעות.",
    "writes": "spec.screens.{screen}.decisionHelp",
    "source": [
     "S12"

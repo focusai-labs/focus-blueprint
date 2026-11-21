@@ -13,7 +13,7 @@
    "default": null,
    "decideButton": true,
    "prefillable": true,
-   "why": "מחיקה לא מתוכננת היא הדרך הקלה לאבד מידע שמישהו צריך.",
+   "why": "כשלא מתכננים מראש מה נמחק, קל למחוק מידע שמישהו עוד צריך.",
    "writes": "spec.data.retention"
   },
   {
@@ -91,7 +91,7 @@
    "default": "yes",
    "decideButton": true,
    "prefillable": true,
-   "why": "גיבוי הוא הדרך היחידה לחזור מטעות במסד הנתונים.",
+   "why": "רק גיבוי מאפשר לשחזר את מסד הנתונים אחרי טעות.",
    "writes": "spec.data.backup",
    "source": [
     "D48"
@@ -108,7 +108,7 @@
    "default": null,
    "decideButton": true,
    "prefillable": true,
-   "why": "זו הבדיקה שמשתמש שני עושה לפני כל השקה.",
+   "why": "את זה בודקים לפני כל השקה, כשנכנסים למערכת כמשתמש שני.",
    "writes": "spec.data.isolation"
   },
   {
@@ -120,7 +120,7 @@
    "options": [
     {
      "v": "soft",
-     "t": "מסמנים כמחוק, ושומרים"
+     "t": "מסמנים כמחוק ושומרים"
     },
     {
      "v": "hard",
@@ -131,7 +131,7 @@
    "default": "soft",
    "decideButton": true,
    "prefillable": true,
-   "why": "סימון כמחוק מאפשר לשחזר טעות.",
+   "why": "כשרק מסמנים כמחוק, אפשר לשחזר מידע שנמחק בטעות.",
    "writes": "spec.data.deleteMode",
    "source": [
     "D48"
@@ -148,7 +148,7 @@
    "default": null,
    "decideButton": true,
    "prefillable": true,
-   "why": "מידע אישי שאין בו צורך הוא סיכון בלי תועלת.",
+   "why": "מידע אישי שלא צריך רק מוסיף סיכון, בלי שום תועלת.",
    "writes": "spec.data.personal"
   },
   {
@@ -175,7 +175,7 @@
    "default": "later",
    "decideButton": true,
    "prefillable": true,
-   "why": "ייצוא הוא גם שירות למשתמש, וגם דרך יציאה אם מחליפים מערכת.",
+   "why": "ייצוא הוא שירות למשתמש, והוא גם מאפשר לעבור למערכת אחרת בלי לאבד מידע.",
    "writes": "spec.data.export"
   },
   {
@@ -189,7 +189,7 @@
    "default": null,
    "decideButton": true,
    "prefillable": true,
-   "why": "שדה חובה נבדק גם במסד הנתונים, ולא רק בטופס.",
+   "why": "שדה חובה בודקים גם במסד הנתונים, ולא רק בטופס.",
    "writes": "spec.data.required",
    "source": [
     "D40"

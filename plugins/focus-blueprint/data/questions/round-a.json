@@ -6,14 +6,14 @@
    "id": "a-01",
    "round": "a",
    "block": "העסק והבעיה",
-   "text": "מה הבעיה, במשפט אחד שזר יכול לחזור עליו?",
+   "text": "מה הבעיה, במשפט אחד שגם מישהו מבחוץ יכול לחזור עליו?",
    "type": "open",
    "options": [],
    "allowOther": false,
    "default": null,
    "decideButton": true,
    "prefillable": true,
-   "why": "משפט אחד מכריח להחליט מה באמת כואב.",
+   "why": "כשכותבים את הבעיה במשפט אחד, צריך להחליט מה באמת הכי כואב.",
    "writes": "spec.problem.statement",
    "source": [
     "R6"
@@ -47,7 +47,7 @@
    "default": null,
    "decideButton": true,
    "prefillable": true,
-   "why": "ההתנהגות של היום מראה כמה הבעיה כואבת, ואילו פתרונות כבר עובדים.",
+   "why": "מה שאנשים עושים היום מראה כמה הבעיה כואבת ואילו פתרונות כבר עובדים.",
    "writes": "spec.problem.current",
    "source": [
     "R6"
@@ -64,7 +64,7 @@
    "default": null,
    "decideButton": true,
    "prefillable": true,
-   "why": "את מה שאוהבים שומרים, ואת מה ששונאים לא מעתיקים.",
+   "why": "את מה שאנשים אוהבים בפתרון של היום כדאי לשמור, ואת מה שהם שונאים לא כדאי להעתיק.",
    "writes": "spec.problem.likesDislikes",
    "source": [
     "R6"
@@ -81,7 +81,7 @@
    "default": null,
    "decideButton": true,
    "prefillable": true,
-   "why": "צריך לדעת אם הבעיה לא חשובה להם, או שהפתרונות הקיימים גרועים.",
+   "why": "צריך לדעת אם הבעיה לא חשובה להם או שהפתרונות הקיימים גרועים.",
    "writes": "spec.problem.whyUnsolved",
    "when": {
     "a-02": [
@@ -103,7 +103,7 @@
    "default": null,
    "decideButton": true,
    "prefillable": true,
-   "why": "כלל לא כתוב מסביר התנהגות שנראית מבחוץ מוזרה.",
+   "why": "כלל לא כתוב מסביר למה אנשים בתחום מתנהגים בדרך שנראית מוזרה למי שבא מבחוץ.",
    "writes": "spec.problem.norms",
    "source": [
     "R7"
@@ -154,7 +154,7 @@
    "default": null,
    "decideButton": true,
    "prefillable": false,
-   "why": "התאמה לקבוצה אמיתית עובדת טוב יותר מהתאמה לממוצע שלא קיים.",
+   "why": "מערכת שמתאימה לקבוצה אמיתית של אנשים עובדת טוב יותר ממערכת שמתאימה לממוצע, כי משתמש ממוצע לא קיים.",
    "writes": "spec.users.segments",
    "probe": "מה הכי שונה בין שתי הקבוצות?",
    "source": [
@@ -165,14 +165,14 @@
    "id": "a-08",
    "round": "a",
    "block": "המשתמשים לעומק",
-   "text": "לכל קבוצה, תארו שני מצבים שבהם משתמשים במערכת: איפה, מתי, מה יש סביב, ומה צריך באותו רגע.",
+   "text": "לכל קבוצה, תארו שני מצבים שבהם משתמשים במערכת: איפה, מתי, מה יש מסביב ומה צריך באותו רגע.",
    "type": "open",
    "options": [],
    "allowOther": false,
    "default": null,
    "decideButton": true,
    "prefillable": true,
-   "why": "כל מצב שימוש צריך תשובה משלו במסך.",
+   "why": "בכל מצב כזה המשתמש צריך מהמסך משהו אחר.",
    "writes": "spec.users.scenarios",
    "source": [
     "R10"
@@ -182,14 +182,14 @@
    "id": "a-09",
    "round": "a",
    "block": "המשתמשים לעומק",
-   "text": "איך נראה המקום שבו משתמשים במערכת? ציוד, רעש, הפרעות, והאם הידיים פנויות.",
+   "text": "איך נראה המקום שבו משתמשים במערכת? כתבו איזה ציוד יש שם, כמה רעש והפרעות יש ואם הידיים פנויות.",
    "type": "open",
    "options": [],
    "allowOther": false,
    "default": null,
    "decideButton": true,
    "prefillable": true,
-   "why": "המקום עצמו קובע את גודל הכפתורים, את מצב הלילה, ומה חייב לעבוד גם בחיבור חלש.",
+   "why": "לפי המקום מחליטים כמה גדולים יהיו הכפתורים, אם צריך מצב לילה ומה חייב לעבוד גם בחיבור חלש.",
    "writes": "spec.users.environment",
    "source": [
     "R11"
@@ -219,7 +219,7 @@
    "default": "both",
    "decideButton": true,
    "prefillable": true,
-   "why": "מכשיר אחר פירושו מסך אחר, ודרך אחרת ללחוץ.",
+   "why": "בכל מכשיר המסך בגודל אחר ולוחצים בדרך אחרת, ולכן גם העיצוב שונה.",
    "writes": "spec.users.device",
    "source": [
     "R11",
@@ -237,9 +237,9 @@
    "default": null,
    "decideButton": true,
    "prefillable": false,
-   "why": "הסיבה האמיתית מסתתרת בדרך כלל מאחורי התשובה הראשונה.",
+   "why": "בדרך כלל הסיבה האמיתית מתגלה רק אחרי התשובה הראשונה.",
    "writes": "spec.users.realReason",
-   "probe": "ולמה זה חשוב להם?",
+   "probe": "למה זה חשוב להם?",
    "source": [
     "R5"
    ]
@@ -272,7 +272,7 @@
    "default": null,
    "decideButton": true,
    "prefillable": true,
-   "why": "כך תופסים מוצר שעומד בכל הדרישות ומפספס את המטרה.",
+   "why": "כך אפשר לזהות מוצר שעומד בכל הדרישות ובכל זאת לא משיג את המטרה.",
    "writes": "spec.success.antiGoals",
    "source": [
     "R1"
@@ -310,7 +310,7 @@
    "default": null,
    "decideButton": true,
    "prefillable": true,
-   "why": "מערכת חדשה מתחברת למה שכבר קיים, או מחליפה אותו בכוונה.",
+   "why": "המערכת החדשה צריכה להתחבר למה שכבר קיים, או להחליף אותו בכוונה.",
    "writes": "spec.systems.existing",
    "source": [
     "R6"
@@ -320,14 +320,14 @@
    "id": "a-15",
    "round": "a",
    "block": "מערכות קיימות",
-   "text": "איפה יושב היום המידע שהמערכת תצטרך, ומי מעדכן אותו?",
+   "text": "איפה נמצא היום המידע שהמערכת תצטרך, ומי מעדכן אותו?",
    "type": "open",
    "options": [],
    "allowOther": false,
    "default": null,
    "decideButton": true,
    "prefillable": true,
-   "why": "מידע שכבר קיים קובע מה מייבאים, ולאן מתחברים.",
+   "why": "לפי המידע שכבר קיים מחליטים מה לייבא ולאיזו מערכת להתחבר.",
    "writes": "spec.systems.data",
    "source": [
     "R6"
@@ -353,7 +353,7 @@
    "default": null,
    "decideButton": true,
    "prefillable": true,
-   "why": "התחברות פירושה טבלת משתמשים, הרשאות, ואבטחה ברמת השורה.",
+   "why": "כשיש התחברות צריך טבלת משתמשים, הרשאות ואבטחה ברמת השורה.",
    "writes": "spec.track.login"
   },
   {
@@ -376,7 +376,7 @@
    "default": null,
    "decideButton": true,
    "prefillable": true,
-   "why": "נתונים שמשתנים צריכים מסד נתונים, ולא רק דפים.",
+   "why": "נתונים שמשתנים צריך לשמור במסד נתונים, ודפים לבד לא מספיקים.",
    "writes": "spec.track.data"
   },
   {
@@ -399,7 +399,7 @@
    "default": null,
    "decideButton": false,
    "prefillable": true,
-   "why": "תשלום מוסיף סליקה, חשבוניות ובדיקות משלו.",
+   "why": "תשלום דורש סליקה וחשבוניות, ויש לו גם בדיקות משלו.",
    "writes": "spec.track.payment"
   },
   {
@@ -422,7 +422,7 @@
    "default": null,
    "decideButton": true,
    "prefillable": true,
-   "why": "עבודה ברקע היא אוטומציה, ב-Supabase או ב-n8n.",
+   "why": "עבודה שרצה ברקע בונים כאוטומציה, ב-Supabase או ב-n8n.",
    "writes": "spec.track.background"
   },
   {
@@ -445,7 +445,7 @@
    "default": null,
    "decideButton": false,
    "prefillable": true,
-   "why": "מי משלם למי קובע את הסליקה ואת החשבוניות. הסליקה עצמה מתחברת בשלב נפרד, דרך המודולה של Cardcom.",
+   "why": "התשובה קובעת איך בונים את הסליקה ואת החשבוניות. את הסליקה עצמה מחברים בשלב נפרד, דרך המודול של Cardcom.",
    "writes": "spec.payment.flow",
    "when": {
     "a-18": [
@@ -477,7 +477,7 @@
    "default": null,
    "decideButton": false,
    "prefillable": true,
-   "why": "תשלום חוזר דורש מנוי, חידוש, וטיפול בכרטיס שפג.",
+   "why": "תשלום חוזר דורש מנוי עם חידוש, וגם טיפול בכרטיס שפג תוקפו.",
    "writes": "spec.payment.recurrence",
    "when": {
     "a-18": [
@@ -488,7 +488,7 @@
   {
    "id": "a-22",
    "round": "a",
-   "block": "אוטומציות ואדם בלולאה",
+   "block": "אוטומציות ובקרה אנושית",
    "text": "אילו פעולות קורות לבד, ומה מפעיל כל אחת?",
    "type": "open",
    "options": [],
@@ -496,7 +496,7 @@
    "default": null,
    "decideButton": true,
    "prefillable": true,
-   "why": "כל אוטומציה מתחילה בטריגר ברור.",
+   "why": "כל אוטומציה צריכה טריגר ברור, כלומר אירוע או שעה שמפעילים אותה.",
    "writes": "spec.automations.list",
    "when": {
     "a-19": [
@@ -507,15 +507,15 @@
   {
    "id": "a-23",
    "round": "a",
-   "block": "אוטומציות ואדם בלולאה",
-   "text": "לכל אוטומציה, באיזו רמה היא רצה? מציעה ואדם מאשר, מבצעת ואדם מפקח, רצה לבד ומעבירה לאדם מקרים חריגים, או רצה לבד לגמרי. ומה היא לא עושה לבד אף פעם?",
+   "block": "אוטומציות ובקרה אנושית",
+   "text": "לכל אוטומציה, באיזו רמה היא רצה: מציעה ואדם מאשר, מבצעת ואדם מפקח, רצה לבד ומעבירה לאדם מקרים חריגים, או רצה לבד לגמרי? כתבו גם מה היא אף פעם לא עושה לבד.",
    "type": "open",
    "options": [],
    "allowOther": false,
    "default": null,
    "decideButton": true,
    "prefillable": true,
-   "why": "מה שיוצא ללקוח עובר דרך אדם, לפחות פעם אחת.",
+   "why": "כל מה שיוצא ללקוח צריך לעבור דרך אדם לפחות פעם אחת.",
    "writes": "spec.automations.autonomy",
    "when": {
     "a-19": [
@@ -526,7 +526,7 @@
   {
    "id": "a-24",
    "round": "a",
-   "block": "אוטומציות ואדם בלולאה",
+   "block": "אוטומציות ובקרה אנושית",
    "text": "מה קורה כשאוטומציה נכשלת, ומי מקבל התראה?",
    "type": "open",
    "options": [],
@@ -534,7 +534,7 @@
    "default": null,
    "decideButton": true,
    "prefillable": true,
-   "why": "אוטומציה שנכשלת בשקט גרועה מאוטומציה שלא קיימת.",
+   "why": "אוטומציה שנכשלת בלי שאף אחד שם לב גרועה יותר מאוטומציה שלא קיימת בכלל.",
    "writes": "spec.automations.onFailure",
    "when": {
     "a-19": [
@@ -546,14 +546,14 @@
    "id": "a-25",
    "round": "a",
    "block": "הרשאות",
-   "text": "לכל תפקיד, מה הוא רשאי לראות ולשנות, ואם רק את שלו או את של כולם?",
+   "text": "לכל תפקיד, מה מותר לו לראות ולשנות? רק את המידע שלו, או גם את המידע של כולם?",
    "type": "open",
    "options": [],
    "allowOther": false,
    "default": null,
    "decideButton": true,
    "prefillable": true,
-   "why": "הסוכן בונה בדיוק את מה שכתוב. תא שלא מילאתם, הוא ימלא לבד.",
+   "why": "הסוכן בונה בדיוק את מה שכתוב, ואם השארתם תא ריק במטריצה הוא ימלא אותו בעצמו.",
    "writes": "spec.permissions.matrix",
    "when": {
     "a-16": [
@@ -575,7 +575,7 @@
    "default": null,
    "decideButton": true,
    "prefillable": true,
-   "why": "כך תופסים את התא ששוכחים, כמו הערות פנימיות שאסור ללקוח לראות.",
+   "why": "כך מוצאים תאים ששוכחים בקלות, כמו הערות פנימיות שאסור שהלקוח יראה.",
    "writes": "spec.permissions.never",
    "when": {
     "a-16": [

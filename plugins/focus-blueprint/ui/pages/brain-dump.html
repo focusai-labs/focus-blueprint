@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light">
+<title>Focus Blueprint</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="ui.css">
+</head>
+<body data-page="brain-dump" data-title="brainDump.title">
+<main>
+<header class="top"><h1 data-t="brainDump.title"></h1><span id="save" class="save" role="status" aria-live="polite"></span></header>
+<section id="step-why" data-why-first class="card">
+  <label for="why" data-t="brainDump.whyQuestion"></label>
+  <p class="muted small" data-t="brainDump.whyHint"></p>
+  <textarea id="why" rows="3" style="min-height:96px"></textarea>
+  <div class="row"><button id="why-continue" type="button" class="primary" disabled data-t="brainDump.whyContinue"></button></div>
+</section>
+<section id="step-dump" hidden class="card">
+  <label for="dump" data-t="brainDump.dumpHint"></label>
+  <textarea id="dump" disabled style="min-height:260px"></textarea>
+  <div class="row spread"><span id="count" class="muted small" aria-live="polite"></span><button id="done" type="button" class="primary" disabled data-t="brainDump.done"></button></div>
+</section>
+<p id="finished" class="note" hidden data-t="common.backToClaude"></p>
+<p id="fatal" class="note" hidden role="alert"></p>
+</main>
+<script src="ui.js" defer></script>
+</body>
+</html>

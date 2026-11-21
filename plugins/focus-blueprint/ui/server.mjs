@@ -6,7 +6,9 @@ import fs from 'node:fs';
 import http from 'node:http';
 import path from 'node:path';
 import { spawn } from 'node:child_process';
+import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
+import { answersFile, loadCatalog, nameOfRound, questionsFor, readAnswers, readJsonStrict, unconfirmedIds, writeJsonAtomic, dataPath } from './lib.mjs';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const MAX_BODY = 1024 * 1024;
@@ -54,6 +56,107 @@ export function openBrowser(url) {
  * Start the server. Resolves with the address once it is listening.
  * once: stop shortly after the first saved answer.
  */
+const PAGES = new Set(['brain-dump', 'questionnaire', 'catalog', 'board']);
+const STATIC = { 'ui.css': 'text/css; charset=utf-8', 'ui.js': 'text/javascript; charset=utf-8', 'strings.he.json': 'application/json; charset=utf-8' };
+const NAME = /^[a-z0-9-]{1,40}$/;
+const QID = /^[A-Za-z0-9_.֐-׿-]{1,100}$/;
+
+function gitInfo(projectDir) {
+  const run = (args) => spawnSync('git', args, { cwd: projectDir, encoding: 'utf8', timeout: 5000, windowsHide: true });
+  const status = run(['status', '--porcelain']);
+  if (status.error || status.status !== 0) return { available: false, branch: null, changed: 0, files: [] };
+  const branch = run(['branch', '--show-current']);
+  const files = status.stdout.split(/\r?\n/).filter(Boolean);
+  return { available: true, branch: branch.status === 0 ? branch.stdout.trim() || null : null, changed: files.length, files: files.slice(0, 30) };
+}
+
+function listEvals(projectDir) {
+  try {
+    return fs.readdirSync(path.join(projectDir, 'evals')).filter((f) => f.endsWith('.md') && f.toLowerCase() !== 'readme.md').sort().map((f) => ({ id: f.replace(/\.md$/, ''), file: `evals/${f}` }));
+  } catch {
+    return [];
+  }
+}
+
+function boardState(projectDir) {
+  const p = (...rel) => path.join(projectDir, ...rel);
+  const state = readJsonStrict(p('.blueprint', 'state.json'), null);
+  const closes = {};
+  for (const [n, st] of Object.entries(state?.stages || {})) if (st && st.close) closes[n] = st.close;
+  let stagesDef = [];
+  try { stagesDef = readJsonStrict(dataPath('stages.json'), []).map((s) => ({ n: s.n, chapter: s.chapter, name: s.name })); } catch { /* optional */ }
+  let lastSession = '';
+  try { lastSession = fs.readFileSync(p('.blueprint', 'last-session.md'), 'utf8'); } catch { /* optional */ }
+  return {
+    state,
+    map: readJsonStrict(p('.blueprint', 'map.json'), null),
+    evals: listEvals(projectDir),
+    changes: readJsonStrict(p('.blueprint', 'changes.json'), []),
+    rulings: readJsonStrict(p('.blueprint', 'rulings.json'), []),
+    closes,
+    stagesDef,
+    lastSession,
+    git: gitInfo(projectDir),
+  };
+}
+
+/** Merge one answer into its file. Returns { status, body }. */
+function saveAnswer(projectDir, data) {
+  const name = String(data.name || '');
+  if (!NAME.test(name)) return { status: 400, body: { error: 'bad name' } };
+  const file = answersFile(projectDir, name);
+  const doc = readAnswers(projectDir, name);
+  const now = new Date().toISOString();
+
+  // The first form, still used by the probe: one free answer under the name.
+  if (!('id' in data) && !('confirm' in data) && 'answer' in data) {
+    doc.answer = data.answer;
+    doc.savedAt = now;
+    writeJsonAtomic(file, doc);
+    return { status: 200, body: { ok: true } };
+  }
+
+  const id = String(data.id || '');
+  if (!QID.test(id) || id === '__proto__') return { status: 400, body: { error: 'bad id' } };
+  doc.answers = doc.answers && typeof doc.answers === 'object' ? doc.answers : {};
+  const prev = Object.prototype.hasOwnProperty.call(doc.answers, id) ? doc.answers[id] : null;
+
+  if (data.confirm === true) {
+    if (!prev) return { status: 404, body: { error: 'nothing to confirm' } };
+    doc.answers[id] = { ...prev, confirmed: true, decidedBy: 'user', at: now };
+  } else if (data.pending === true) {
+    doc.answers[id] = { value: null, pending: true, decidedBy: null, at: now };
+  } else if (data.decidedBy === 'claude') {
+    doc.answers[id] = { value: null, decidedBy: 'claude', at: now };
+  } else if ('value' in data) {
+    // A new value replaces the entry, so a prefill loses its "from the idea" mark.
+    const entry = { value: data.value, decidedBy: 'user', at: now };
+    if (typeof data.other === 'string') entry.other = data.other;
+    doc.answers[id] = entry;
+  } else {
+    return { status: 400, body: { error: 'nothing to save' } };
+  }
+  doc.savedAt = now;
+  writeJsonAtomic(file, doc);
+  return { status: 200, body: { ok: true } };
+}
+
+function markDone(projectDir, data) {
+  const name = String(data.name || '');
+  if (!NAME.test(name)) return { status: 400, body: { error: 'bad name' } };
+  const doc = readAnswers(projectDir, name);
+  if (name === 'brain-dump') {
+    const why = doc.answers?.why?.value;
+    if (typeof why !== 'string' || !why.trim()) return { status: 400, body: { error: 'why missing' } };
+  }
+  const ids = unconfirmedIds(doc);
+  if (ids.length) return { status: 409, body: { error: 'unconfirmed prefill', ids } };
+  doc.done = true;
+  doc.savedAt = new Date().toISOString();
+  writeJsonAtomic(answersFile(projectDir, name), doc);
+  return { status: 200, body: { ok: true } };
+}
+
 export async function startUi({ projectDir, once = false, idleMinutes = 30 } = {}) {
   const token = crypto.randomBytes(16).toString('hex');
   const uiDir = path.join(projectDir, '.blueprint', 'ui');
@@ -93,31 +196,52 @@ export async function startUi({ projectDir, once = false, idleMinutes = 30 } = {
     if (parts[0] !== token) return send(res, 404, { error: 'not found' });
     const route = parts.slice(1).join('/');
 
-    if (req.method === 'GET' && route === '') {
-      return send(res, 200, fs.readFileSync(path.join(here, 'probe.html'), 'utf8'), 'text/html; charset=utf-8');
-    }
+    const query = new URL(req.url, 'http://local').searchParams;
 
-    if (req.method === 'POST' && route === 'api/answer') {
-      // A JSON content type cannot be sent across sites without a preflight,
-      // and this server answers none.
-      if (!String(req.headers['content-type'] || '').startsWith('application/json')) {
-        return send(res, 415, { error: 'json only' });
+    try {
+      if (req.method === 'GET') {
+        if (route === '') return send(res, 200, fs.readFileSync(path.join(here, 'probe.html'), 'utf8'), 'text/html; charset=utf-8');
+        if (PAGES.has(route)) return send(res, 200, fs.readFileSync(path.join(here, 'pages', `${route}.html`), 'utf8'), 'text/html; charset=utf-8');
+        if (Object.hasOwn(STATIC, route)) {
+          const file = path.join(here, 'pages', route);
+          if (!fs.existsSync(file)) return send(res, 404, { error: 'not found' });
+          return send(res, 200, fs.readFileSync(file, 'utf8'), STATIC[route]);
+        }
+        if (route === 'api/questions') {
+          const round = query.get('round') || 'a';
+          const questions = questionsFor(projectDir, round, { screens: query.get('screens') });
+          if (!questions) return send(res, 400, { error: 'bad round' });
+          return send(res, 200, { round, name: nameOfRound(round), done: readAnswers(projectDir, nameOfRound(round)).done === true, questions });
+        }
+        if (route === 'api/answers') {
+          const name = String(query.get('name') || '');
+          if (!NAME.test(name)) return send(res, 400, { error: 'bad name' });
+          return send(res, 200, readAnswers(projectDir, name));
+        }
+        if (route === 'api/state') return send(res, 200, boardState(projectDir));
+        if (route === 'api/catalog') return send(res, 200, loadCatalog());
       }
-      let data;
-      try {
-        data = JSON.parse(await readBody(req));
-      } catch {
-        return send(res, 400, { error: 'bad request' });
+
+      if (req.method === 'POST' && (route === 'api/answer' || route === 'api/done')) {
+        // A JSON content type cannot be sent across sites without a preflight,
+        // and this server answers none.
+        if (!String(req.headers['content-type'] || '').startsWith('application/json')) {
+          return send(res, 415, { error: 'json only' });
+        }
+        let data;
+        try {
+          data = JSON.parse(await readBody(req));
+        } catch {
+          return send(res, 400, { error: 'bad request' });
+        }
+        if (!data || typeof data !== 'object' || Array.isArray(data)) return send(res, 400, { error: 'bad request' });
+        const result = route === 'api/answer' ? saveAnswer(projectDir, data) : markDone(projectDir, data);
+        send(res, result.status, result.body);
+        if (once && result.status === 200) setTimeout(close, 1000);
+        return;
       }
-      const name = String(data.name || '');
-      if (!/^[a-z0-9-]{1,40}$/.test(name)) return send(res, 400, { error: 'bad name' });
-      const file = path.join(answersDir, `${name}.json`);
-      const record = { name, answer: data.answer, savedAt: new Date().toISOString() };
-      fs.writeFileSync(`${file}.tmp`, JSON.stringify(record, null, 2));
-      fs.renameSync(`${file}.tmp`, file);
-      send(res, 200, { ok: true });
-      if (once) setTimeout(close, 1000);
-      return;
+    } catch (e) {
+      return send(res, 500, { error: String(e && e.message ? e.message : e) });
     }
 
     return send(res, 404, { error: 'not found' });

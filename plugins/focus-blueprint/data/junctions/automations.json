@@ -1,0 +1,44 @@
+{
+  "id": "automations",
+  "need": "אתם צריכים שדברים ירוצו לבד ברקע",
+  "opens_at": [
+    4,
+    12,
+    "change"
+  ],
+  "options": [
+    {
+      "id": "supabase-native",
+      "name": "טריגרים, webhooks ו-cron ב-Supabase",
+      "fits": "הפעולה קשורה ישירות לנתונים, למשל חישוב בעת שינוי בטבלה או דוח לילי.",
+      "less": "כל שינוי דורש קוד ו-SQL, ואין מסך ויזואלי שמראה מה רץ.",
+      "cost": {
+        "text": "השימוש נכלל בתוכנית של Supabase. התוכנית החינמית נעצרת אחרי שבוע בלי פעילות.",
+        "source": "https://supabase.com/pricing",
+        "checkedAt": "2026-11-21"
+      },
+      "connection": "supabase",
+      "taught": true,
+      "switch": "hard"
+    },
+    {
+      "id": "n8n-workflow",
+      "name": "תהליכים ב-n8n",
+      "fits": "הפעולה מחברת כמה שירותים, כמו מייל, גיליון והודעה, ואתם רוצים לראות אותה על מסך.",
+      "less": "צריך לשמור את n8n פעיל ולנהל בו שגיאות.",
+      "cost": {
+        "text": "תוכנית Starter בענן עולה 20 יורו בחודש בחיוב שנתי וכוללת 2,500 הרצות.",
+        "source": "https://n8n.io/pricing/",
+        "checkedAt": "2026-11-21"
+      },
+      "connection": "n8n",
+      "taught": true,
+      "switch": "mid"
+    }
+  ],
+  "recommend": {
+    "option": "n8n-workflow",
+    "why": "תהליך ב-n8n רואים ובודקים על המסך, וזה קל יותר לתחזוקה.",
+    "unless": "אם הפעולה היא רק שינוי בתוך הנתונים, בחרו ב-Supabase כדי לא להוסיף שירות."
+  }
+}

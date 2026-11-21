@@ -1,0 +1,44 @@
+{
+  "id": "domain",
+  "need": "איפה קונים ומנהלים את הדומיין",
+  "opens_at": [
+    4,
+    13,
+    "change"
+  ],
+  "options": [
+    {
+      "id": "cloudflare-vercel",
+      "name": "רישום ב-Cloudflare וחיבור ל-Vercel",
+      "fits": "אתם רוצים לשלם מחיר עלות ולנהל את ה-DNS במקום אחד, גם אם האתר יעבור פלטפורמה.",
+      "less": "צריך להעתיק רשומות DNS ל-Vercel ביד.",
+      "cost": {
+        "text": "השירות Cloudflare Registrar מוכר דומיינים במחיר עלות, בלי עמלה נוספת.",
+        "source": "https://developers.cloudflare.com/registrar/",
+        "checkedAt": "2026-11-21"
+      },
+      "connection": "cloudflare",
+      "taught": true,
+      "switch": "mid"
+    },
+    {
+      "id": "vercel-domains",
+      "name": "דומיין דרך Vercel",
+      "fits": "אתם רוצים הגדרה מיידית, בלי להעתיק רשומות.",
+      "less": "הדומיין קשור לצוות ב-Vercel, וזה מסבך מעבר לפלטפורמה אחרת.",
+      "cost": {
+        "text": "מחיר הדומיין ב-Vercel זהה למחיר של חברת הרישום. צוות Pro בתשלום מקבל דומיין אחד חינם לשנה הראשונה.",
+        "source": "https://vercel.com/docs/domains/working-with-domains",
+        "checkedAt": "2026-11-21"
+      },
+      "connection": "vercel",
+      "taught": true,
+      "switch": "mid"
+    }
+  ],
+  "recommend": {
+    "option": "cloudflare-vercel",
+    "why": "הדומיין נשאר בידיכם, והמחיר הוא מחיר עלות.",
+    "unless": "אם אתם רוצים הגדרה בלי לגעת ב-DNS, קנו ב-Vercel."
+  }
+}

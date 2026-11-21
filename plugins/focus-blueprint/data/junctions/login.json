@@ -1,0 +1,58 @@
+{
+  "id": "login",
+  "need": "איך המשתמשים שלכם מתחברים",
+  "opens_at": [
+    4,
+    10,
+    "change"
+  ],
+  "options": [
+    {
+      "id": "magic-link",
+      "name": "קישור התחברות במייל",
+      "fits": "המשתמשים נכנסים לעיתים רחוקות ואתם לא רוצים שיזכרו סיסמה.",
+      "less": "הכניסה תלויה במייל שמגיע, ושרת המיילים המובנה מוגבל.",
+      "cost": {
+        "text": "השירות המובנה של Supabase שולח עד 2 הודעות בשעה, ולכן בפרודקשן מחברים שרת מיילים.",
+        "source": "https://supabase.com/docs/guides/auth/auth-smtp",
+        "checkedAt": "2026-11-21"
+      },
+      "connection": "supabase",
+      "taught": true,
+      "switch": "mid"
+    },
+    {
+      "id": "password",
+      "name": "אימייל וסיסמה",
+      "fits": "המשתמשים נכנסים כל יום ורגילים לסיסמה.",
+      "less": "אתם צריכים להגדיר איפוס סיסמה, וסיסמאות חלשות הן סיכון.",
+      "cost": {
+        "text": "התוכנית החינמית של Supabase כוללת עד 50,000 משתמשים פעילים בחודש.",
+        "source": "https://supabase.com/pricing",
+        "checkedAt": "2026-11-21"
+      },
+      "connection": "supabase",
+      "taught": true,
+      "switch": "mid"
+    },
+    {
+      "id": "google",
+      "name": "התחברות עם Google",
+      "fits": "המשתמשים מחזיקים חשבון Google ורוצים להיכנס בלחיצה אחת.",
+      "less": "אתם תלויים בהגדרות של Google Cloud, וזה דורש הגדרה נוספת.",
+      "cost": {
+        "text": "התוכנית החינמית של Supabase כוללת עד 50,000 משתמשים פעילים בחודש. את התנאים של Google צריך לבדוק בנפרד.",
+        "source": "https://supabase.com/pricing",
+        "checkedAt": "2026-11-21"
+      },
+      "connection": "supabase",
+      "taught": true,
+      "switch": "mid"
+    }
+  ],
+  "recommend": {
+    "option": "password",
+    "why": "אימייל וסיסמה לא תלויים בשרת מיילים או בספק חיצוני, ולכן קל לבדוק אותם.",
+    "unless": "אם המשתמשים שלכם נכנסים לעיתים רחוקות, קישור התחברות במייל נוח להם יותר."
+  }
+}

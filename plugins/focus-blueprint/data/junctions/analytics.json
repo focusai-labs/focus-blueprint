@@ -1,0 +1,58 @@
+{
+  "id": "analytics",
+  "need": "איך אתם מודדים את מי שנכנס לאתר",
+  "opens_at": [
+    4,
+    13,
+    "change"
+  ],
+  "options": [
+    {
+      "id": "vercel-analytics",
+      "name": "Vercel Web Analytics",
+      "fits": "האתר כבר רץ ב-Vercel ואתם רוצים מדידה בלי הגדרות.",
+      "less": "המדידה בסיסית, ואין בה ניתוח מתקדם של קהלים.",
+      "cost": {
+        "text": "בתוכנית Hobby כלולים 50,000 אירועים בחודש, ובתוכנית Pro התשלום הוא 3 דולר לכל 100,000 אירועים.",
+        "source": "https://vercel.com/pricing",
+        "checkedAt": "2026-11-21"
+      },
+      "connection": "vercel",
+      "taught": true,
+      "switch": "easy"
+    },
+    {
+      "id": "plausible",
+      "name": "מדידה עם Plausible",
+      "fits": "אתם רוצים מדידה פשוטה שלא משתמשת בעוגיות.",
+      "less": "זה שירות בתשלום שצריך לחבר ולהחזיק.",
+      "cost": {
+        "text": "התוכנית הזולה ביותר עולה 9 דולר בחודש ל-10,000 צפיות, ויש ניסיון חינם ל-30 יום.",
+        "source": "https://plausible.io/#pricing",
+        "checkedAt": "2026-11-21"
+      },
+      "connection": "none",
+      "taught": false,
+      "switch": "easy"
+    },
+    {
+      "id": "ga4",
+      "name": "מדידה עם Google Analytics 4",
+      "fits": "אתם צריכים ניתוח עמוק של מקורות הגעה ופרסום.",
+      "less": "המסכים מורכבים, ויש חובת הסכמה לעוגיות בחלק מהמקרים.",
+      "cost": {
+        "text": "בעמוד הרשמי כתוב ש-Google Analytics ניתן בלי תשלום.",
+        "source": "https://marketingplatform.google.com/about/analytics/",
+        "checkedAt": "2026-11-21"
+      },
+      "connection": "none",
+      "taught": false,
+      "switch": "easy"
+    }
+  ],
+  "recommend": {
+    "option": "vercel-analytics",
+    "why": "היא כבר מחוברת לאתר, ולכן תקבלו נתונים מהיום הראשון.",
+    "unless": "אם אתם מפרסמים בתשלום וצריכים לעקוב אחרי קמפיינים, בחרו ב-Google Analytics."
+  }
+}

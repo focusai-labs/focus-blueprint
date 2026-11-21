@@ -1,0 +1,44 @@
+{
+  "id": "knowledge",
+  "need": "איפה שומרים ידע שהמערכת מחפשת בו",
+  "opens_at": [
+    4,
+    10,
+    "change"
+  ],
+  "options": [
+    {
+      "id": "pgvector",
+      "name": "חיפוש pgvector ב-Supabase",
+      "fits": "הנתונים כבר נמצאים ב-Supabase ואתם רוצים חיפוש במקום אחד.",
+      "less": "התאמה ומעקב אחרי הביצועים נשארים עליכם ככל שהמידע גדל.",
+      "cost": {
+        "text": "התוכנית החינמית כוללת 500 מגה של מסד נתונים, ותוכנית Pro ב-25 דולר בחודש כוללת 8 גיגה.",
+        "source": "https://supabase.com/pricing",
+        "checkedAt": "2026-11-21"
+      },
+      "connection": "supabase",
+      "taught": true,
+      "switch": "mid"
+    },
+    {
+      "id": "pinecone",
+      "name": "Pinecone",
+      "fits": "יש כמות גדולה של מסמכים ואתם רוצים שירות שמתמחה בחיפוש.",
+      "less": "זה שירות נוסף עם מפתח וחשבון משלו, והנתונים יושבים בנפרד מהמסד.",
+      "cost": {
+        "text": "התוכנית החינמית כוללת עד 2 גיגה אחסון, ותוכנית Standard דורשת מינימום 50 דולר בחודש.",
+        "source": "https://www.pinecone.io/pricing/",
+        "checkedAt": "2026-11-21"
+      },
+      "connection": "pinecone",
+      "taught": true,
+      "switch": "mid"
+    }
+  ],
+  "recommend": {
+    "option": "pgvector",
+    "why": "המידע נשאר באותו מסד נתונים של המערכת, ויש פחות חלקים לתחזק.",
+    "unless": "אם כמות המסמכים גדולה מאוד או שהחיפוש הוא לב המוצר, בדקו את Pinecone."
+  }
+}

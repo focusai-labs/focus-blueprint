@@ -1,0 +1,72 @@
+{
+  "id": "files",
+  "need": "אתם צריכים מקום לשמור קבצים ותמונות",
+  "opens_at": [
+    4,
+    9,
+    "change"
+  ],
+  "options": [
+    {
+      "id": "supabase-storage",
+      "name": "האחסון של Supabase",
+      "fits": "הקבצים שייכים למשתמשים ולנתונים שכבר יושבים ב-Supabase, ואפשר להגביל גישה לפי הרשאות.",
+      "less": "הכלי לא משנה גודל של תמונות לבד.",
+      "cost": {
+        "text": "התוכנית החינמית כוללת גיגה אחד של אחסון, ותוכנית Pro ב-25 דולר בחודש כוללת מאה גיגה.",
+        "source": "https://supabase.com/pricing",
+        "checkedAt": "2026-11-21"
+      },
+      "connection": "supabase",
+      "taught": true,
+      "switch": "mid"
+    },
+    {
+      "id": "vercel-blob",
+      "name": "Vercel Blob",
+      "fits": "האתר רץ ב-Vercel ואתם רוצים אחסון קרוב לקוד שלו.",
+      "less": "האחסון לא מחובר להרשאות של המשתמשים ב-Supabase.",
+      "cost": {
+        "text": "בתוכנית Hobby כלול גיגה אחד בחודש, והיא מיועדת לשימוש לא מסחרי. בתוכנית Pro התשלום מתחיל ב-0.023 דולר לגיגה.",
+        "source": "https://vercel.com/pricing",
+        "checkedAt": "2026-11-21"
+      },
+      "connection": "vercel",
+      "taught": true,
+      "switch": "mid"
+    },
+    {
+      "id": "cloudinary",
+      "name": "Cloudinary",
+      "fits": "יש הרבה תמונות וסרטונים, ואתם רוצים שהמערכת תקטין ותתאים אותם אוטומטית.",
+      "less": "הכלי מוסיף שירות חיצוני נוסף לחשבונות שלכם.",
+      "cost": {
+        "text": "התוכנית החינמית נותנת 25 קרדיטים בחודש, וקרדיט אחד שווה גיגה אחד של אחסון או גיגה של רוחב פס.",
+        "source": "https://cloudinary.com/pricing",
+        "checkedAt": "2026-11-21"
+      },
+      "connection": "cloudinary",
+      "taught": true,
+      "switch": "mid"
+    },
+    {
+      "id": "in-repo",
+      "name": "קבצים בתוך ה-repo",
+      "fits": "מדובר בכמה קבצים קטנים וקבועים, כמו לוגו או איור, שמשתנים רק כשאתם משנים את האתר.",
+      "less": "קבצים שמשתמשים מעלים לא יכולים לשבת שם. כל החלפה דורשת commit.",
+      "cost": {
+        "text": "מאגרים פרטיים ב-GitHub Free אינם מוגבלים במספר, ולכן הקבצים לא עולים כסף.",
+        "source": "https://docs.github.com/en/get-started/learning-about-github/githubs-plans",
+        "checkedAt": "2026-11-21"
+      },
+      "connection": "github",
+      "taught": true,
+      "switch": "easy"
+    }
+  ],
+  "recommend": {
+    "option": "supabase-storage",
+    "why": "אתם כבר עובדים עם Supabase, ולכן ההרשאות והקבצים נשארים במקום אחד.",
+    "unless": "אם יש רק כמה קבצים קבועים, אפשר להשאיר אותם ב-repo."
+  }
+}

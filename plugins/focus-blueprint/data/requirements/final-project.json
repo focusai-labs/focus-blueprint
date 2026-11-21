@@ -1,0 +1,23 @@
+{
+  "mode": "final-project",
+  "parts": [
+    { "id": "p01", "name": "האפיון", "stage": 4, "proof": "spec/ holds the reviewed spec and the decision log; the owner decisions are listed", "folder": "spec/" },
+    { "id": "p02", "name": "הנתונים", "stage": 10, "proof": "db/data.md exists, every table has RLS on, and the permission table covers every role", "folder": "db/" },
+    { "id": "p03", "name": "השירות", "stage": 12, "proof": "signup, login and the three roles work live; a webhook call without the secret is refused", "folder": "app/" },
+    { "id": "p04", "name": "דף המכירה", "stage": 12, "proof": "the flow reaches the order summary and the order row is saved as pending payment", "folder": "app/" },
+    { "id": "p05", "name": "פאנל הניהול", "stage": 12, "proof": "an owner edits content and publishes an article without code; the business dashboard loads", "folder": "app/" },
+    { "id": "p06", "name": "דשבורד המפתח", "stage": 12, "proof": "visits, sales, faults and the change log show for developers only; an owner session gets refused", "folder": "app/" },
+    { "id": "p07", "name": "הסוכן הדואלי", "stage": 12, "proof": "the owner mode opens only for the owner account id; a customer account stays in customer mode", "folder": "n8n/" },
+    { "id": "p08", "name": "האישור האנושי", "stage": 12, "proof": "an outgoing email, offer or publish waits for approval and does not go out without it", "folder": "n8n/" },
+    { "id": "p09", "name": "האוטומציה", "stage": 12, "proof": "one flow runs by schedule or event with no click; the executions list shows the run", "folder": "n8n/" },
+    { "id": "p10", "name": "מערכת ההתראות", "stage": 13, "proof": "docs/alerts.md maps the critical points and a forced fault sends an email", "folder": "docs/" },
+    { "id": "p11", "name": "ה-API", "stage": 12, "proof": "docs/api.md lists three capabilities with keys; a call without a key returns 401", "folder": "docs/" },
+    { "id": "p12", "name": "מוכן לסוכני AI", "stage": 13, "proof": "five readiness checks pass, including robots.txt, the sitemap and Markdown content", "folder": "app/" },
+    { "id": "p13", "name": "הסקילים", "stage": 13, "proof": "a design system skill and a go-live skill are packed as a plugin with a version number", "folder": ".claude/" },
+    { "id": "p14", "name": "הוק CI/CD", "stage": 13, "proof": "a push to production without passing tests and approval is blocked; a feature needs a branch and a pull request", "folder": ".claude/" },
+    { "id": "p15", "name": "הבדיקות", "stage": 12, "proof": "evals/ holds at least 20 checks in the six types and the report shows two runs", "folder": "evals/" },
+    { "id": "p16", "name": "המסירה", "stage": 15, "proof": "docs/ holds the owner guide, the next developer document and the acceptance test result", "folder": "docs/" },
+    { "id": "p17", "name": "הסרטון והמצגת", "stage": 15, "proof": "a video of five to seven minutes and a deck are in docs/, and the video shows the main flow live", "folder": "docs/" }
+  ],
+  "checkpoints": []
+}

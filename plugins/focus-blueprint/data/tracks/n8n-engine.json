@@ -1,0 +1,62 @@
+{
+  "id": "n8n-engine",
+  "name": "מערכת שהמנוע שלה הוא n8n",
+  "when": "זה מתאים כשעיקר העבודה קורה ברקע: תהליכים שרצים לפי שעה או אירוע, ולכל היותר דף קטן שמפעיל אותם.",
+  "needs": [
+    "github",
+    "playwright",
+    "n8n"
+  ],
+  "steps": [
+    {
+      "id": "ne-data",
+      "stage": 10,
+      "intent": "הנתונים חיים במקום אחד שנבחר בהחלטה: טבלאות הנתונים של n8n או Supabase, והבחירה נרשמת",
+      "docs": [
+        "https://docs.n8n.io/build/work-with-data/data-tables"
+      ],
+      "safety": "לא שומרים מידע אישי של לקוחות במקום שלא הוחלט עליו, ולא מערבבים שני מקומות לאותו נתון",
+      "proof": "spec/decisions.md holds the data decision and one test row is written and read back"
+    },
+    {
+      "id": "ne-front",
+      "stage": 11,
+      "intent": "יש חזית דקה, טופס, דף דשבורד או בוט, שקוראת ל-webhook ב-n8n ומציגה את התשובה",
+      "docs": [
+        "https://docs.n8n.io/integrations/builtin/core-nodes/n8n-nodes-base.webhook"
+      ],
+      "safety": "כתובת ה-webhook לא מתפרסמת בקוד ציבורי בלי אימות, ואין בה פעולה שמוחקת מידע",
+      "proof": "curl -s -X POST <webhook-url> with a test body returns 200 and the expected JSON"
+    },
+    {
+      "id": "ne-export",
+      "stage": 11,
+      "intent": "כל workflow מועתק כקובץ JSON לתיקיית n8n ב-repo, בלי פרטי הזדהות",
+      "docs": [
+        "https://docs.n8n.io/connect/n8n-api"
+      ],
+      "safety": "לפני כל commit בודקים שאין בקובץ מפתח או טוקן, ומפתח ה-API של n8n לא נשמר ב-Git",
+      "proof": "grep -ri 'apikey|token|password' n8n/ returns nothing"
+    },
+    {
+      "id": "ne-workflow",
+      "stage": 12,
+      "intent": "לכל יכולת יש workflow אחד שמוכיח את עצמו על קלט אמיתי, עם workflow שגיאות שמודיע כשהוא נופל",
+      "docs": [
+        "https://docs.n8n.io/build/flow-logic/handle-errors-gracefully"
+      ],
+      "safety": "אין שליחה החוצה בלי אישור אנושי, ובודקים קודם על נתוני בדיקה",
+      "proof": "one run succeeds, one forced failure triggers the error workflow, both quoted from the executions list"
+    },
+    {
+      "id": "ne-health",
+      "stage": 13,
+      "intent": "יש בדיקת בריאות מתוזמנת ב-n8n שמודיעה לבעלים כשתהליך חשוב נכשל או לא רץ",
+      "docs": [
+        "https://docs.n8n.io/build/flow-logic/handle-errors-gracefully"
+      ],
+      "safety": "ההודעה יוצאת רק לכתובת שהבעלים אישר, ובלי נתונים אישיים בגוף ההודעה",
+      "proof": "a deliberate failure produces a message in the owner inbox, quoted in the launch checklist"
+    }
+  ]
+}

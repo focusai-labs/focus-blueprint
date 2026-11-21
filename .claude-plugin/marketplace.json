@@ -1,0 +1,14 @@
+{
+  "name": "focus-ai",
+  "description": "Tools from Focus AI for building with Claude Code",
+  "owner": {
+    "name": "Focus AI"
+  },
+  "plugins": [
+    {
+      "name": "focus-blueprint",
+      "source": "./plugins/focus-blueprint",
+      "description": "From an idea to a live system, stage by stage"
+    }
+  ]
+}

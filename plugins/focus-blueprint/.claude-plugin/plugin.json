@@ -1,0 +1,8 @@
+{
+  "name": "focus-blueprint",
+  "version": "0.0.1",
+  "description": "From an idea to a live system, stage by stage. Walking skeleton: entry command, local page, and Git and schema guards.",
+  "author": {
+    "name": "Focus AI"
+  }
+}

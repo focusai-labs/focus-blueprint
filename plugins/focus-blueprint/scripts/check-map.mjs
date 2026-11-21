@@ -37,6 +37,18 @@ function sectionLines(text, marker) {
   return out;
 }
 const hasMarker = (text, marker) => text.includes(mk(marker));
+// Section text with the guidance comments removed, so a filled section is judged by what the student wrote.
+const sectionText = (text, marker) => {
+  const body = text && sectionLines(text, marker);
+  return body ? body.join('\n').replace(/<!--[\s\S]*?-->/g, ' ').replace(/\s+/g, ' ').trim() : '';
+};
+const PRD_REQUIRED = [
+  ['prd:success', 'מדדי הצלחה'],
+  ['prd:edge-cases', 'מקרי קצה ומקרי כשל'],
+  ['prd:open-questions', 'שאלות פתוחות'],
+  ['prd:done', 'מתי העבודה גמורה'],
+];
+const listHe = (xs) => (xs.length < 2 ? xs.join('') : `${xs.slice(0, -1).join(', ')} ו${xs[xs.length - 1]}`);
 
 // Same extraction as bp.mjs: the rest of the marker line, or the first non-empty line after it.
 function catchesOf(text) {
@@ -184,12 +196,20 @@ const rules = [
   { id: '11', run({ stage, ctx, warn }) {
     if (stage < 5) return;
     const text = ctx.read('spec/prd.md');
-    const body = text && sectionLines(text, 'prd:anti-goals');
-    const joined = body ? body.join(' ').trim() : '';
+    const joined = sectionText(text, 'prd:anti-goals');
     const sentences = joined.split(/[.!?]+(?:\s|$)/).map((s) => s.trim()).filter(Boolean);
     if (!joined || joined.includes('<<fill>>') || sentences.length < 1 || sentences.length > 2) {
       warn('11', 'spec/prd.md', 'ב-PRD עוד לא כתוב מה ייחשב כישלון גם אם הכל עובד.');
     }
+  } },
+  { id: '14', run({ stage, ctx, warn }) {
+    if (stage < 5) return;
+    const text = ctx.read('spec/prd.md') || '';
+    const empty = PRD_REQUIRED.filter(([m]) => {
+      const body = sectionText(text, m);
+      return !hasMarker(text, m) || !body || body.includes('<<fill>>');
+    }).map(([, name]) => name);
+    if (empty.length) warn('14', 'spec/prd.md', `בסעיפים האלה ב-PRD עוד אין תוכן: ${listHe(empty)}.`);
   } },
   { id: '12', run({ stage, ctx, err }) {
     if (stage < 6) return;

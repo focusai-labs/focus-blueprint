@@ -11,6 +11,34 @@ const CHECK = path.join(PLUGIN, 'scripts', 'check-map.mjs');
 const { checkMap } = await import(CHECK).catch(() => ({ checkMap: null }));
 
 const sha = (s) => crypto.createHash('sha256').update(s).digest('hex');
+const PRD = `# מסמך PRD: מסמכים למשרד
+
+## מה ייחשב כישלון
+<!-- prd:anti-goals -->
+
+<!-- תוצאה שבה המערכת עובדת ובכל זאת לא משיגה את מה שרצינו. משפט אחד או שניים. -->
+כישלון הוא כשלקוח רואה קובץ של אחר.
+
+## מדדי הצלחה
+<!-- prd:success -->
+
+רוב הלקוחות מעלים את המסמכים עד העשירי בחודש.
+
+## מקרי קצה ומקרי כשל
+<!-- prd:edge-cases -->
+
+קובץ ריק מחזיר הודעת שגיאה.
+
+## שאלות פתוחות
+<!-- prd:open-questions -->
+
+אין.
+
+## מתי העבודה גמורה
+<!-- prd:done -->
+
+- כל בדיקות הקבלה עוברות.
+`;
 const CATCH = 'לקוח בלי הרשאה לא רואה קבצים של לקוח אחר';
 const EVAL = `# בדיקת קבלה: העלאה
 
@@ -98,7 +126,7 @@ function good(mut) {
     'n8n/monthly.json': '{"a":1}',
     'evals/upload-docs.md': EVAL, 'evals/briefs/upload-docs.md': BRIEF,
     'evals/evidence/upload-docs.red.txt': redTxt, 'evals/evidence/upload-docs.green.txt': greenTxt,
-    'evals/reviews/upload-docs.md': 'ok', 'spec/prd.md': 'x\n<!-- prd:anti-goals -->\nכישלון הוא כשלקוח רואה קובץ של אחר.\n',
+    'evals/reviews/upload-docs.md': 'ok', 'spec/prd.md': PRD,
     'spec/builder-check.md': '<!-- bc:answered -->\na\n<!-- bc:ruled -->\nb\n<!-- bc:asked-student -->\nc\n',
     'spec/idea.md': '<!-- idea:words -->\nמילים\n<!-- idea:summary -->\nשורה א <!-- src:student -->\nשורה ב <!-- src:claude -->\n',
   };
@@ -197,6 +225,20 @@ test('rule 11: anti-goals warning from stage 5', () => {
   assert.ok(hasW(r, 11)); assert.equal(r.ok, true);
   assert.equal(r.warnings.find((w) => w.rule === '11').message, 'ב-PRD עוד לא כתוב מה ייחשב כישלון גם אם הכל עובד.');
   assert.ok(!hasW(run((c) => { c.state.stage = 4; c.files['spec/prd.md'] = 'x'; }), 11));
+});
+test('rule 11: a filled section under its heading passes, with the guidance comment ignored', () => {
+  assert.ok(!hasW(run(), 11));
+  const r = run((c) => { c.files['spec/prd.md'] = PRD.replace('כישלון הוא כשלקוח רואה קובץ של אחר.', '<<fill>>'); });
+  assert.ok(hasW(r, 11));
+});
+test('rule 14: the success, edge-case, open-question and done sections must have content from stage 5', () => {
+  assert.ok(!hasW(run(), 14));
+  const r = run((c) => { c.files['spec/prd.md'] = PRD.replace('אין.', '<!-- כשאין שאלות כותבים "אין". -->').replace('- כל בדיקות הקבלה עוברות.', '- <<fill>>'); });
+  assert.ok(hasW(r, 14)); assert.equal(r.ok, true);
+  assert.equal(r.warnings.find((w) => w.rule === '14').message, 'בסעיפים האלה ב-PRD עוד אין תוכן: שאלות פתוחות ומתי העבודה גמורה.');
+  const all = run((c) => { c.files['spec/prd.md'] = 'x'; });
+  assert.equal(all.warnings.find((w) => w.rule === '14').message, 'בסעיפים האלה ב-PRD עוד אין תוכן: מדדי הצלחה, מקרי קצה ומקרי כשל, שאלות פתוחות ומתי העבודה גמורה.');
+  assert.ok(!hasW(run((c) => { c.state.stage = 4; c.files['spec/prd.md'] = 'x'; }), 14));
 });
 test('rule 12: builder check from stage 6', () => {
   const m = 'חסר הקובץ spec/builder-check.md, או אחד משלושת החלקים שלו.';

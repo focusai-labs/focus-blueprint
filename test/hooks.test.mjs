@@ -1,6 +1,7 @@
 // Task 2: the upgraded hooks. Each test feeds the hook's stdin JSON and asserts exit code and output.
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { test } from 'node:test';
@@ -385,4 +386,82 @@ test('push --all with a force is blocked from any branch; .env names are case-in
   stageFile(ok, '.ENV.EXAMPLE');
   stageFile(ok, '.Env.Sample');
   assert.equal(shell(ok, 'git push origin b').code, 0);
+});
+
+// Task 4: the Stop hook asks for the session summary when the state changed.
+const stop = (dir, over = {}) => hook('stop-summary', { cwd: dir, stop_hook_active: false, ...over });
+const touch = (file, secondsAgo) => { const t = new Date(Date.now() - secondsAgo * 1000); fs.utimesSync(file, t, t); };
+const ruling = (i, over = {}) => ({ id: `r-${i}`, at: '', stage: 12, capability: null, decision: `החלטה ${i}`, why: `סיבה ${i}`, priceIfWrong: `מחיר ${i}`, by: 'claude', reported: false, ...over });
+const closedState = (close) => baseState({ stage: 5, status: 'in_progress', stages: { 4: { status: 'done', close } } });
+
+test('stop: a changed state with a close and two rulings asks for the summary with both', () => {
+  const dir = tmpProject({ state: closedState({ status: 'done_with_concerns', note: 'הערה מיוחדת על הסגירה', proof: 'ok', at: '' }) });
+  writeBp(dir, 'rulings.json', [ruling(1), ruling(2), ruling(3, { reported: true, decision: 'כבר הוצגה' })]);
+  const r = stop(dir);
+  assert.equal(r.code, 0);
+  assert.equal(r.json.hookSpecificOutput.hookEventName, 'Stop');
+  const c = ctx(r);
+  assert.match(c, /last-session\.md/);
+  assert.match(c, /סגירת השלב האחרון: שלב 4, גמור עם ספקות\. הערה מיוחדת על הסגירה/);
+  assert.match(c, /הכרעות שעוד לא הוצגו לסטודנט \(2\)/);
+  assert.ok(c.indexOf('החלטה 2') < c.indexOf('החלטה 1'), 'newest first');
+  assert.match(c, /למה: סיבה 1\. המחיר אם זה שגוי: מחיר 1\. שלב 12\./);
+  assert.match(c, /ruling report/);
+  assert.doesNotMatch(c, /כבר הוצגה/);
+  assert.doesNotMatch(c, /אין הכרעות חדשות/);
+});
+
+test('stop: blocked and needs_context say the stage is not done', () => {
+  for (const [status, word] of [['blocked', 'תקוע'], ['needs_context', 'חסר מידע']]) {
+    const dir = tmpProject({ state: baseState({ stage: 3, status, stages: { 3: { status, close: { status, note: 'צריך מפתח', proof: '', at: '' } } } }) });
+    const c = ctx(stop(dir));
+    assert.match(c, new RegExp(`שלב 3, ${word}\\.`));
+    assert.match(c, /השלב עוד לא גמור, וזה מה שנדרש מהסטודנט: צריך מפתח/);
+  }
+});
+
+test('stop: no rulings gives the none line and no ruling text', () => {
+  const dir = tmpProject({ state: closedState({ status: 'done', note: '', proof: 'x', at: '' }) });
+  writeBp(dir, 'rulings.json', []);
+  const c = ctx(stop(dir));
+  assert.match(c, /אין הכרעות חדשות\./);
+  assert.doesNotMatch(c, /ruling report/);
+  assert.match(c, /שלב 4, גמור\./);
+});
+
+test('stop: fifty rulings stay under 3000 characters, the latest ten with a count of the rest', () => {
+  const dir = tmpProject({ state: closedState({ status: 'done_with_concerns', note: 'ה'.repeat(2000), proof: 'x', at: '' }) });
+  writeBp(dir, 'rulings.json', Array.from({ length: 50 }, (_, i) => ruling(i + 1, { decision: 'ד'.repeat(500), why: 'ס'.repeat(500), priceIfWrong: 'מ'.repeat(500) })));
+  const c = ctx(stop(dir));
+  assert.ok(c.length < 3000, String(c.length));
+  assert.match(c, /\(50\)/);
+  assert.match(c, /יש עוד \d+ הכרעות שלא מוצגות כאן\./);
+  assert.match(c, /ruling report/);
+});
+
+test('stop: stop_hook_active, a fresher summary, and no project give no output', () => {
+  const dir = tmpProject({ state: closedState({ status: 'done', note: '', proof: 'x', at: '' }) });
+  assert.deepEqual([stop(dir, { stop_hook_active: true }).out, stop(dir, { stop_hook_active: true }).code], ['', 0]);
+  const summary = path.join(dir, '.blueprint', 'last-session.md');
+  fs.writeFileSync(summary, 'סיכום');
+  touch(path.join(dir, '.blueprint', 'state.json'), 100);
+  touch(summary, 10);
+  const fresh = stop(dir);
+  assert.equal(fresh.out, '');
+  assert.equal(fresh.code, 0);
+  touch(summary, 200);
+  assert.match(ctx(stop(dir)), /last-session\.md/);
+  const none = fs.mkdtempSync(path.join(os.tmpdir(), 'bp-none-'));
+  const r = stop(none, { cwd: none });
+  assert.equal(r.out, '');
+  assert.equal(r.code, 0);
+});
+
+test('stop: a corrupt rulings file does not crash and is not rewritten', () => {
+  const dir = tmpProject({ state: closedState({ status: 'done', note: '', proof: 'x', at: '' }) });
+  writeBp(dir, 'rulings.json', '{broken');
+  const r = stop(dir);
+  assert.equal(r.code, 0);
+  assert.match(ctx(r), /אין הכרעות חדשות/);
+  assert.equal(fs.readFileSync(path.join(dir, '.blueprint', 'rulings.json'), 'utf8'), '{broken');
 });

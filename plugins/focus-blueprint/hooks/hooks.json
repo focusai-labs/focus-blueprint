@@ -7,7 +7,9 @@
           {
             "type": "command",
             "command": "node",
-            "args": ["${CLAUDE_PLUGIN_ROOT}/hooks/session-start.mjs"],
+            "args": [
+              "${CLAUDE_PLUGIN_ROOT}/hooks/session-start.mjs"
+            ],
             "timeout": 15
           }
         ]
@@ -19,7 +21,9 @@
           {
             "type": "command",
             "command": "node",
-            "args": ["${CLAUDE_PLUGIN_ROOT}/hooks/prompt-context.mjs"],
+            "args": [
+              "${CLAUDE_PLUGIN_ROOT}/hooks/prompt-context.mjs"
+            ],
             "timeout": 10
           }
         ]
@@ -32,7 +36,9 @@
           {
             "type": "command",
             "command": "node",
-            "args": ["${CLAUDE_PLUGIN_ROOT}/hooks/post-edit.mjs"],
+            "args": [
+              "${CLAUDE_PLUGIN_ROOT}/hooks/post-edit.mjs"
+            ],
             "timeout": 15
           }
         ]
@@ -45,7 +51,9 @@
           {
             "type": "command",
             "command": "node",
-            "args": ["${CLAUDE_PLUGIN_ROOT}/hooks/guard-shell.mjs"],
+            "args": [
+              "${CLAUDE_PLUGIN_ROOT}/hooks/guard-shell.mjs"
+            ],
             "timeout": 15
           }
         ]
@@ -56,8 +64,24 @@
           {
             "type": "command",
             "command": "node",
-            "args": ["${CLAUDE_PLUGIN_ROOT}/hooks/guard-migration.mjs"],
+            "args": [
+              "${CLAUDE_PLUGIN_ROOT}/hooks/guard-migration.mjs"
+            ],
             "timeout": 15
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node",
+            "args": [
+              "${CLAUDE_PLUGIN_ROOT}/hooks/stop-summary.mjs"
+            ],
+            "timeout": 10
           }
         ]
       }

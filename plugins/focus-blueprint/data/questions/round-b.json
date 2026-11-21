@@ -1,0 +1,294 @@
+{
+ "schema": 1,
+ "name": "round-b",
+ "questions": [
+  {
+   "id": "b-01",
+   "round": "b",
+   "block": "סגנון",
+   "text": "אילו נכסי מותג כבר יש?",
+   "type": "multi",
+   "options": [
+    {
+     "v": "logo",
+     "t": "לוגו"
+    },
+    {
+     "v": "colors",
+     "t": "צבעים"
+    },
+    {
+     "v": "fonts",
+     "t": "גופנים"
+    },
+    {
+     "v": "photos",
+     "t": "תמונות"
+    },
+    {
+     "v": "none",
+     "t": "עוד אין"
+    }
+   ],
+   "allowOther": false,
+   "default": null,
+   "decideButton": true,
+   "prefillable": true,
+   "why": "מה שכבר קיים נכנס למערכת העיצוב, ולא ממציאים אותו מחדש.",
+   "writes": "spec.brand.assets"
+  },
+  {
+   "id": "b-02",
+   "round": "b",
+   "block": "סגנון",
+   "text": "לאילו אתרים או אפליקציות אתם רוצים שזה ירגיש קרוב, ולמה?",
+   "type": "open",
+   "options": [],
+   "allowOther": false,
+   "default": null,
+   "decideButton": true,
+   "prefillable": false,
+   "why": "דוגמה חיה מסבירה טעם טוב יותר מכל תיאור.",
+   "writes": "spec.brand.references"
+  },
+  {
+   "id": "b-03",
+   "round": "b",
+   "block": "סגנון",
+   "text": "איזו שפה חזותית מתאימה למערכת?",
+   "type": "single",
+   "options": [
+    {
+     "v": "minimal",
+     "t": "נקייה ומינימלית"
+    },
+    {
+     "v": "glass",
+     "t": "שכבות שקופות"
+    },
+    {
+     "v": "neumorphism",
+     "t": "בליטות רכות"
+    },
+    {
+     "v": "bento",
+     "t": "אריחים"
+    },
+    {
+     "v": "brutalism",
+     "t": "גסה ובולטת"
+    },
+    {
+     "v": "magazine",
+     "t": "מגזין"
+    }
+   ],
+   "allowOther": false,
+   "default": "minimal",
+   "decideButton": true,
+   "prefillable": false,
+   "why": "שפה חזותית אחת שומרת על המסכים עקביים זה עם זה.",
+   "writes": "spec.style.visual",
+   "source": [
+    "D28"
+   ]
+  },
+  {
+   "id": "b-04",
+   "round": "b",
+   "block": "סגנון",
+   "text": "איך זזים בין המסכים?",
+   "type": "single",
+   "options": [
+    {
+     "v": "top-bar",
+     "t": "סרגל עליון"
+    },
+    {
+     "v": "side-bar",
+     "t": "תפריט צד"
+    },
+    {
+     "v": "bottom-tabs",
+     "t": "לשוניות בתחתית, לטלפון"
+    },
+    {
+     "v": "hub",
+     "t": "מסך בית עם כרטיסים"
+    },
+    {
+     "v": "wizard",
+     "t": "צעד אחרי צעד"
+    }
+   ],
+   "allowOther": false,
+   "default": "top-bar",
+   "decideButton": true,
+   "prefillable": true,
+   "why": "הניווט קובע איך מגיעים לכל מסך, ואיך חוזרים לדף הבית.",
+   "writes": "spec.style.nav",
+   "source": [
+    "S3",
+    "S13"
+   ]
+  },
+  {
+   "id": "b-05",
+   "round": "b",
+   "block": "סגנון",
+   "text": "כמה צפוף המסך?",
+   "type": "single",
+   "options": [
+    {
+     "v": "comfortable",
+     "t": "מרווח"
+    },
+    {
+     "v": "compact",
+     "t": "צפוף"
+    }
+   ],
+   "allowOther": false,
+   "default": "comfortable",
+   "decideButton": true,
+   "prefillable": true,
+   "why": "מסך מרווח קל לעין, ומסך צפוף מתאים למי שעובד עם הרבה פריטים כל יום.",
+   "writes": "spec.style.density",
+   "source": [
+    "D27"
+   ]
+  },
+  {
+   "id": "b-06",
+   "round": "b",
+   "block": "סגנון",
+   "text": "האם האתר הוא דף אחד ארוך, או כמה דפים?",
+   "type": "single",
+   "options": [
+    {
+     "v": "single-page",
+     "t": "דף אחד"
+    },
+    {
+     "v": "multi-page",
+     "t": "כמה דפים"
+    }
+   ],
+   "allowOther": false,
+   "default": "multi-page",
+   "decideButton": true,
+   "prefillable": true,
+   "why": "דף אחד מתאים לסיפור קצר. כמה דפים מתאימים למערכת שעובדים בה.",
+   "writes": "spec.style.structure",
+   "source": [
+    "S2"
+   ]
+  },
+  {
+   "id": "b-07",
+   "round": "b",
+   "block": "סגנון",
+   "text": "איך נראה מסך ההתחברות?",
+   "type": "single",
+   "options": [
+    {
+     "v": "centered-card",
+     "t": "כרטיס במרכז המסך"
+    },
+    {
+     "v": "split-image",
+     "t": "תמונה בצד אחד וטופס בצד השני"
+    },
+    {
+     "v": "inline",
+     "t": "התחברות בתוך דף הבית"
+    }
+   ],
+   "allowOther": false,
+   "default": "centered-card",
+   "decideButton": true,
+   "prefillable": true,
+   "why": "מסך ההתחברות הוא הדבר הראשון שמשתמש חוזר רואה.",
+   "writes": "spec.style.login",
+   "when": {
+    "a-16": [
+     "yes"
+    ]
+   }
+  },
+  {
+   "id": "b-08",
+   "round": "b",
+   "block": "סגנון",
+   "text": "מה ברירת המחדל, מצב יום או מצב לילה?",
+   "type": "single",
+   "options": [
+    {
+     "v": "light-toggle",
+     "t": "יום, עם מתג ללילה"
+    },
+    {
+     "v": "dark-toggle",
+     "t": "לילה, עם מתג ליום"
+    },
+    {
+     "v": "light-only",
+     "t": "רק יום"
+    }
+   ],
+   "allowOther": false,
+   "default": "light-toggle",
+   "decideButton": true,
+   "prefillable": true,
+   "why": "רוב השימוש הוא ביום, ומי שעובד בלילה צריך מתג.",
+   "writes": "spec.style.theme",
+   "source": [
+    "S5"
+   ]
+  },
+  {
+   "id": "b-09",
+   "round": "b",
+   "block": "סגנון",
+   "text": "מה הטון של הטקסטים במערכת?",
+   "type": "single",
+   "options": [
+    {
+     "v": "friendly",
+     "t": "ידידותי ופשוט"
+    },
+    {
+     "v": "formal",
+     "t": "רשמי"
+    },
+    {
+     "v": "brief",
+     "t": "קצר וענייני"
+    }
+   ],
+   "allowOther": false,
+   "default": "friendly",
+   "decideButton": true,
+   "prefillable": true,
+   "why": "טון אחיד הוא חלק מהמותג, בדיוק כמו הצבעים.",
+   "writes": "spec.style.tone",
+   "source": [
+    "D24"
+   ]
+  },
+  {
+   "id": "b-10",
+   "round": "b",
+   "block": "סגנון",
+   "text": "יש משהו שאתם לא רוצים לראות במסכים, בשום מצב?",
+   "type": "open",
+   "options": [],
+   "allowOther": false,
+   "default": null,
+   "decideButton": true,
+   "prefillable": false,
+   "why": "קל יותר לתקן כיוון לפני שבונים שלוש גרסאות.",
+   "writes": "spec.brand.never"
+  }
+ ]
+}

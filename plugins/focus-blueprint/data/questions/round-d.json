@@ -1,0 +1,199 @@
+{
+ "schema": 1,
+ "name": "round-d",
+ "questions": [
+  {
+   "id": "d-01",
+   "round": "d",
+   "block": "הנתונים",
+   "text": "איזה מידע נמחק, ואיזה נשמר לתמיד?",
+   "type": "open",
+   "options": [],
+   "allowOther": false,
+   "default": null,
+   "decideButton": true,
+   "prefillable": true,
+   "why": "מחיקה לא מתוכננת היא הדרך הקלה לאבד מידע שמישהו צריך.",
+   "writes": "spec.data.retention"
+  },
+  {
+   "id": "d-02",
+   "round": "d",
+   "block": "הנתונים",
+   "text": "מי רשאי לשנות כל סוג מידע?",
+   "type": "open",
+   "options": [],
+   "allowOther": false,
+   "default": null,
+   "decideButton": true,
+   "prefillable": true,
+   "why": "כל תשובה כאן הופכת לכלל של אבטחה ברמת השורה.",
+   "writes": "spec.data.writers"
+  },
+  {
+   "id": "d-03",
+   "round": "d",
+   "block": "הנתונים",
+   "text": "מה קורה למידע של משתמש שעוזב?",
+   "type": "single",
+   "options": [
+    {
+     "v": "delete",
+     "t": "נמחק"
+    },
+    {
+     "v": "hide",
+     "t": "נשמר ומוסתר"
+    },
+    {
+     "v": "transfer",
+     "t": "עובר למשתמש אחר"
+    }
+   ],
+   "allowOther": false,
+   "default": null,
+   "decideButton": true,
+   "prefillable": true,
+   "why": "משתמש שעוזב לא צריך להשאיר מאחוריו מידע שאף אחד לא יודע מה לעשות בו.",
+   "writes": "spec.data.onLeave"
+  },
+  {
+   "id": "d-04",
+   "round": "d",
+   "block": "הנתונים",
+   "text": "כמה זמן שומרים כל סוג מידע?",
+   "type": "open",
+   "options": [],
+   "allowOther": false,
+   "default": null,
+   "decideButton": true,
+   "prefillable": true,
+   "why": "יש מידע שהחוק או העסק מחייבים לשמור, ויש מידע שעדיף לא להחזיק.",
+   "writes": "spec.data.keepFor"
+  },
+  {
+   "id": "d-05",
+   "round": "d",
+   "block": "הנתונים",
+   "text": "האם צריך גיבוי לפני ההשקה?",
+   "type": "single",
+   "options": [
+    {
+     "v": "yes",
+     "t": "כן, גיבוי קבוע"
+    },
+    {
+     "v": "no",
+     "t": "לא בשלב הזה"
+    }
+   ],
+   "allowOther": false,
+   "default": "yes",
+   "decideButton": true,
+   "prefillable": true,
+   "why": "גיבוי הוא הדרך היחידה לחזור מטעות במסד הנתונים.",
+   "writes": "spec.data.backup",
+   "source": [
+    "D48"
+   ]
+  },
+  {
+   "id": "d-06",
+   "round": "d",
+   "block": "הנתונים",
+   "text": "איזה מידע אסור שיופיע אצל לקוח אחר, בשום מצב?",
+   "type": "open",
+   "options": [],
+   "allowOther": false,
+   "default": null,
+   "decideButton": true,
+   "prefillable": true,
+   "why": "זו הבדיקה שמשתמש שני עושה לפני כל השקה.",
+   "writes": "spec.data.isolation"
+  },
+  {
+   "id": "d-07",
+   "round": "d",
+   "block": "הנתונים",
+   "text": "כשמוחקים, מוחקים באמת או מסמנים כמחוק?",
+   "type": "single",
+   "options": [
+    {
+     "v": "soft",
+     "t": "מסמנים כמחוק, ושומרים"
+    },
+    {
+     "v": "hard",
+     "t": "מוחקים באמת"
+    }
+   ],
+   "allowOther": false,
+   "default": "soft",
+   "decideButton": true,
+   "prefillable": true,
+   "why": "סימון כמחוק מאפשר לשחזר טעות.",
+   "writes": "spec.data.deleteMode",
+   "source": [
+    "D48"
+   ]
+  },
+  {
+   "id": "d-08",
+   "round": "d",
+   "block": "הנתונים",
+   "text": "איזה מידע אישי נשמר, ומי צריך לגשת אליו?",
+   "type": "open",
+   "options": [],
+   "allowOther": false,
+   "default": null,
+   "decideButton": true,
+   "prefillable": true,
+   "why": "מידע אישי שאין בו צורך הוא סיכון בלי תועלת.",
+   "writes": "spec.data.personal"
+  },
+  {
+   "id": "d-09",
+   "round": "d",
+   "block": "הנתונים",
+   "text": "האם משתמש יכול לייצא את המידע שלו?",
+   "type": "single",
+   "options": [
+    {
+     "v": "yes",
+     "t": "כן"
+    },
+    {
+     "v": "no",
+     "t": "לא"
+    },
+    {
+     "v": "later",
+     "t": "אחר כך"
+    }
+   ],
+   "allowOther": false,
+   "default": "later",
+   "decideButton": true,
+   "prefillable": true,
+   "why": "ייצוא הוא גם שירות למשתמש, וגם דרך יציאה אם מחליפים מערכת.",
+   "writes": "spec.data.export"
+  },
+  {
+   "id": "d-10",
+   "round": "d",
+   "block": "הנתונים",
+   "text": "אילו שדות חייבים להיות מלאים בכל רשומה?",
+   "type": "open",
+   "options": [],
+   "allowOther": false,
+   "default": null,
+   "decideButton": true,
+   "prefillable": true,
+   "why": "שדה חובה נבדק גם במסד הנתונים, ולא רק בטופס.",
+   "writes": "spec.data.required",
+   "source": [
+    "D40"
+   ]
+  }
+ ]
+}

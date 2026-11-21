@@ -1,0 +1,587 @@
+{
+ "schema": 1,
+ "name": "round-a",
+ "questions": [
+  {
+   "id": "a-01",
+   "round": "a",
+   "block": "העסק והבעיה",
+   "text": "מה הבעיה, במשפט אחד שזר יכול לחזור עליו?",
+   "type": "open",
+   "options": [],
+   "allowOther": false,
+   "default": null,
+   "decideButton": true,
+   "prefillable": true,
+   "why": "משפט אחד מכריח להחליט מה באמת כואב.",
+   "writes": "spec.problem.statement",
+   "source": [
+    "R6"
+   ]
+  },
+  {
+   "id": "a-02",
+   "round": "a",
+   "block": "העסק והבעיה",
+   "text": "איך פותרים את הבעיה היום?",
+   "type": "multi",
+   "options": [
+    {
+     "v": "none",
+     "t": "לא פותרים בכלל"
+    },
+    {
+     "v": "manual",
+     "t": "בלי מחשב, על נייר או בטלפון"
+    },
+    {
+     "v": "general",
+     "t": "בכלי כללי, כמו גיליון או וואטסאפ"
+    },
+    {
+     "v": "dedicated",
+     "t": "בכלי שנבנה בדיוק לזה"
+    }
+   ],
+   "allowOther": true,
+   "default": null,
+   "decideButton": true,
+   "prefillable": true,
+   "why": "ההתנהגות של היום מראה כמה הבעיה כואבת, ואילו פתרונות כבר עובדים.",
+   "writes": "spec.problem.current",
+   "source": [
+    "R6"
+   ]
+  },
+  {
+   "id": "a-03",
+   "round": "a",
+   "block": "העסק והבעיה",
+   "text": "בדרך שבה פותרים היום, מה אנשים אוהבים ומה הם שונאים?",
+   "type": "open",
+   "options": [],
+   "allowOther": false,
+   "default": null,
+   "decideButton": true,
+   "prefillable": true,
+   "why": "את מה שאוהבים שומרים, ואת מה ששונאים לא מעתיקים.",
+   "writes": "spec.problem.likesDislikes",
+   "source": [
+    "R6"
+   ]
+  },
+  {
+   "id": "a-04",
+   "round": "a",
+   "block": "העסק והבעיה",
+   "text": "אם רוב האנשים בתחום לא פותרים את הבעיה, למה?",
+   "type": "open",
+   "options": [],
+   "allowOther": false,
+   "default": null,
+   "decideButton": true,
+   "prefillable": true,
+   "why": "צריך לדעת אם הבעיה לא חשובה להם, או שהפתרונות הקיימים גרועים.",
+   "writes": "spec.problem.whyUnsolved",
+   "when": {
+    "a-02": [
+     "none"
+    ]
+   },
+   "source": [
+    "R6"
+   ]
+  },
+  {
+   "id": "a-05",
+   "round": "a",
+   "block": "העסק והבעיה",
+   "text": "אילו כללים לא כתובים יש בתחום? כתבו אותם כמו שאנשים אומרים אותם.",
+   "type": "open",
+   "options": [],
+   "allowOther": false,
+   "default": null,
+   "decideButton": true,
+   "prefillable": true,
+   "why": "כלל לא כתוב מסביר התנהגות שנראית מבחוץ מוזרה.",
+   "writes": "spec.problem.norms",
+   "source": [
+    "R7"
+   ]
+  },
+  {
+   "id": "a-06",
+   "round": "a",
+   "block": "המשתמשים לעומק",
+   "text": "מי ישתמש במערכת, לפי תפקידים?",
+   "type": "multi",
+   "options": [
+    {
+     "v": "customers",
+     "t": "לקוחות של העסק"
+    },
+    {
+     "v": "staff",
+     "t": "עובדים"
+    },
+    {
+     "v": "managers",
+     "t": "מנהלים"
+    },
+    {
+     "v": "partners",
+     "t": "ספקים או שותפים"
+    }
+   ],
+   "allowOther": true,
+   "default": null,
+   "decideButton": true,
+   "prefillable": true,
+   "why": "כל תפקיד הוא כמעט מוצר נפרד, עם מסע ומסכים משלו.",
+   "writes": "spec.users.roles",
+   "source": [
+    "R8"
+   ]
+  },
+  {
+   "id": "a-07",
+   "round": "a",
+   "block": "המשתמשים לעומק",
+   "text": "לכל תפקיד, איזו שאלה מחלקת את האנשים בו לשתי קבוצות שונות באמת, ומי בכל קבוצה?",
+   "type": "pairs",
+   "options": [],
+   "allowOther": false,
+   "default": null,
+   "decideButton": true,
+   "prefillable": false,
+   "why": "התאמה לקבוצה אמיתית עובדת טוב יותר מהתאמה לממוצע שלא קיים.",
+   "writes": "spec.users.segments",
+   "probe": "מה הכי שונה בין שתי הקבוצות?",
+   "source": [
+    "R9"
+   ]
+  },
+  {
+   "id": "a-08",
+   "round": "a",
+   "block": "המשתמשים לעומק",
+   "text": "לכל קבוצה, תארו שני מצבים שבהם משתמשים במערכת: איפה, מתי, מה יש סביב, ומה צריך באותו רגע.",
+   "type": "open",
+   "options": [],
+   "allowOther": false,
+   "default": null,
+   "decideButton": true,
+   "prefillable": true,
+   "why": "כל מצב שימוש צריך תשובה משלו במסך.",
+   "writes": "spec.users.scenarios",
+   "source": [
+    "R10"
+   ]
+  },
+  {
+   "id": "a-09",
+   "round": "a",
+   "block": "המשתמשים לעומק",
+   "text": "איך נראה המקום שבו משתמשים במערכת? ציוד, רעש, הפרעות, והאם הידיים פנויות.",
+   "type": "open",
+   "options": [],
+   "allowOther": false,
+   "default": null,
+   "decideButton": true,
+   "prefillable": true,
+   "why": "המקום עצמו קובע את גודל הכפתורים, את מצב הלילה, ומה חייב לעבוד גם בחיבור חלש.",
+   "writes": "spec.users.environment",
+   "source": [
+    "R11"
+   ]
+  },
+  {
+   "id": "a-10",
+   "round": "a",
+   "block": "המשתמשים לעומק",
+   "text": "מאיזה מכשיר ישתמשו בעיקר?",
+   "type": "single",
+   "options": [
+    {
+     "v": "phone",
+     "t": "טלפון"
+    },
+    {
+     "v": "desktop",
+     "t": "מחשב"
+    },
+    {
+     "v": "both",
+     "t": "שניהם, באותה מידה"
+    }
+   ],
+   "allowOther": false,
+   "default": "both",
+   "decideButton": true,
+   "prefillable": true,
+   "why": "מכשיר אחר פירושו מסך אחר, ודרך אחרת ללחוץ.",
+   "writes": "spec.users.device",
+   "source": [
+    "R11",
+    "D11"
+   ]
+  },
+  {
+   "id": "a-11",
+   "round": "a",
+   "block": "המשתמשים לעומק",
+   "text": "למה אנשים באמת ירצו את זה? אם התשובה הראשונה היא שזה יחסוך זמן, כתבו למה הזמן הזה חשוב להם.",
+   "type": "open",
+   "options": [],
+   "allowOther": false,
+   "default": null,
+   "decideButton": true,
+   "prefillable": false,
+   "why": "הסיבה האמיתית מסתתרת בדרך כלל מאחורי התשובה הראשונה.",
+   "writes": "spec.users.realReason",
+   "probe": "ולמה זה חשוב להם?",
+   "source": [
+    "R5"
+   ]
+  },
+  {
+   "id": "a-12",
+   "round": "a",
+   "block": "מה נחשב הצלחה",
+   "text": "איך תדעו שהמערכת הצליחה? כתבו משפט אחד שאפשר למדוד.",
+   "type": "open",
+   "options": [],
+   "allowOther": false,
+   "default": null,
+   "decideButton": true,
+   "prefillable": true,
+   "why": "בלי משפט כזה אי אפשר לבדוק אחרי ההשקה אם זה עבד.",
+   "writes": "spec.success.metric",
+   "source": [
+    "R1"
+   ]
+  },
+  {
+   "id": "a-13",
+   "round": "a",
+   "block": "מה נחשב הצלחה",
+   "text": "מה ייחשב כישלון, גם אם הכל עובד?",
+   "type": "open",
+   "options": [],
+   "allowOther": false,
+   "default": null,
+   "decideButton": true,
+   "prefillable": true,
+   "why": "כך תופסים מוצר שעומד בכל הדרישות ומפספס את המטרה.",
+   "writes": "spec.success.antiGoals",
+   "source": [
+    "R1"
+   ]
+  },
+  {
+   "id": "a-14",
+   "round": "a",
+   "block": "מערכות קיימות",
+   "text": "באילו מערכות העסק כבר משתמש?",
+   "type": "multi",
+   "options": [
+    {
+     "v": "sheets",
+     "t": "גיליון, כמו Google Sheets"
+    },
+    {
+     "v": "whatsapp",
+     "t": "וואטסאפ"
+    },
+    {
+     "v": "email",
+     "t": "מייל"
+    },
+    {
+     "v": "accounting",
+     "t": "תוכנה להנהלת חשבונות"
+    },
+    {
+     "v": "crm",
+     "t": "מערכת לניהול לקוחות"
+    }
+   ],
+   "allowOther": true,
+   "default": null,
+   "decideButton": true,
+   "prefillable": true,
+   "why": "מערכת חדשה מתחברת למה שכבר קיים, או מחליפה אותו בכוונה.",
+   "writes": "spec.systems.existing",
+   "source": [
+    "R6"
+   ]
+  },
+  {
+   "id": "a-15",
+   "round": "a",
+   "block": "מערכות קיימות",
+   "text": "איפה יושב היום המידע שהמערכת תצטרך, ומי מעדכן אותו?",
+   "type": "open",
+   "options": [],
+   "allowOther": false,
+   "default": null,
+   "decideButton": true,
+   "prefillable": true,
+   "why": "מידע שכבר קיים קובע מה מייבאים, ולאן מתחברים.",
+   "writes": "spec.systems.data",
+   "source": [
+    "R6"
+   ]
+  },
+  {
+   "id": "a-16",
+   "round": "a",
+   "block": "ארבע שאלות המסלול",
+   "text": "האם יש משתמשים שמתחברים למערכת עם חשבון משלהם?",
+   "type": "single",
+   "options": [
+    {
+     "v": "yes",
+     "t": "כן"
+    },
+    {
+     "v": "no",
+     "t": "לא"
+    }
+   ],
+   "allowOther": false,
+   "default": null,
+   "decideButton": true,
+   "prefillable": true,
+   "why": "התחברות פירושה טבלת משתמשים, הרשאות, ואבטחה ברמת השורה.",
+   "writes": "spec.track.login"
+  },
+  {
+   "id": "a-17",
+   "round": "a",
+   "block": "ארבע שאלות המסלול",
+   "text": "האם יש נתונים שמשתנים ושצריך לשמור?",
+   "type": "single",
+   "options": [
+    {
+     "v": "yes",
+     "t": "כן"
+    },
+    {
+     "v": "no",
+     "t": "לא"
+    }
+   ],
+   "allowOther": false,
+   "default": null,
+   "decideButton": true,
+   "prefillable": true,
+   "why": "נתונים שמשתנים צריכים מסד נתונים, ולא רק דפים.",
+   "writes": "spec.track.data"
+  },
+  {
+   "id": "a-18",
+   "round": "a",
+   "block": "ארבע שאלות המסלול",
+   "text": "האם מישהו משלם דרך המערכת?",
+   "type": "single",
+   "options": [
+    {
+     "v": "yes",
+     "t": "כן"
+    },
+    {
+     "v": "no",
+     "t": "לא"
+    }
+   ],
+   "allowOther": false,
+   "default": null,
+   "decideButton": false,
+   "prefillable": true,
+   "why": "תשלום מוסיף סליקה, חשבוניות ובדיקות משלו.",
+   "writes": "spec.track.payment"
+  },
+  {
+   "id": "a-19",
+   "round": "a",
+   "block": "ארבע שאלות המסלול",
+   "text": "האם יש דברים שצריכים לרוץ לבד ברקע, כמו תזכורות או דוחות?",
+   "type": "single",
+   "options": [
+    {
+     "v": "yes",
+     "t": "כן"
+    },
+    {
+     "v": "no",
+     "t": "לא"
+    }
+   ],
+   "allowOther": false,
+   "default": null,
+   "decideButton": true,
+   "prefillable": true,
+   "why": "עבודה ברקע היא אוטומציה, ב-Supabase או ב-n8n.",
+   "writes": "spec.track.background"
+  },
+  {
+   "id": "a-20",
+   "round": "a",
+   "block": "תשלום",
+   "text": "מי משלם למי?",
+   "type": "single",
+   "options": [
+    {
+     "v": "customers-to-business",
+     "t": "הלקוחות משלמים לעסק דרך המערכת"
+    },
+    {
+     "v": "users-subscription",
+     "t": "המשתמשים משלמים על מנוי למערכת"
+    }
+   ],
+   "allowOther": true,
+   "default": null,
+   "decideButton": false,
+   "prefillable": true,
+   "why": "מי משלם למי קובע את הסליקה ואת החשבוניות. הסליקה עצמה מתחברת בשלב נפרד, דרך המודולה של Cardcom.",
+   "writes": "spec.payment.flow",
+   "when": {
+    "a-18": [
+     "yes"
+    ]
+   }
+  },
+  {
+   "id": "a-21",
+   "round": "a",
+   "block": "תשלום",
+   "text": "התשלום חד פעמי או חוזר?",
+   "type": "single",
+   "options": [
+    {
+     "v": "one-time",
+     "t": "חד פעמי"
+    },
+    {
+     "v": "recurring",
+     "t": "חוזר, כל חודש"
+    },
+    {
+     "v": "both",
+     "t": "גם וגם"
+    }
+   ],
+   "allowOther": false,
+   "default": null,
+   "decideButton": false,
+   "prefillable": true,
+   "why": "תשלום חוזר דורש מנוי, חידוש, וטיפול בכרטיס שפג.",
+   "writes": "spec.payment.recurrence",
+   "when": {
+    "a-18": [
+     "yes"
+    ]
+   }
+  },
+  {
+   "id": "a-22",
+   "round": "a",
+   "block": "אוטומציות ואדם בלולאה",
+   "text": "אילו פעולות קורות לבד, ומה מפעיל כל אחת?",
+   "type": "open",
+   "options": [],
+   "allowOther": false,
+   "default": null,
+   "decideButton": true,
+   "prefillable": true,
+   "why": "כל אוטומציה מתחילה בטריגר ברור.",
+   "writes": "spec.automations.list",
+   "when": {
+    "a-19": [
+     "yes"
+    ]
+   }
+  },
+  {
+   "id": "a-23",
+   "round": "a",
+   "block": "אוטומציות ואדם בלולאה",
+   "text": "לכל אוטומציה, באיזו רמה היא רצה? מציעה ואדם מאשר, מבצעת ואדם מפקח, רצה לבד ומעבירה לאדם מקרים חריגים, או רצה לבד לגמרי. ומה היא לא עושה לבד אף פעם?",
+   "type": "open",
+   "options": [],
+   "allowOther": false,
+   "default": null,
+   "decideButton": true,
+   "prefillable": true,
+   "why": "מה שיוצא ללקוח עובר דרך אדם, לפחות פעם אחת.",
+   "writes": "spec.automations.autonomy",
+   "when": {
+    "a-19": [
+     "yes"
+    ]
+   }
+  },
+  {
+   "id": "a-24",
+   "round": "a",
+   "block": "אוטומציות ואדם בלולאה",
+   "text": "מה קורה כשאוטומציה נכשלת, ומי מקבל התראה?",
+   "type": "open",
+   "options": [],
+   "allowOther": false,
+   "default": null,
+   "decideButton": true,
+   "prefillable": true,
+   "why": "אוטומציה שנכשלת בשקט גרועה מאוטומציה שלא קיימת.",
+   "writes": "spec.automations.onFailure",
+   "when": {
+    "a-19": [
+     "yes"
+    ]
+   }
+  },
+  {
+   "id": "a-25",
+   "round": "a",
+   "block": "הרשאות",
+   "text": "לכל תפקיד, מה הוא רשאי לראות ולשנות, ואם רק את שלו או את של כולם?",
+   "type": "open",
+   "options": [],
+   "allowOther": false,
+   "default": null,
+   "decideButton": true,
+   "prefillable": true,
+   "why": "הסוכן בונה בדיוק את מה שכתוב. תא שלא מילאתם, הוא ימלא לבד.",
+   "writes": "spec.permissions.matrix",
+   "when": {
+    "a-16": [
+     "yes"
+    ]
+   },
+   "source": [
+    "R8"
+   ]
+  },
+  {
+   "id": "a-26",
+   "round": "a",
+   "block": "הרשאות",
+   "text": "איזה מידע אסור שיגיע לתפקיד מסוים, בשום מצב?",
+   "type": "open",
+   "options": [],
+   "allowOther": false,
+   "default": null,
+   "decideButton": true,
+   "prefillable": true,
+   "why": "כך תופסים את התא ששוכחים, כמו הערות פנימיות שאסור ללקוח לראות.",
+   "writes": "spec.permissions.never",
+   "when": {
+    "a-16": [
+     "yes"
+    ]
+   }
+  }
+ ]
+}

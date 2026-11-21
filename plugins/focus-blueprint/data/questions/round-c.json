@@ -1,0 +1,282 @@
+{
+ "schema": 1,
+ "name": "round-c",
+ "questions": [
+  {
+   "id": "c-click-{screen}",
+   "round": "c",
+   "block": "מול המסך",
+   "text": "במסך {screen}, מה קורה כשלוחצים על הפעולה הראשית?",
+   "type": "open",
+   "options": [],
+   "allowOther": false,
+   "default": null,
+   "decideButton": true,
+   "prefillable": true,
+   "why": "הפעולה הראשית היא הסיבה שהמסך קיים.",
+   "writes": "spec.screens.{screen}.primaryAction",
+   "source": [
+    "S8"
+   ]
+  },
+  {
+   "id": "c-who-{screen}",
+   "round": "c",
+   "block": "מול המסך",
+   "text": "מי רואה את המסך {screen}, ומי לא?",
+   "type": "open",
+   "options": [],
+   "allowOther": false,
+   "default": null,
+   "decideButton": true,
+   "prefillable": true,
+   "why": "כל תשובה כאן היא שורה במטריצת ההרשאות.",
+   "writes": "spec.screens.{screen}.audience",
+   "source": [
+    "R8"
+   ]
+  },
+  {
+   "id": "c-send-{screen}",
+   "round": "c",
+   "block": "מול המסך",
+   "text": "האם המסך {screen} שולח משהו למישהו? למי, והאם הוא מחכה לאישור של אדם?",
+   "type": "open",
+   "options": [],
+   "allowOther": false,
+   "default": null,
+   "decideButton": true,
+   "prefillable": true,
+   "why": "כל שליחה החוצה צריכה לדעת אם היא רצה לבד או עוברת דרך אדם.",
+   "writes": "spec.screens.{screen}.sends",
+   "source": [
+    "D45"
+   ]
+  },
+  {
+   "id": "c-fail-{screen}",
+   "round": "c",
+   "block": "מול המסך",
+   "text": "מה המשתמש רואה במסך {screen} כשמשהו נכשל?",
+   "type": "open",
+   "options": [],
+   "allowOther": false,
+   "default": null,
+   "decideButton": true,
+   "prefillable": true,
+   "why": "תקלה בלי התנהגות מוגדרת היא חור באפיון.",
+   "writes": "spec.screens.{screen}.onFailure",
+   "source": [
+    "D49"
+   ]
+  },
+  {
+   "id": "c-remember-{screen}",
+   "round": "c",
+   "block": "מול המסך",
+   "text": "מה המשתמש צריך לזכור מהמסך הקודם כשהוא מגיע למסך {screen}?",
+   "type": "open",
+   "options": [],
+   "allowOther": false,
+   "default": null,
+   "decideButton": true,
+   "prefillable": true,
+   "why": "מה שצריך לזכור, המסך מציג שוב.",
+   "writes": "spec.screens.{screen}.carryOver",
+   "source": [
+    "D20"
+   ]
+  },
+  {
+   "id": "c-lose-{screen}",
+   "round": "c",
+   "block": "מול המסך",
+   "text": "יש במסך {screen} משהו שהמשתמש ישנא לאבד?",
+   "type": "open",
+   "options": [],
+   "allowOther": false,
+   "default": null,
+   "decideButton": true,
+   "prefillable": true,
+   "why": "מה שאסור לאבד נשמר ברקע, כבר מהגרסה הראשונה.",
+   "writes": "spec.screens.{screen}.mustKeep",
+   "source": [
+    "S14"
+   ]
+  },
+  {
+   "id": "c-empty-{screen}",
+   "round": "c",
+   "block": "מול המסך",
+   "text": "מה רואים במסך {screen} לפני שיש בו נתונים?",
+   "type": "open",
+   "options": [],
+   "allowOther": false,
+   "default": null,
+   "decideButton": true,
+   "prefillable": true,
+   "why": "מסך ריק הוא המסך הראשון שכל משתמש חדש פוגש.",
+   "writes": "spec.screens.{screen}.emptyState",
+   "source": [
+    "S11"
+   ]
+  },
+  {
+   "id": "c-double-{screen}",
+   "round": "c",
+   "block": "מול המסך",
+   "text": "מה קורה במסך {screen} אם לוחצים פעמיים על אותו כפתור?",
+   "type": "open",
+   "options": [],
+   "allowOther": false,
+   "default": null,
+   "decideButton": true,
+   "prefillable": true,
+   "why": "לחיצה כפולה יכולה ליצור כפילות, או לשלוח פעמיים.",
+   "writes": "spec.screens.{screen}.doubleSubmit",
+   "source": [
+    "D40"
+   ]
+  },
+  {
+   "id": "c-back-{screen}",
+   "round": "c",
+   "block": "מול המסך",
+   "text": "איך חוזרים מהמסך {screen} לדף הבית, ומה קורה למה שכבר הוקלד?",
+   "type": "open",
+   "options": [],
+   "allowOther": false,
+   "default": null,
+   "decideButton": true,
+   "prefillable": true,
+   "why": "דרך חזרה ברורה מחזירה את הביטחון.",
+   "writes": "spec.screens.{screen}.anchor",
+   "source": [
+    "S13"
+   ]
+  },
+  {
+   "id": "c-phone-{screen}",
+   "round": "c",
+   "block": "מול המסך",
+   "text": "איך המסך {screen} עובד בטלפון, ביד אחת?",
+   "type": "open",
+   "options": [],
+   "allowOther": false,
+   "default": null,
+   "decideButton": true,
+   "prefillable": true,
+   "why": "בטלפון האגודל קובע מה קל להשיג ומה רחוק.",
+   "writes": "spec.screens.{screen}.phone",
+   "source": [
+    "D11",
+    "D12"
+   ]
+  },
+  {
+   "id": "c-wait-{screen}",
+   "round": "c",
+   "block": "מול המסך",
+   "text": "יש במסך {screen} פעולה שלוקחת זמן? מה רואים בזמן ההמתנה?",
+   "type": "open",
+   "options": [],
+   "allowOther": false,
+   "default": null,
+   "decideButton": true,
+   "prefillable": true,
+   "why": "שקט בזמן המתנה נקרא ככישלון.",
+   "writes": "spec.screens.{screen}.waiting",
+   "source": [
+    "D18",
+    "D19"
+   ]
+  },
+  {
+   "id": "c-undo-{screen}",
+   "round": "c",
+   "block": "מול המסך",
+   "text": "יש במסך {screen} פעולה שאי אפשר לבטל? איך מאשרים אותה, ואיך חוזרים ממנה?",
+   "type": "open",
+   "options": [],
+   "allowOther": false,
+   "default": null,
+   "decideButton": true,
+   "prefillable": true,
+   "why": "פעולה בלתי הפיכה צריכה אישור, ועדיף גם דרך חזרה.",
+   "writes": "spec.screens.{screen}.irreversible",
+   "source": [
+    "D47",
+    "D48"
+   ]
+  },
+  {
+   "id": "c-input-{screen}",
+   "round": "c",
+   "block": "מול המסך",
+   "text": "אילו שדות במסך {screen} אפשר להחליף בבחירה, במקום הקלדה?",
+   "type": "open",
+   "options": [],
+   "allowOther": false,
+   "default": null,
+   "decideButton": true,
+   "prefillable": true,
+   "why": "כל שדה שלא צריך להקליד בו הוא טעות שלא תקרה.",
+   "writes": "spec.screens.{screen}.inputs",
+   "source": [
+    "D13",
+    "D39"
+   ]
+  },
+  {
+   "id": "c-state-{screen}",
+   "round": "c",
+   "block": "מול המסך",
+   "text": "איזה מצב המשתמש צריך לראות כל הזמן במסך {screen}? למשל מה כבר נשמר, ומה עוד חסר.",
+   "type": "open",
+   "options": [],
+   "allowOther": false,
+   "default": null,
+   "decideButton": true,
+   "prefillable": true,
+   "why": "מצב שלא רואים גורם לפעולות שגויות.",
+   "writes": "spec.screens.{screen}.state",
+   "source": [
+    "D16"
+   ]
+  },
+  {
+   "id": "c-next-{screen}",
+   "round": "c",
+   "block": "מול המסך",
+   "text": "מה הצעד הבא אחרי שמסיימים במסך {screen}, ואיך המסך מציע אותו?",
+   "type": "open",
+   "options": [],
+   "allowOther": false,
+   "default": null,
+   "decideButton": true,
+   "prefillable": true,
+   "why": "מסך שנגמר בלי צעד הבא משאיר את המשתמש תקוע.",
+   "writes": "spec.screens.{screen}.next",
+   "source": [
+    "S11"
+   ]
+  },
+  {
+   "id": "c-help-{screen}",
+   "round": "c",
+   "block": "מול המסך",
+   "text": "יש במסך {screen} רגע שבו המשתמש צריך להחליט? איזו עזרה הוא מקבל שם?",
+   "type": "open",
+   "options": [],
+   "allowOther": false,
+   "default": null,
+   "decideButton": true,
+   "prefillable": true,
+   "why": "בצמתי החלטה משתמשים נכשלים, אם אין עזרה.",
+   "writes": "spec.screens.{screen}.decisionHelp",
+   "source": [
+    "S12"
+   ]
+  }
+ ]
+}

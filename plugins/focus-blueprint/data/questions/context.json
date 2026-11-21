@@ -1,0 +1,133 @@
+{
+ "schema": 1,
+ "name": "context",
+ "questions": [
+  {
+   "id": "c-01",
+   "round": "context",
+   "block": "בשביל מי בונים",
+   "text": "מי משלם על הבנייה?",
+   "type": "single",
+   "options": [
+    {
+     "v": "client",
+     "t": "לקוח שהזמין את העבודה"
+    },
+    {
+     "v": "employer",
+     "t": "הארגון שאני עובד בו"
+    },
+    {
+     "v": "me",
+     "t": "אני"
+    },
+    {
+     "v": "nobody",
+     "t": "אף אחד, זה פרויקט ללמידה"
+    }
+   ],
+   "allowOther": false,
+   "default": null,
+   "decideButton": false,
+   "prefillable": true,
+   "why": "מי שמשלם קובע מה נחשב גמור, ועל שם מי יוצאת הצעת המחיר.",
+   "writes": "context.payer"
+  },
+  {
+   "id": "c-02",
+   "round": "context",
+   "block": "בשביל מי בונים",
+   "text": "מי מאשר ומחליט?",
+   "type": "single",
+   "options": [
+    {
+     "v": "outside-person",
+     "t": "אדם אחד מחוץ לצוות, כמו בעל העסק"
+    },
+    {
+     "v": "manager",
+     "t": "מנהל בארגון"
+    },
+    {
+     "v": "me",
+     "t": "אני"
+    },
+    {
+     "v": "partners",
+     "t": "שותפים, ביחד"
+    },
+    {
+     "v": "market",
+     "t": "השוק, כלומר המשתמשים עצמם"
+    }
+   ],
+   "allowOther": false,
+   "default": null,
+   "decideButton": false,
+   "prefillable": true,
+   "why": "מי שמאשר הוא מי שרואה את ה-mockup ראשון, ומי שחותם על המסמך שלפני הבנייה.",
+   "writes": "context.approver"
+  },
+  {
+   "id": "c-03",
+   "round": "context",
+   "block": "בשביל מי בונים",
+   "text": "מי ישתמש במערכת?",
+   "type": "single",
+   "options": [
+    {
+     "v": "me",
+     "t": "אני"
+    },
+    {
+     "v": "org-staff",
+     "t": "עובדים של ארגון אחד"
+    },
+    {
+     "v": "business-customers",
+     "t": "לקוחות של עסק אחד"
+    },
+    {
+     "v": "many",
+     "t": "הרבה עסקים ואנשים"
+    }
+   ],
+   "allowOther": false,
+   "default": null,
+   "decideButton": false,
+   "prefillable": true,
+   "why": "התשובה קובעת אם בונים מערכת אחת, או עותק נפרד לכל לקוח.",
+   "writes": "context.users",
+   "notes": {
+    "many": "מי שבונה להרבה עסקים מתחיל בעותק נפרד לכל לקוח. הפרדה בין עסקים בתוך מערכת אחת היא נושא בפני עצמו, וטעות אחת בה חושפת עסק אחד לאחר."
+   }
+  },
+  {
+   "id": "c-04",
+   "round": "context",
+   "block": "בשביל מי בונים",
+   "text": "מי הבעלים, ומי יתחזק את המערכת אחר כך?",
+   "type": "single",
+   "options": [
+    {
+     "v": "client",
+     "t": "הלקוח"
+    },
+    {
+     "v": "org",
+     "t": "הארגון"
+    },
+    {
+     "v": "me",
+     "t": "אני"
+    }
+   ],
+   "allowOther": false,
+   "default": null,
+   "decideButton": false,
+   "prefillable": true,
+   "why": "הבעלים קובע על שם מי פותחים את החשבונות, ומי מקבל את המסירה.",
+   "writes": "context.owner"
+  }
+ ]
+}

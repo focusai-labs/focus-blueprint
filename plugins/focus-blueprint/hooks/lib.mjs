@@ -3,6 +3,7 @@
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 
 export const TERMS_VERSION = '2026-11-16';
@@ -88,4 +89,137 @@ export function probeMark(event) {
 /** Path relative to the project, with forward slashes on every platform. */
 export function relative(projectDir, file) {
   return path.relative(projectDir, path.resolve(file)).split(path.sep).join('/');
+}
+
+/** Stages and capabilities that hit the three-round fix cap. Read only; a broken file is skipped. */
+export function haltedItems(project) {
+  const items = [];
+  const st = (project.state && project.state.stages) || {};
+  for (const n of Object.keys(st).sort((a, b) => Number(a) - Number(b))) {
+    if (st[n] && st[n].halted === true) items.push(`stage ${n}`);
+  }
+  const map = readJson(path.join(project.dir, '.blueprint', 'map.json'));
+  for (const c of (map && Array.isArray(map.capabilities) ? map.capabilities : [])) {
+    if (c && c.halted === true) items.push(String(c.id));
+  }
+  return items;
+}
+
+export function haltedLine(item) {
+  return `[HALTED] ${item}: שלושה סבבי תיקון לא סגרו את זה. לא מנסים תיקון נוסף. אומרים לסטודנט מה פתוח ולמה (openFindings), ומחכים לו.`;
+}
+
+/** Rulings the student has not been shown yet. A missing or broken file gives an empty list. */
+export function unreportedRulings(project) {
+  const list = readJson(path.join(project.dir, '.blueprint', 'rulings.json'));
+  return Array.isArray(list) ? list.filter((r) => r && r.reported === false) : [];
+}
+
+/** Branch, dirty file count and branch age in days. Null when the folder is not a git repository. */
+export function gitInfo(dir) {
+  const git = (args) => spawnSync('git', args, { cwd: dir, encoding: 'utf8' });
+  const b = git(['symbolic-ref', '--short', '-q', 'HEAD']);
+  if (b.error || b.status !== 0) return null;
+  const branch = (b.stdout || '').trim();
+  const dirty = (git(['status', '--porcelain']).stdout || '').split('\n').filter(Boolean).length;
+  let days = 0;
+  if (!PROTECTED_BRANCHES.includes(branch)) {
+    const base = PROTECTED_BRANCHES.find((m) => git(['rev-parse', '--verify', '-q', m]).status === 0);
+    if (base) {
+      const first = (git(['log', '--reverse', '--format=%ct', branch, `^${base}`]).stdout || '').split('\n')[0].trim();
+      if (first) days = Math.max(0, Math.floor((Date.now() / 1000 - Number(first)) / 86400));
+    }
+  }
+  return { branch, dirty, days };
+}
+
+/**
+ * Like findProject, for the guards: a .blueprint folder whose state.json cannot be
+ * parsed still counts as a Blueprint project, so the guards keep working. The state
+ * is then empty (live is treated as false) and `stateBroken` is true. Nothing is written.
+ */
+export function findProjectForGuard(input) {
+  const found = findProject(input);
+  if (found) return found;
+  const starts = [input.cwd, process.env.CLAUDE_PROJECT_DIR, process.cwd()].filter(Boolean);
+  for (const start of starts) {
+    let dir = path.resolve(start);
+    for (;;) {
+      if (fs.existsSync(path.join(dir, '.blueprint'))) {
+        process.stderr.write('Focus Blueprint: .blueprint/state.json cannot be read; the guards run with the default rules and treat the project as not live.\n');
+        return { dir, state: {}, stateBroken: true };
+      }
+      const parent = path.dirname(dir);
+      if (parent === dir) break;
+      dir = parent;
+    }
+  }
+  return null;
+}
+
+/**
+ * SQL with everything that cannot run blanked out: comments (also nested block
+ * comments), 'strings' (with '' escapes), E'strings' (with backslash escapes),
+ * $tag$dollar quoted bodies$tag$ and "quoted identifiers". One pass, so a quote
+ * inside a comment and a comment marker inside a string are both handled.
+ */
+export function sanitizeSql(sql) {
+  const s = String(sql || '');
+  let out = '';
+  let i = 0;
+  while (i < s.length) {
+    const c = s[i];
+    const two = s.slice(i, i + 2);
+    if (two === '--') {
+      while (i < s.length && s[i] !== '\n') i++;
+      out += ' ';
+    } else if (two === '/*') {
+      let depth = 1;
+      i += 2;
+      while (i < s.length && depth > 0) {
+        if (s.slice(i, i + 2) === '/*') { depth++; i += 2; }
+        else if (s.slice(i, i + 2) === '*/') { depth--; i += 2; }
+        else i++;
+      }
+      out += ' ';
+    } else if (c === "'" || ((c === 'E' || c === 'e') && s[i + 1] === "'" && !/[\w$]/.test(s[i - 1] || ''))) {
+      const escaped = c !== "'";
+      i += escaped ? 2 : 1;
+      while (i < s.length) {
+        if (escaped && s[i] === '\\') { i += 2; continue; }
+        if (s[i] === "'") {
+          if (s[i + 1] === "'") { i += 2; continue; }
+          i++;
+          break;
+        }
+        i++;
+      }
+      out += "''";
+    } else if (c === '"') {
+      i++;
+      while (i < s.length) {
+        if (s[i] === '"') {
+          if (s[i + 1] === '"') { i += 2; continue; }
+          i++;
+          break;
+        }
+        i++;
+      }
+      out += '""';
+    } else if (c === '$' && !/[\w$]/.test(s[i - 1] || '')) {
+      const tag = s.slice(i).match(/^\$[A-Za-z_]*\$/);
+      if (tag) {
+        const end = s.indexOf(tag[0], i + tag[0].length);
+        i = end === -1 ? s.length : end + tag[0].length;
+        out += "''";
+      } else {
+        out += c;
+        i++;
+      }
+    } else {
+      out += c;
+      i++;
+    }
+  }
+  return out;
 }

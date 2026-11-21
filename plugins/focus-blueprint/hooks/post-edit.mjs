@@ -24,6 +24,18 @@ if (/^mockup\/.+\.html$/.test(rel) && !screens.has(rel)) {
   );
 }
 
+const tables = new Set((map.tables || []).map((t) => t && t.migration));
+if (/^db\/migrations\/.+\.sql$/.test(rel) && !tables.has(rel)) {
+  notes.push(`Focus Blueprint: the migration ${rel} is not listed in the project map (.blueprint/map.json, tables[].migration). Add the table to the map.`);
+}
+const copies = new Set((map.automations || []).map((a) => a && a.copy));
+if (/^n8n\/.+\.json$/.test(rel) && !copies.has(rel)) {
+  notes.push(`Focus Blueprint: the n8n export ${rel} is not listed in the project map (.blueprint/map.json, automations[].copy). Add the automation to the map.`);
+}
+if (rel === 'spec/prd.md' && Number(project.state.stage) >= 6) {
+  notes.push('Focus Blueprint: PRD changed after the screens map: run /focus-blueprint:change');
+}
+
 const mark = probeMark('PostToolUse');
 if (!notes.length && !mark) process.exit(0);
 

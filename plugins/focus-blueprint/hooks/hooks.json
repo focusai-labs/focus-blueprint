@@ -1,5 +1,5 @@
 {
-  "description": "Focus Blueprint: project state at session start, a short reminder on every prompt, a map check after edits, and two guards (commit on main, schema change without a migration file). Every hook stays silent outside a Blueprint project.",
+  "description": "Focus Blueprint: project state at session start, a short reminder on every prompt, a map check after edits, and guards (commit, merge and force push on main, push with a secret file, schema change without a migration file). Every hook stays silent outside a Blueprint project.",
   "hooks": {
     "SessionStart": [
       {
@@ -51,7 +51,7 @@
         ]
       },
       {
-        "matcher": "mcp__.*[Ss]upabase.*__apply_migration",
+        "matcher": "mcp__.*[Ss]upabase.*__(apply_migration|execute_sql)",
         "hooks": [
           {
             "type": "command",

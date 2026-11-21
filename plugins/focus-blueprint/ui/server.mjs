@@ -185,6 +185,8 @@ export async function startUi({ projectDir, once = false, idleMinutes = 30 } = {
     idleTimer = setTimeout(close, idleMinutes * 60 * 1000);
   };
 
+  const PLACEHOLDER_PAGE = '<!doctype html><html lang="he" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>הממשק המקומי</title></head><body><p>הממשק המקומי עובד</p></body></html>';
+
   const server = http.createServer(async (req, res) => {
     touch();
     // Only this machine, by its own name. A page on another site that points a
@@ -200,7 +202,7 @@ export async function startUi({ projectDir, once = false, idleMinutes = 30 } = {
 
     try {
       if (req.method === 'GET') {
-        if (route === '') return send(res, 200, fs.readFileSync(path.join(here, 'probe.html'), 'utf8'), 'text/html; charset=utf-8');
+        if (route === '') return send(res, 200, PLACEHOLDER_PAGE, 'text/html; charset=utf-8');
         if (PAGES.has(route)) return send(res, 200, fs.readFileSync(path.join(here, 'pages', `${route}.html`), 'utf8'), 'text/html; charset=utf-8');
         if (Object.hasOwn(STATIC, route)) {
           const file = path.join(here, 'pages', route);

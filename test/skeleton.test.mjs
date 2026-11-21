@@ -158,11 +158,11 @@ test('hooks.json points at scripts that exist, in exec form', () => {
   }
 });
 
-test('the stage table in the entry skill matches the stage data', () => {
+test('the entry skill reads the stage data, which lists the 15 stages', () => {
   const skill = fs.readFileSync(path.join(plugin, 'skills', 'blueprint', 'SKILL.md'), 'utf8');
   const stages = JSON.parse(fs.readFileSync(path.join(plugin, 'data', 'stages.json'), 'utf8'));
   assert.equal(stages.length, 15);
-  for (const s of stages) assert.ok(skill.includes(`| ${s.n} | ${s.chapter} | ${s.name} |`), `stage ${s.n}`);
+  assert.ok(skill.includes('stages.json'));
 });
 
 function request(url, { method = 'GET', headers = {}, body } = {}) {

@@ -1,40 +1,47 @@
 ---
 name: blueprint
-description: Entry command of Focus Blueprint, the idea-to-system process. Reads the project's state file and tells the user which stage the project is at and what comes next. Use when the user runs /blueprint or asks where the project stands in the Blueprint process.
+description: פקודת הכניסה של Focus Blueprint, התהליך מרעיון למערכת. בודקת שתנאי השימוש אושרו, אומרת באיזה שלב הפרויקט ומה הצעד הבא, ומנתבת שינוי באמצע הדרך למסלול השינוי. משתמשים בה כשכותבים /blueprint, או כששואלים איפה הפרויקט עומד.
+model: inherit
 ---
 
-# Focus Blueprint: entry command
+# פקודת הכניסה של Focus Blueprint
 
-This is the walking skeleton of the entry command. It proves one thing: a new conversation picks the project up from its files, not from an earlier conversation.
+בכל מקום שכתוב `bp`, מריצים `node "${CLAUDE_PLUGIN_ROOT}/scripts/bp.mjs"`.
 
-## What to do
+הקבצים בתיקייה הם מקור האמת, ולא מה שנאמר בשיחות קודמות.
 
-1. Read `.blueprint/state.json` in the project root with the Read tool. The file is the source of truth for the stage, whatever earlier messages said.
-2. If the file does not exist, tell the user in one sentence that this folder is not a Blueprint project yet, and stop. Do not create the file.
-3. If it exists, answer in Hebrew in three short lines:
-   - the chapter and the stage, as a number out of 15 with its name from the table below
-   - the status of the stage, from the `status` field
-   - the stage that comes next
-4. Do nothing else: no edits and no commands.
+## 1. תנאי השימוש, תמיד ראשונים
 
-Every line of the answer opens with a Hebrew word, so it reads right to left.
+1. מריצים `bp profile get`, וקוראים את הגרסה בקובץ `${CLAUDE_PLUGIN_ROOT}/data/terms/terms.json`.
+2. אם אין אישור בפרופיל, או שהגרסה שאושרה שונה, מציגים את `${CLAUDE_PLUGIN_ROOT}/TERMS.md` במלואו, ושואלים עם AskUserQuestion שאלה אחת עם שתי תשובות, "מאשר" ו"לא מאשר".
+3. על "מאשר" מריצים `bp accept-terms`. על כל תשובה אחרת עוצרים, ואומרים בשורה אחת ששום שלב לא רץ בלי אישור.
+4. לא מדלגים על הצעד הזה, גם כשהסטודנט ממהר.
 
-## The stages
+## 2. אין עדיין פרויקט בתיקייה
 
-| Stage | Chapter | Name |
-|---|---|---|
-| 1 | להבין | בדיקת חיבורים |
-| 2 | להבין | שפיכת הרעיון |
-| 3 | להבין | שאלון |
-| 4 | להבין | מסמך PRD ובחירת מסלול |
-| 5 | להבין | מפת מסכים |
-| 6 | לראות | כיוון עיצובי |
-| 7 | לראות | בניית ה-mockup |
-| 8 | לראות | הצגה לאדם אמיתי |
-| 9 | לבנות | סריקת מלאי |
-| 10 | לבנות | נתונים והרשאות |
-| 11 | לבנות | שלד חי |
-| 12 | לבנות | יכולת אחרי יכולת |
-| 13 | להשיק | רשימת השקה |
-| 14 | להשיק | סליקה |
-| 15 | להשיק | מסירה |
+כשאין `.blueprint/state.json` בתיקייה או מעליה, שואלים עם AskUserQuestion מה לעשות:
+
+- להתחיל כאן פרויקט חדש: מפעילים את `/focus-blueprint:stage-01-connect`.
+- להכניס את הכלי לפרויקט שכבר קיים: מפעילים את `/focus-blueprint:adopt`.
+- כלום בינתיים.
+
+## 3. יש פרויקט: איפה הוא עומד
+
+1. קוראים את `.blueprint/state.json` ואת `${CLAUDE_PLUGIN_ROOT}/data/stages.json`.
+2. עונים בעברית, בשלוש שורות קצרות:
+   - הפרק והשלב, כמספר מתוך חמישה עשר, עם השם שלו.
+   - המצב של השלב: עוד לא התחיל, בעבודה, גמור, תקוע או חסר מידע. כשיש סגירה שמורה, מצטטים את ההערה שלה.
+   - השלב שבא אחריו.
+3. אם יש דבר שמחכה לסטודנט, מוסיפים שורה לכל אחד: שאלות שנענו "לא יודע עדיין", הכרעות שעוד לא הוצגו לו, וכל מה שנעצר אחרי שלושה סבבי תיקון.
+4. אם `state.mode` הוא `final-project`, מוסיפים שורה עם ההתקדמות מול `${CLAUDE_PLUGIN_ROOT}/data/requirements/final-project.json`: כמה מהחלקים כבר מוכנים, מתוך כמה.
+
+## 4. מה עושים עכשיו
+
+- אם בהודעה של הסטודנט יש בקשה שמוסיפה או משנה משהו בהיקף, כמו מסך, שדה, יכולת או הרשאה, מפעילים את `/focus-blueprint:change`. שינוי לא נכנס ישר לקוד.
+- אחרת, מציעים לפתוח את ה-skill של השלב הנוכחי, לפי השדה `skill` בקובץ השלבים: `/focus-blueprint:<skill>`.
+- מזכירים בשורה אחת שכל שלב רץ בשיחה חדשה. הקבצים זוכרים את מה שהיה, והשיחה החדשה ממשיכה מהם.
+
+## כללים
+
+- כל שורה בתשובה פותחת במילה בעברית, כדי שתיקרא מימין לשמאל.
+- הפקודה הזאת לא עורכת קבצים, חוץ מאישור התנאים. את העבודה עושים ה-skills של השלבים.

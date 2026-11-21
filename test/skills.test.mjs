@@ -163,3 +163,31 @@ test('Hebrew lint passes on every skill, agent and TERMS body', { skip: lintSkip
   fs.rmSync(tmp, { recursive: true, force: true });
   assert.equal(failures.length, 0, failures.join('\n'));
 });
+
+// YAML plain scalars break on ": " and on some leading characters; a broken
+// frontmatter loads with empty metadata at runtime (found by `claude plugin validate`).
+test('frontmatter values are valid YAML plain scalars', () => {
+  const files = [];
+  if (fs.existsSync(skillsDir)) for (const d of fs.readdirSync(skillsDir)) {
+    const f = path.join(skillsDir, d, 'SKILL.md'); if (fs.existsSync(f)) files.push(f);
+  }
+  if (fs.existsSync(agentsDir)) for (const f of fs.readdirSync(agentsDir)) if (f.endsWith('.md')) files.push(path.join(agentsDir, f));
+  for (const f of files) {
+    const m = read(f).match(/^---\r?\n([\s\S]*?)\r?\n---/);
+    for (const line of m[1].split(/\r?\n/)) {
+      const k = line.match(/^([A-Za-z][\w-]*):\s*(.*)$/);
+      if (!k || !k[2]) continue;
+      const v = k[2];
+      if (/^["']/.test(v)) continue; // quoted scalars may hold anything
+      assert.ok(!/: /.test(v), `${path.relative(PLUGIN, f)}: "${k[1]}" holds ": ", quote it or rephrase`);
+      assert.ok(!/ #/.test(v), `${path.relative(PLUGIN, f)}: "${k[1]}" holds " #", which starts a YAML comment`);
+      assert.ok(!/^[*&!%@`\[\]{}>|#]/.test(v), `${path.relative(PLUGIN, f)}: "${k[1]}" starts with a YAML indicator`);
+    }
+  }
+});
+
+test('claude plugin validate passes when the CLI is available', (t) => {
+  const r = spawnSync('claude', ['plugin', 'validate', PLUGIN], { encoding: 'utf8', timeout: 60000 });
+  if (r.error || r.status === null) { t.skip('claude CLI not available'); return; }
+  assert.equal(r.status, 0, (r.stdout || '') + (r.stderr || ''));
+});

@@ -1,0 +1,156 @@
+{
+  "url": "file://<fixtures>/pass.html",
+  "viewport": {
+    "w": 390,
+    "h": 844,
+    "phone": true
+  },
+  "screen": "order-form",
+  "results": [
+    {
+      "id": "contrast-text",
+      "principle": "D7",
+      "pass": true,
+      "level": "pass",
+      "details": []
+    },
+    {
+      "id": "primary-count",
+      "principle": "D7",
+      "pass": true,
+      "level": "pass",
+      "details": []
+    },
+    {
+      "id": "target-size",
+      "principle": "D12",
+      "pass": true,
+      "level": "pass",
+      "details": []
+    },
+    {
+      "id": "tab-order",
+      "principle": "D15",
+      "pass": true,
+      "level": "skip",
+      "details": [
+        "desktop only"
+      ]
+    },
+    {
+      "id": "field-labels",
+      "principle": "D34",
+      "pass": true,
+      "level": "pass",
+      "details": []
+    },
+    {
+      "id": "typing-replaceable",
+      "principle": "D13,D39",
+      "pass": true,
+      "level": "pass",
+      "details": []
+    },
+    {
+      "id": "required-gate",
+      "principle": "D40",
+      "pass": true,
+      "level": "pass",
+      "details": []
+    },
+    {
+      "id": "inline-error-slot",
+      "principle": "D41",
+      "pass": true,
+      "level": "pass",
+      "details": []
+    },
+    {
+      "id": "destructive-adjacency",
+      "principle": "D43",
+      "pass": true,
+      "level": "pass",
+      "details": []
+    },
+    {
+      "id": "destructive-confirm",
+      "principle": "D47",
+      "pass": true,
+      "level": "pass",
+      "details": []
+    },
+    {
+      "id": "opt-in-prechecked",
+      "principle": "D46",
+      "pass": true,
+      "level": "pass",
+      "details": []
+    },
+    {
+      "id": "line-length",
+      "principle": "D4",
+      "pass": true,
+      "level": "skip",
+      "details": [
+        "desktop only"
+      ]
+    },
+    {
+      "id": "rtl-direction",
+      "principle": "D33",
+      "pass": true,
+      "level": "pass",
+      "details": [
+        "יש עברית בלי dir=rtl"
+      ]
+    },
+    {
+      "id": "anchor-home",
+      "principle": "S13",
+      "pass": true,
+      "level": "pass",
+      "details": [
+        "אין [data-anchor] גלוי בעמוד pass.html"
+      ]
+    },
+    {
+      "id": "feedback-states",
+      "principle": "D17",
+      "pass": true,
+      "level": "skip",
+      "details": [
+        "desktop only"
+      ]
+    },
+    {
+      "id": "loading-state",
+      "principle": "D18,D19",
+      "pass": true,
+      "level": "pass",
+      "details": []
+    },
+    {
+      "id": "color-alone",
+      "principle": "D6",
+      "pass": true,
+      "level": "pass",
+      "details": []
+    },
+    {
+      "id": "persist-input",
+      "principle": "S14",
+      "pass": true,
+      "level": "pass",
+      "details": [
+        "שדות קלט בלי שמירת טיוטה (localStorage או [data-persist])"
+      ]
+    },
+    {
+      "id": "motion",
+      "principle": "D3",
+      "pass": true,
+      "level": "pass",
+      "details": []
+    }
+  ]
+}

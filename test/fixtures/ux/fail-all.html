@@ -1,0 +1,72 @@
+<!doctype html>
+<!-- rtl-direction: Hebrew content, no dir attribute on html or body -->
+<html lang="he">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="blueprint:screen" content="everything-wrong">
+<title>הכול שבור</title>
+<style>
+  body { font: 16px/1.6 sans-serif; color: #1a1a1a; background: #fff; margin: 0; padding: 16px; }
+  /* tab-order: focus ring removed and no :focus / :focus-visible rule */
+  button, input, textarea { outline: none; font: inherit; }
+  /* feedback-states: no hover or active rule anywhere */
+  /* contrast-text: light grey on white */
+  .faint { color: #bbbbbb; }
+  /* target-size (phone): 16px buttons side by side */
+  .tiny { width: 16px; height: 16px; padding: 0; margin: 0 2px; }
+  .status-dot { display: inline-block; width: 14px; height: 14px; background: #c00; border-radius: 50%; }
+  /* motion: infinite animation outside a loader, and no prefers-reduced-motion rule */
+  @keyframes pulse { 50% { opacity: .3; } }
+  .pulse { animation: pulse 1s infinite; }
+</style>
+</head>
+<body>
+<!-- anchor-home: no [data-anchor] link on this page (it is not index.html) -->
+<main>
+  <h1>הזמנה</h1>
+  <p class="faint">טקסט בהיר מאוד על רקע לבן שקשה לקרוא.</p> <!-- contrast-text -->
+
+  <!-- line-length: a long paragraph across the full desktop width -->
+  <p>זהו פסקה ארוכה מאוד שנמשכת לרוחב כל המסך בלי שום הגבלת רוחב, ולכן השורה בה עוברת הרבה יותר מתשעים תווים בשורה אחת. קשה לעקוב אחרי שורות כאלה, והעין מאבדת את המקום בקפיצה לשורה הבאה. הוסיפו עוד טקסט כדי לעבור את מאה ועשרים התווים.</p>
+
+  <!-- tab-order: clickable div with no tabindex, and a real button taken out of the tab order -->
+  <div onclick="void 0" style="padding:12px;border:1px solid #888">לחיצה על div</div>
+  <button type="button" tabindex="-1" style="min-height:44px">כפתור מחוץ לסדר</button>
+
+  <!-- target-size (phone): three 16px buttons packed together -->
+  <p><button type="button" class="tiny" aria-label="אחד"></button><button type="button" class="tiny" aria-label="שניים"></button><button type="button" class="tiny" aria-label="שלושה"></button></p>
+
+  <form id="order" novalidate> <!-- required-gate: novalidate and an enabled submit; loading-state: no loading marker -->
+    <!-- field-labels: input with no label -->
+    <input name="nolabel" type="text">
+    <!-- typing-replaceable: free text for a date -->
+    <label for="birth-date">תאריך לידה</label>
+    <input id="birth-date" name="birth-date" type="text" placeholder="תאריך">
+    <!-- inline-error-slot: required with no aria-describedby -->
+    <label for="nm">שם</label>
+    <input id="nm" name="nm" type="text" required>
+    <!-- persist-input: textarea and 3+ inputs, no localStorage and no data-persist -->
+    <label for="msg">הודעה</label>
+    <textarea id="msg" name="msg"></textarea>
+    <!-- opt-in-prechecked -->
+    <label><input type="checkbox" checked> מסכים לקבל דיוור</label>
+
+    <!-- primary-count: two primary actions in one main -->
+    <button type="submit" data-primary style="min-height:44px">שלח</button>
+    <!-- destructive-adjacency + destructive-confirm: delete next to submit, no data-confirm -->
+    <button type="button" style="min-height:44px">מחק הכול</button>
+    <button type="button" data-primary style="min-height:44px">שלח ועוד</button>
+  </form>
+
+  <!-- loading-state: async region with no loading marker -->
+  <div data-async>תוצאות</div>
+
+  <!-- color-alone: a coloured dot with no text or icon -->
+  <p><span class="status-dot"></span></p>
+
+  <!-- motion -->
+  <p class="pulse">מהבהב לנצח</p>
+</main>
+</body>
+</html>

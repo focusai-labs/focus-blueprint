@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="blueprint:screen" content="order-form">
+<meta name="blueprint:persona" content="shop-owner">
+<title>טופס הזמנה</title>
+<style>
+  body { font: 16px/1.6 sans-serif; color: #1a1a1a; background: #ffffff; margin: 0; padding: 16px; }
+  main { max-width: 640px; margin: 0 auto; }
+  p { max-width: 60ch; }
+  a, button, input, select, textarea { font: inherit; }
+  a[data-anchor] { display: inline-block; min-height: 44px; min-width: 44px; padding: 10px 8px; color: #0b3d91; }
+  label { display: block; margin-top: 12px; }
+  input:not([type=checkbox]), select, textarea { display: block; width: 100%; box-sizing: border-box; min-height: 44px; margin-top: 4px; }
+  input[type=checkbox] { width: 24px; height: 24px; vertical-align: middle; }
+  button { min-height: 44px; min-width: 44px; padding: 8px 16px; cursor: pointer; }
+  button:hover { background: #e8eefc; }
+  button:active { background: #d3defa; }
+  a:hover { text-decoration: underline; }
+  :focus-visible { outline: 3px solid #0b3d91; outline-offset: 2px; }
+  [data-primary] { background: #0b3d91; color: #ffffff; border: 0; }
+  button:disabled { opacity: 1; background: #595959; color: #ffffff; }
+  small.error { display: block; color: #8a1c1c; }
+  small.error:empty { display: none; }
+  .danger-zone { margin-top: 80px; }
+  .spinner { display: inline-block; width: 24px; height: 24px; border: 3px solid #0b3d91; border-top-color: transparent; border-radius: 50%; animation: spin 1s linear infinite; }
+  [data-loading][hidden] { display: none; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  @media (prefers-reduced-motion: reduce) { .spinner { animation: none; } }
+</style>
+</head>
+<body>
+<header><a data-anchor href="index.html">חזרה לדף הבית</a></header>
+<main>
+  <h1>הזמנה חדשה</h1>
+  <p>מלאו את הפרטים והזמנה תישמר ברשימה. אפשר לחזור ולערוך אותה בכל רגע.</p>
+  <form id="order" data-persist>
+    <label for="full-name">שם מלא</label>
+    <input id="full-name" name="full-name" type="text" required aria-describedby="full-name-error">
+    <small class="error" id="full-name-error"></small>
+
+    <label for="pickup">תאריך איסוף</label>
+    <input id="pickup" name="pickup" type="date" required aria-describedby="pickup-error">
+    <small class="error" id="pickup-error"></small>
+
+    <label for="tel">טלפון</label>
+    <input id="tel" name="tel" type="tel" required aria-describedby="tel-error">
+    <small class="error" id="tel-error"></small>
+
+    <label for="mail">מייל</label>
+    <input id="mail" name="mail" type="email">
+
+    <label for="qty">כמות</label>
+    <input id="qty" name="qty" type="number" min="1">
+
+    <label for="city">עיר</label>
+    <select id="city" name="city"><option>תל אביב</option><option>חיפה</option></select>
+
+    <label for="notes">הערות</label>
+    <textarea id="notes" name="notes" rows="3"></textarea>
+
+    <label><input type="checkbox" name="updates"> אשמח לקבל עדכונים</label>
+
+    <p><button type="submit" data-primary id="save" disabled>שמירת ההזמנה</button>
+    <span data-loading hidden><span class="spinner" aria-hidden="true"></span> שומר</span></p>
+  </form>
+
+  <section class="danger-zone">
+    <h2>אזור רגיש</h2>
+    <button type="button" id="del" data-confirm="ההזמנה תימחק לצמיתות">מחק הזמנה</button>
+  </section>
+
+  <dialog id="dlg" aria-labelledby="dlg-title">
+    <h2 id="dlg-title">למחוק את ההזמנה?</h2>
+    <p>ההזמנה תימחק לצמיתות.</p>
+    <form method="dialog"><button data-primary value="keep">השאר את ההזמנה</button> <button value="del">מחק</button></form>
+  </dialog>
+</main>
+<script>
+  const form = document.getElementById('order');
+  const save = document.getElementById('save');
+  const req = [...form.querySelectorAll('[required]')];
+  const check = () => { save.disabled = !req.every((f) => f.value.trim()); };
+  try { const d = JSON.parse(localStorage.getItem('order-draft') || '{}'); Object.keys(d).forEach((k) => { if (form.elements[k] && form.elements[k].type !== 'checkbox') form.elements[k].value = d[k]; }); } catch (e) {}
+  form.addEventListener('input', () => { check(); try { localStorage.setItem('order-draft', JSON.stringify(Object.fromEntries(new FormData(form)))); } catch (e) {} });
+  check();
+  document.getElementById('del').addEventListener('click', () => document.getElementById('dlg').showModal());
+</script>
+</body>
+</html>

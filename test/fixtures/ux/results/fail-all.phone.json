@@ -1,0 +1,187 @@
+{
+  "url": "file://<fixtures>/fail-all.html",
+  "viewport": {
+    "w": 390,
+    "h": 844,
+    "phone": true
+  },
+  "screen": "everything-wrong",
+  "results": [
+    {
+      "id": "contrast-text",
+      "principle": "D7",
+      "pass": false,
+      "level": "fail",
+      "details": [
+        "p.faint \"טקסט בהיר מאוד על רקע לבן שקשה לקרוא.\" יחס 1.92 (נדרש 4.5)"
+      ]
+    },
+    {
+      "id": "primary-count",
+      "principle": "D7",
+      "pass": false,
+      "level": "fail",
+      "details": [
+        "main 1: 2 כפתורים ראשיים: button \"שלח\" | button \"שלח ועוד\""
+      ]
+    },
+    {
+      "id": "target-size",
+      "principle": "D12",
+      "pass": false,
+      "level": "fail",
+      "details": [
+        "button.tiny \"אחד\" 16x16 קרוב ל-button.tiny \"שניים\"",
+        "button.tiny \"שניים\" 16x16 קרוב ל-button.tiny \"אחד\"",
+        "button.tiny \"שלושה\" 16x16 קרוב ל-button.tiny \"שניים\""
+      ]
+    },
+    {
+      "id": "tab-order",
+      "principle": "D15",
+      "pass": true,
+      "level": "skip",
+      "details": [
+        "desktop only"
+      ]
+    },
+    {
+      "id": "field-labels",
+      "principle": "D34",
+      "pass": false,
+      "level": "fail",
+      "details": [
+        "input \"\""
+      ]
+    },
+    {
+      "id": "typing-replaceable",
+      "principle": "D13,D39",
+      "pass": false,
+      "level": "warn",
+      "details": [
+        "input#birth-date \"\""
+      ]
+    },
+    {
+      "id": "required-gate",
+      "principle": "D40",
+      "pass": false,
+      "level": "warn",
+      "details": [
+        "טופס order: novalidate וכפתור שליחה פעיל"
+      ]
+    },
+    {
+      "id": "inline-error-slot",
+      "principle": "D41",
+      "pass": false,
+      "level": "warn",
+      "details": [
+        "input#nm \"\""
+      ]
+    },
+    {
+      "id": "destructive-adjacency",
+      "principle": "D43",
+      "pass": false,
+      "level": "fail",
+      "details": [
+        "button \"מחק הכול\" צמוד ל-button \"שלח\"",
+        "button \"מחק הכול\" צמוד ל-button \"שלח ועוד\""
+      ]
+    },
+    {
+      "id": "destructive-confirm",
+      "principle": "D47",
+      "pass": false,
+      "level": "fail",
+      "details": [
+        "button \"מחק הכול\""
+      ]
+    },
+    {
+      "id": "opt-in-prechecked",
+      "principle": "D46",
+      "pass": false,
+      "level": "fail",
+      "details": [
+        "input \"on\""
+      ]
+    },
+    {
+      "id": "line-length",
+      "principle": "D4",
+      "pass": true,
+      "level": "skip",
+      "details": [
+        "desktop only"
+      ]
+    },
+    {
+      "id": "rtl-direction",
+      "principle": "D33",
+      "pass": false,
+      "level": "fail",
+      "details": [
+        "יש עברית בלי dir=rtl"
+      ]
+    },
+    {
+      "id": "anchor-home",
+      "principle": "S13",
+      "pass": false,
+      "level": "fail",
+      "details": [
+        "אין [data-anchor] גלוי בעמוד fail-all.html"
+      ]
+    },
+    {
+      "id": "feedback-states",
+      "principle": "D17",
+      "pass": true,
+      "level": "skip",
+      "details": [
+        "desktop only"
+      ]
+    },
+    {
+      "id": "loading-state",
+      "principle": "D18,D19",
+      "pass": false,
+      "level": "warn",
+      "details": [
+        "form#order \"תאריך לידה  שם  הודעה   מסכים לקבל דיוור\"",
+        "div \"תוצאות\""
+      ]
+    },
+    {
+      "id": "color-alone",
+      "principle": "D6",
+      "pass": false,
+      "level": "fail",
+      "details": [
+        "span.status-dot \"\""
+      ]
+    },
+    {
+      "id": "persist-input",
+      "principle": "S14",
+      "pass": false,
+      "level": "warn",
+      "details": [
+        "שדות קלט בלי שמירת טיוטה (localStorage או [data-persist])"
+      ]
+    },
+    {
+      "id": "motion",
+      "principle": "D3",
+      "pass": false,
+      "level": "warn",
+      "details": [
+        "אנימציה אינסופית: p.pulse \"מהבהב לנצח\"",
+        "יש אנימציה בלי כלל prefers-reduced-motion"
+      ]
+    }
+  ]
+}

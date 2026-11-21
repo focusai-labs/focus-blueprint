@@ -195,7 +195,7 @@ test('rule 10b: review', () => {
 test('rule 11: anti-goals warning from stage 5', () => {
   const r = run((c) => { c.files['spec/prd.md'] = 'x'; });
   assert.ok(hasW(r, 11)); assert.equal(r.ok, true);
-  assert.equal(r.warnings.find((w) => w.rule === '11').message, 'ב-PRD עוד אין אנטי מטרה, כלומר מה ייחשב כישלון גם אם הכל עובד.');
+  assert.equal(r.warnings.find((w) => w.rule === '11').message, 'ב-PRD עוד לא כתוב מה ייחשב כישלון גם אם הכל עובד.');
   assert.ok(!hasW(run((c) => { c.state.stage = 4; c.files['spec/prd.md'] = 'x'; }), 11));
 });
 test('rule 12: builder check from stage 6', () => {

@@ -18,7 +18,7 @@ disable-model-invocation: true
 - בקובץ המצב `.blueprint/state.json` בודקים שהשלב הנוכחי הוא 5. אם לא, מפנים את הסטודנט ל-`/blueprint`.
 - `spec/users.md`, `spec/prd.md`, `spec/decisions.md`.
 - העקרונות שמסומנים לשלב 5 בקובץ `${CLAUDE_PLUGIN_ROOT}/data/ux/principles.json`, כלומר S1 עד S14 ו-D36 עד D38.
-- ההנחיה של בודק הבונה בקובץ `${CLAUDE_PLUGIN_ROOT}/agents/builder-check.md`, בשביל הצעד האחרון.
+- ההנחיה לבדיקה בעיני המפתח בקובץ `${CLAUDE_PLUGIN_ROOT}/agents/builder-check.md`, בשביל הצעד האחרון.
 
 ## מה עושים
 
@@ -32,12 +32,12 @@ disable-model-invocation: true
    - במסך הבית, שני הדברים שהכי חשובים לכל פרסונה, במקום שרואים בלי לגלול (S7).
 4. רושמים כל מסך במפה עם `bp map add screen '{"file":"mockup/<id>.html","name":"<שם>","persona":"<id>","journeyStage":"<שלב>","nav":"fixed|free"}'`.
 5. מריצים את שתי הבדיקות, בסקריפט קצר עם `node -e` שקורא את `.blueprint/map.json` ואת `spec/journeys.md`. הסקריפט בודק שאין שלב במסע בלי מסך, ושאין מסך שאף שלב לא מוביל אליו. כל ממצא מתקנים במפה ובמסמך, ומריצים שוב עד ששתי הבדיקות עוברות.
-6. מריצים סבב אחד של בודק הבונה. שולחים סוכן חדש, `focus-blueprint:builder-check`, ואם אי אפשר לשלוח אותו בשם הזה, שולחים `general-purpose` עם ההנחיה מהקובץ `agents/builder-check.md`. הסוכן מקבל רק נתיבים: `spec/prd.md`, `spec/users.md`, `spec/journeys.md`, `spec/screens-map.md`, `.blueprint/map.json`. הוא מחזיר עד עשר שאלות, וליד כל אחת מה ישתנה אם התשובה תהיה הפוכה, ובאיזה קובץ או באיזו יכולת.
+6. מריצים סבב אחד של הבדיקה בעיני המפתח. שולחים סוכן חדש, `focus-blueprint:builder-check`, ואם אי אפשר לשלוח אותו בשם הזה, שולחים `general-purpose` עם ההנחיה מהקובץ `agents/builder-check.md`. הסוכן מקבל רק נתיבים: `spec/prd.md`, `spec/users.md`, `spec/journeys.md`, `spec/screens-map.md`, `.blueprint/map.json`. הוא מחזיר עד עשר שאלות, וליד כל אחת מה ישתנה אם התשובה תהיה הפוכה, ובאיזה קובץ או באיזו יכולת.
 7. ממיינים כל שאלה לאחת משלוש רשימות, וכותבים את `spec/builder-check.md`:
    - `<!-- bc:answered -->`: שאלות שהאפיון כבר עונה עליהן. ליד כל אחת כותבים את התשובה ואיפה היא כתובה.
    - `<!-- bc:ruled -->`: שאלות קטנות ש-Claude מכריע בעצמו. כל הכרעה כזאת רושמים עם `bp ruling add decision="…" why="…" price="…" stage=5`.
    - `<!-- bc:asked-student -->`: רק שאלות שהסטודנט צריך להחליט עליהן. שואלים אותו בשיחה, ורושמים את התשובה ליד השאלה.
-8. כשתשובה משנה משהו, מעדכנים את ה-PRD, את קובץ המשתמשים או את המפה. לבודק הבונה אין סבב שני.
+8. כשתשובה משנה משהו, מעדכנים את ה-PRD, את קובץ המשתמשים או את המפה. לבדיקה בעיני המפתח אין סבב שני.
 
 ## מה חייב להיות נכון בסוף (ההוכחה)
 
@@ -54,7 +54,7 @@ disable-model-invocation: true
 ## סגירה
 
 1. מריצים את בדיקות ההוכחה ושומרים את הפלט שהן החזירו בפועל.
-2. מציגים לסטודנט את ההכרעות של השלב שעוד לא ראה, כולל ההכרעות מהסבב של בודק הבונה, עם `bp ruling list --unreported --stage 5`, ואחר כך מריצים `bp ruling report --stage 5`.
+2. מציגים לסטודנט את ההכרעות של השלב שעוד לא ראה, כולל ההכרעות מהבדיקה בעיני המפתח, עם `bp ruling list --unreported --stage 5`, ואחר כך מריצים `bp ruling report --stage 5`.
 3. סוגרים את השלב עם `bp stage done 5 --status <done|done_with_concerns|blocked|needs_context> --note "<מה פתוח>" --proof "<הפלט>"`.
 4. עושים commit בענף `stage-05` עם הודעה בעברית, פותחים PR וממזגים אחרי שהבדיקה עוברת.
 5. כותבים את `.blueprint/last-session.md`.

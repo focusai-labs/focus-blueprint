@@ -188,7 +188,7 @@ const rules = [
     const joined = body ? body.join(' ').trim() : '';
     const sentences = joined.split(/[.!?]+(?:\s|$)/).map((s) => s.trim()).filter(Boolean);
     if (!joined || joined.includes('<<fill>>') || sentences.length < 1 || sentences.length > 2) {
-      warn('11', 'spec/prd.md', 'ב-PRD עוד אין אנטי מטרה, כלומר מה ייחשב כישלון גם אם הכל עובד.');
+      warn('11', 'spec/prd.md', 'ב-PRD עוד לא כתוב מה ייחשב כישלון גם אם הכל עובד.');
     }
   } },
   { id: '12', run({ stage, ctx, err }) {

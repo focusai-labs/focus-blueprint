@@ -5,7 +5,7 @@ model: opus
 disable-model-invocation: true
 ---
 
-# שלב 02: שפיכת הרעיון
+# שלב 02: תיאור הרעיון
 
 בכל מקום שכתוב `bp`, מריצים `node "${CLAUDE_PLUGIN_ROOT}/scripts/bp.mjs"`.
 

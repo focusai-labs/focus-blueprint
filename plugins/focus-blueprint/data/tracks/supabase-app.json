@@ -39,7 +39,7 @@
     {
       "id": "sb-template",
       "stage": 11,
-      "intent": "השלד החי נבנה מהתבנית with-supabase, שבה ההתחברות והעוגיות כבר מוכנות, ואליו מכניסים את המסכים מהמפה",
+      "intent": "השלד באוויר נבנה מהתבנית with-supabase, שבה ההתחברות והעוגיות כבר מוכנות, ואליו מכניסים את המסכים מהמפה",
       "docs": ["https://supabase.com/docs/guides/getting-started/quickstarts/nextjs"],
       "safety": "לא משנים את תהליך ההתחברות של התבנית לפני שהוא עובד כמו שהוא, ולא מעלים את קובץ ה-env",
       "proof": "the dev server starts and a test user signs in and reaches a protected page"

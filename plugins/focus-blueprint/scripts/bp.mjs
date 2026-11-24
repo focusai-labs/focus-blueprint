@@ -10,6 +10,8 @@ import { findProject, profileDir } from '../hooks/lib.mjs';
 import { installGitHook } from './install-git-hook.mjs';
 import { syncProjectFiles } from './project-files.mjs';
 import { impact, migrateMapInPlace, filesHash, NODE_TYPES } from './blueprint-model/map-model.mjs';
+import { questionsFor, ROUND_FILES } from '../ui/lib.mjs';
+import { saveAnswer } from '../ui/server.mjs';
 import { renderDoc } from './render-doc.mjs';
 import { replaceBlocks, stampDocument, extractBlocks } from './blueprint-model/render-blocks.mjs';
 
@@ -419,6 +421,20 @@ export const commands = {
     doc.savedAt = nowIso();
     writeJsonAtomic(file, doc); ctx.touch();
     return doc.answers[qid];
+  },
+
+  // answer set <round> <id> --value "<text>": Claude's own answer to a question, saved the way the UI server saves one.
+  answer(args, ctx) {
+    const [sub, round, qid] = args;
+    if (sub !== 'set' || !round || !qid) fail('usage: answer set <round> <id> --value "<text>"');
+    if (!Object.hasOwn(ROUND_FILES, round)) fail(`round must be one of ${Object.keys(ROUND_FILES).join(', ')}`);
+    const value = ctx.flags.value;
+    if (typeof value !== 'string' || !value.trim()) fail('answer set needs --value "<text>"');
+    const ids = (questionsFor(ctx.resolve(), round, { includeClaude: true }) || []).map((q) => q.id);
+    if (!ids.includes(qid)) fail(`question ${qid} is not in round ${round}${round === 'c' ? ' (round C ids are per built screen, such as c-click-<screen>)' : ''}`);
+    const r = saveAnswer(ctx.resolve(), { name: ROUND_FILES[round], id: qid, value, decidedBy: 'claude' });
+    if (r.status !== 200) fail(`answer not saved: ${JSON.stringify(r.body)}`);
+    return { round, id: qid, value, decidedBy: 'claude' };
   },
 
   junction(args, ctx) {

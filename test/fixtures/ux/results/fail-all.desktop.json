@@ -13,7 +13,7 @@
       "pass": false,
       "level": "fail",
       "details": [
-        "p.faint \"טקסט בהיר מאוד על רקע לבן שקשה לקרוא.\" יחס 1.92 (נדרש 4.5)"
+        "יחס ניגודיות 1.92 (נדרש 4.5) ב-p.faint \"טקסט בהיר מאוד על רקע לבן שקשה לקרוא.\""
       ]
     },
     {
@@ -22,7 +22,7 @@
       "pass": false,
       "level": "fail",
       "details": [
-        "main 1: 2 כפתורים ראשיים: button \"שלח\" | button \"שלח ועוד\""
+        "ב-main מספר 1 יש 2 כפתורים ראשיים: button \"שלח\" | button \"שלח ועוד\""
       ]
     },
     {
@@ -40,8 +40,8 @@
       "pass": false,
       "level": "fail",
       "details": [
-        "tabindex=-1 על button \"כפתור מחוץ לסדר\"",
-        "לחיץ בלי tabindex: div \"לחיצה על div\"",
+        "יש tabindex=-1 על button \"כפתור מחוץ לסדר\"",
+        "רכיב לחיץ בלי tabindex: div \"לחיצה על div\"",
         "אין כלל :focus או :focus-visible"
       ]
     },
@@ -69,7 +69,7 @@
       "pass": false,
       "level": "warn",
       "details": [
-        "טופס order: novalidate וכפתור שליחה פעיל"
+        "בטופס order יש novalidate, וכפתור השליחה פעיל"
       ]
     },
     {
@@ -87,7 +87,7 @@
       "pass": false,
       "level": "fail",
       "details": [
-        "button \"מחק הכול\" צמוד ל-button \"שלח\""
+        "הפעולה ההרסנית button \"מחק הכול\" צמודה ל-button \"שלח\""
       ]
     },
     {
@@ -114,7 +114,7 @@
       "pass": false,
       "level": "warn",
       "details": [
-        "p \"זהו פסקה ארוכה מאוד שנמשכת לרוחב כל המסך\" ~156 תווים בשורה"
+        "בערך 156 תווים בשורה ב-p \"זהו פסקה ארוכה מאוד שנמשכת לרוחב כל המסך\""
       ]
     },
     {
@@ -178,9 +178,16 @@
       "pass": false,
       "level": "warn",
       "details": [
-        "אנימציה אינסופית: p.pulse \"מהבהב לנצח\"",
+        "אנימציה שרצה בלי סוף: p.pulse \"מהבהב לנצח\"",
         "יש אנימציה בלי כלל prefers-reduced-motion"
       ]
+    },
+    {
+      "id": "desktop-width",
+      "principle": "S5",
+      "pass": true,
+      "level": "pass",
+      "details": []
     }
   ]
 }

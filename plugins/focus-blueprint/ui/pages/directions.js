@@ -66,7 +66,9 @@
       const a = saved.answers && saved.answers[`screen:${s.key}`];
       if (a && Number.isInteger(a.value) && dirs.some((d) => d.n === a.value && d.screens.some((x) => x.key === s.key))) choices[s.key] = a.value;
     }
-    let mode = 'phone';
+    let override = null; // the switch: null means each screen row keeps its own device
+    const rowMode = (s) => override || (s.device === 'desktop' ? 'desktop' : 'phone');
+    const rows = new Map(); // key -> row element
     const cells = new Map(); // `${key}:${n}` -> { box, pick }
 
     // ---------------------------------------------------------------- the enlarged view
@@ -84,7 +86,7 @@
     dlg.addEventListener('close', () => { dlgFrame.removeAttribute('src'); if (opener && opener.isConnected) opener.focus(); });
     function enlarge(d, s, button) {
       opener = button;
-      const w = DESIGN[mode].w;
+      const w = DESIGN[rowMode(s)].w;
       dlg.style.setProperty('--bw', `${w + 32}px`);
       dlg.style.setProperty('--bwi', String(w));
       const name = d.name || t('directions.directionN', { n: d.n });
@@ -113,6 +115,8 @@
 
     for (const s of screens) {
       const row = h('section', { class: 'shot-row', 'aria-labelledby': `cap-${s.key}` }, h('h3', { class: 'cap', id: `cap-${s.key}` }, s.caption));
+      row.dataset.mode = rowMode(s);
+      rows.set(s.key, row);
       for (const d of dirs) {
         const own = d.screens.find((x) => x.key === s.key);
         if (!own) { row.append(h('div', { class: 'cellbox' }, h('div', { class: 'shot none' }, '—'))); continue; }
@@ -179,21 +183,26 @@
 
     // ---------------------------------------------------------------- phone or desktop, and the scale
     const modeEl = $('#mode');
-    const modeButtons = ['phone', 'desktop'].map((m) => h('button', { type: 'button', 'aria-pressed': String(m === mode), onclick: () => setMode(m) }, t(`directions.${m}`)));
+    const MODES = ['phone', 'desktop'];
+    const modeButtons = MODES.map((m) => h('button', { type: 'button', 'aria-pressed': 'false', onclick: () => setMode(override === m ? null : m) }, t(`directions.${m}`)));
     modeEl.append(...modeButtons);
     function fit() {
-      const probe = board.querySelector('.shot:not(.none)');
-      if (!probe) return;
-      const width = probe.clientWidth;
-      if (width > 0) board.style.setProperty('--s', String(Math.min(1, width / DESIGN[mode].w)));
+      for (const s of screens) {
+        const row = rows.get(s.key);
+        const probe = row && row.querySelector('.shot:not(.none)');
+        if (!probe) continue;
+        const width = probe.clientWidth;
+        if (width > 0) row.style.setProperty('--s', String(Math.min(1, width / DESIGN[rowMode(s)].w)));
+      }
     }
     function setMode(m) {
-      mode = m;
-      board.dataset.mode = m;
-      modeButtons.forEach((b, i) => b.setAttribute('aria-pressed', String(['phone', 'desktop'][i] === m)));
+      override = m;
+      board.dataset.mode = m || 'auto';
+      for (const s of screens) rows.get(s.key).dataset.mode = rowMode(s);
+      modeButtons.forEach((b, i) => b.setAttribute('aria-pressed', String(MODES[i] === m)));
       fit();
     }
-    board.dataset.mode = mode;
+    board.dataset.mode = 'auto';
     new ResizeObserver(fit).observe(board);
     fit();
   }

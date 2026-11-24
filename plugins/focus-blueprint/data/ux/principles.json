@@ -333,7 +333,7 @@
     5,
     7
    ],
-   "check": "review"
+   "check": "auto:desktop-width"
   },
   {
    "id": "S6",

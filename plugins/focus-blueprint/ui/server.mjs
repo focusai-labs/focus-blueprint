@@ -252,7 +252,7 @@ function saveDirectionAnswer(projectDir, data) {
 }
 
 /** Merge one answer into its file. Returns { status, body }. */
-function saveAnswer(projectDir, data) {
+export function saveAnswer(projectDir, data) {
   const name = String(data.name || '');
   if (!NAME.test(name)) return { status: 400, body: { error: 'bad name' } };
   if (name === 'directions') return saveDirectionAnswer(projectDir, data);
@@ -279,7 +279,8 @@ function saveAnswer(projectDir, data) {
   } else if (data.pending === true) {
     doc.answers[id] = { value: null, pending: true, decidedBy: null, at: now };
   } else if (data.decidedBy === 'claude') {
-    doc.answers[id] = { value: null, decidedBy: 'claude', at: now };
+    // Claude's own answer: with a value it is recorded as written, without one it only marks the question as handled.
+    doc.answers[id] = { value: 'value' in data ? data.value : null, decidedBy: 'claude', at: now };
   } else if ('value' in data) {
     // A new value replaces the entry, so a prefill loses its "from the idea" mark.
     const entry = { value: data.value, decidedBy: 'user', at: now };

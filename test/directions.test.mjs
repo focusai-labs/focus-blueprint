@@ -23,7 +23,7 @@ const withMarkers = (name, move, cls) => `<!doctype html><html lang="he" dir="rt
 <figure class="phone"><figcaption>x</figcaption><div class="viewport"><main class="screen walker" data-caption="הטיולים &amp; עוד"><h1>שלום</h1><img src="../design/assets/photos/p.jpg"></main></div></figure>
 <!-- /screen:walker -->
 <!-- screen:owner -->
-<main class="screen owner"><h1>בעלים</h1></main>
+<main class="screen owner" data-device="desktop"><h1>בעלים</h1></main>
 <!-- /screen:owner -->
 </div></div></body></html>`;
 const noMarkers = `<!doctype html><html lang="he" dir="rtl">${HEAD('כיוון בלי סימונים')}<body>${SYMBOLS}<main class="screen"><h1>מסך יחיד</h1></main></body></html>`;
@@ -83,10 +83,11 @@ test('parsing: directions, names, captions, with and without markers', () => {
   assert.deepEqual(sum.directions.map((d) => d.n), [1, 2, 3]);
   assert.equal(sum.directions[0].name, 'המסלול');
   assert.equal(sum.directions[0].move, 'רעיון ראשון');
-  assert.deepEqual(sum.directions[0].screens, [{ key: 'walker', caption: 'הטיולים & עוד' }, { key: 'owner', caption: 'owner' }], 'a missing data-caption falls back to the key');
-  assert.deepEqual(sum.directions[2].screens, [{ key: 'main', caption: 'המסך המרכזי' }], 'no markers: the whole body is one screen');
+  assert.deepEqual(sum.directions[0].screens, [{ key: 'walker', caption: 'הטיולים & עוד', device: 'phone' }, { key: 'owner', caption: 'owner', device: 'desktop' }], 'a missing data-caption falls back to the key');
+  assert.deepEqual(sum.directions[2].screens, [{ key: 'main', caption: 'המסך המרכזי', device: 'phone' }], 'no markers: the whole body is one screen');
   assert.equal(sum.directions[2].name, 'כיוון בלי סימונים', 'the title names a direction without a heading');
   assert.deepEqual(sum.screens.map((s) => s.key), ['walker', 'owner', 'main']);
+  assert.deepEqual(sum.screens.map((s) => s.device), ['phone', 'desktop', 'phone'], 'data-device on the main tag, phone by default');
   // A missing direction file is skipped, not an error.
   fs.rmSync(path.join(dir, 'mockup', '_direction-2.html'));
   assert.deepEqual(lib.directionsSummary(dir).directions.map((d) => d.n), [1, 3]);
@@ -258,4 +259,10 @@ test('the catalog is gone and nothing refers to it', () => {
     const q = b.find((x) => x.id === id);
     for (const o of q.options) assert.match(o.hint, /^מתאים \S/, `${id}/${o.v} has a hint`);
   }
+});
+
+test('the page starts each screen row at its own device and the switch overrides every row', () => {
+  const src = fs.readFileSync(new URL('../plugins/focus-blueprint/ui/pages/directions.js', import.meta.url), 'utf8');
+  assert.match(src, /const rowMode = \(s\) => override \|\| \(s\.device === 'desktop' \? 'desktop' : 'phone'\)/);
+  assert.match(src, /row\.dataset\.mode = rowMode\(s\)/);
 });

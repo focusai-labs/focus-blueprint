@@ -15,8 +15,9 @@ const viewports = { desktop: { width: 1280, height: 800 }, phone: { width: 390, 
 mkdirSync(join(here, 'results'), { recursive: true });
 
 const browser = await chromium.launch();
-for (const name of ['pass', 'fail-all']) {
+for (const name of ['pass', 'fail-all', 'width-pass', 'width-fail']) {
   for (const [vp, viewport] of Object.entries(viewports)) {
+    if (name.startsWith('width-') && vp !== 'desktop') continue;
     const ctx = await browser.newContext({ viewport });
     const page = await ctx.newPage();
     await page.goto(pathToFileURL(join(here, `${name}.html`)).href);

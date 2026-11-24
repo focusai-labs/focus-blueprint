@@ -1,0 +1,165 @@
+{
+  "url": "file://<fixtures>/width-fail.html",
+  "viewport": {
+    "w": 1280,
+    "h": 800,
+    "phone": false
+  },
+  "screen": null,
+  "results": [
+    {
+      "id": "contrast-text",
+      "principle": "D7",
+      "pass": true,
+      "level": "pass",
+      "details": []
+    },
+    {
+      "id": "primary-count",
+      "principle": "D7",
+      "pass": true,
+      "level": "pass",
+      "details": []
+    },
+    {
+      "id": "target-size",
+      "principle": "D12",
+      "pass": true,
+      "level": "skip",
+      "details": [
+        "phone only"
+      ]
+    },
+    {
+      "id": "tab-order",
+      "principle": "D15",
+      "pass": false,
+      "level": "fail",
+      "details": [
+        "אין כלל :focus או :focus-visible"
+      ]
+    },
+    {
+      "id": "field-labels",
+      "principle": "D34",
+      "pass": true,
+      "level": "pass",
+      "details": []
+    },
+    {
+      "id": "typing-replaceable",
+      "principle": "D13,D39",
+      "pass": true,
+      "level": "pass",
+      "details": []
+    },
+    {
+      "id": "required-gate",
+      "principle": "D40",
+      "pass": true,
+      "level": "pass",
+      "details": []
+    },
+    {
+      "id": "inline-error-slot",
+      "principle": "D41",
+      "pass": true,
+      "level": "pass",
+      "details": []
+    },
+    {
+      "id": "destructive-adjacency",
+      "principle": "D43",
+      "pass": true,
+      "level": "pass",
+      "details": []
+    },
+    {
+      "id": "destructive-confirm",
+      "principle": "D47",
+      "pass": true,
+      "level": "pass",
+      "details": []
+    },
+    {
+      "id": "opt-in-prechecked",
+      "principle": "D46",
+      "pass": true,
+      "level": "pass",
+      "details": []
+    },
+    {
+      "id": "line-length",
+      "principle": "D4",
+      "pass": true,
+      "level": "pass",
+      "details": []
+    },
+    {
+      "id": "rtl-direction",
+      "principle": "D33",
+      "pass": true,
+      "level": "pass",
+      "details": [
+        "יש עברית בלי dir=rtl"
+      ]
+    },
+    {
+      "id": "anchor-home",
+      "principle": "S13",
+      "pass": false,
+      "level": "fail",
+      "details": [
+        "אין [data-anchor] גלוי בעמוד width-fail.html"
+      ]
+    },
+    {
+      "id": "feedback-states",
+      "principle": "D17",
+      "pass": false,
+      "level": "warn",
+      "details": [
+        "אין כלל button:hover, a:hover או :active"
+      ]
+    },
+    {
+      "id": "loading-state",
+      "principle": "D18,D19",
+      "pass": true,
+      "level": "pass",
+      "details": []
+    },
+    {
+      "id": "color-alone",
+      "principle": "D6",
+      "pass": true,
+      "level": "pass",
+      "details": []
+    },
+    {
+      "id": "persist-input",
+      "principle": "S14",
+      "pass": true,
+      "level": "pass",
+      "details": [
+        "שדות קלט בלי שמירת טיוטה (localStorage או [data-persist])"
+      ]
+    },
+    {
+      "id": "motion",
+      "principle": "D3",
+      "pass": true,
+      "level": "pass",
+      "details": []
+    },
+    {
+      "id": "desktop-width",
+      "principle": "S5",
+      "pass": false,
+      "level": "warn",
+      "details": [
+        "ברוחב של מחשב המסך תופס רק 38% מהרוחב. כדאי לפרוס אותו לשתי עמודות או להוסיף חלונית צד."
+      ]
+    }
+  ]
+}

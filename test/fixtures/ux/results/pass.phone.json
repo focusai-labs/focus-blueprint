@@ -151,6 +151,15 @@
       "pass": true,
       "level": "pass",
       "details": []
+    },
+    {
+      "id": "desktop-width",
+      "principle": "S5",
+      "pass": true,
+      "level": "skip",
+      "details": [
+        "desktop only"
+      ]
     }
   ]
 }

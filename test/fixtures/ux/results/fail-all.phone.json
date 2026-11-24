@@ -13,7 +13,7 @@
       "pass": false,
       "level": "fail",
       "details": [
-        "p.faint \"טקסט בהיר מאוד על רקע לבן שקשה לקרוא.\" יחס 1.92 (נדרש 4.5)"
+        "יחס ניגודיות 1.92 (נדרש 4.5) ב-p.faint \"טקסט בהיר מאוד על רקע לבן שקשה לקרוא.\""
       ]
     },
     {
@@ -22,7 +22,7 @@
       "pass": false,
       "level": "fail",
       "details": [
-        "main 1: 2 כפתורים ראשיים: button \"שלח\" | button \"שלח ועוד\""
+        "ב-main מספר 1 יש 2 כפתורים ראשיים: button \"שלח\" | button \"שלח ועוד\""
       ]
     },
     {
@@ -31,9 +31,9 @@
       "pass": false,
       "level": "fail",
       "details": [
-        "button.tiny \"אחד\" 16x16 קרוב ל-button.tiny \"שניים\"",
-        "button.tiny \"שניים\" 16x16 קרוב ל-button.tiny \"אחד\"",
-        "button.tiny \"שלושה\" 16x16 קרוב ל-button.tiny \"שניים\""
+        "היעד button.tiny \"אחד\", בגודל 16x16, קרוב ל-button.tiny \"שניים\"",
+        "היעד button.tiny \"שניים\", בגודל 16x16, קרוב ל-button.tiny \"אחד\"",
+        "היעד button.tiny \"שלושה\", בגודל 16x16, קרוב ל-button.tiny \"שניים\""
       ]
     },
     {
@@ -69,7 +69,7 @@
       "pass": false,
       "level": "warn",
       "details": [
-        "טופס order: novalidate וכפתור שליחה פעיל"
+        "בטופס order יש novalidate, וכפתור השליחה פעיל"
       ]
     },
     {
@@ -87,8 +87,8 @@
       "pass": false,
       "level": "fail",
       "details": [
-        "button \"מחק הכול\" צמוד ל-button \"שלח\"",
-        "button \"מחק הכול\" צמוד ל-button \"שלח ועוד\""
+        "הפעולה ההרסנית button \"מחק הכול\" צמודה ל-button \"שלח\"",
+        "הפעולה ההרסנית button \"מחק הכול\" צמודה ל-button \"שלח ועוד\""
       ]
     },
     {
@@ -179,8 +179,17 @@
       "pass": false,
       "level": "warn",
       "details": [
-        "אנימציה אינסופית: p.pulse \"מהבהב לנצח\"",
+        "אנימציה שרצה בלי סוף: p.pulse \"מהבהב לנצח\"",
         "יש אנימציה בלי כלל prefers-reduced-motion"
+      ]
+    },
+    {
+      "id": "desktop-width",
+      "principle": "S5",
+      "pass": true,
+      "level": "skip",
+      "details": [
+        "desktop only"
       ]
     }
   ]

@@ -17,7 +17,8 @@
    "writes": "spec.screens.{screen}.primaryAction",
    "source": [
     "S8"
-   ]
+   ],
+   "by": "claude"
   },
   {
    "id": "c-who-{screen}",
@@ -68,7 +69,8 @@
    "writes": "spec.screens.{screen}.onFailure",
    "source": [
     "D49"
-   ]
+   ],
+   "by": "claude"
   },
   {
    "id": "c-remember-{screen}",
@@ -85,7 +87,8 @@
    "writes": "spec.screens.{screen}.carryOver",
    "source": [
     "D20"
-   ]
+   ],
+   "by": "claude"
   },
   {
    "id": "c-lose-{screen}",
@@ -102,7 +105,8 @@
    "writes": "spec.screens.{screen}.mustKeep",
    "source": [
     "S14"
-   ]
+   ],
+   "by": "claude"
   },
   {
    "id": "c-empty-{screen}",
@@ -119,7 +123,8 @@
    "writes": "spec.screens.{screen}.emptyState",
    "source": [
     "S11"
-   ]
+   ],
+   "by": "claude"
   },
   {
    "id": "c-double-{screen}",
@@ -136,7 +141,8 @@
    "writes": "spec.screens.{screen}.doubleSubmit",
    "source": [
     "D40"
-   ]
+   ],
+   "by": "claude"
   },
   {
    "id": "c-back-{screen}",
@@ -153,7 +159,8 @@
    "writes": "spec.screens.{screen}.anchor",
    "source": [
     "S13"
-   ]
+   ],
+   "by": "claude"
   },
   {
    "id": "c-phone-{screen}",
@@ -171,7 +178,8 @@
    "source": [
     "D11",
     "D12"
-   ]
+   ],
+   "by": "claude"
   },
   {
    "id": "c-wait-{screen}",
@@ -189,7 +197,8 @@
    "source": [
     "D18",
     "D19"
-   ]
+   ],
+   "by": "claude"
   },
   {
    "id": "c-undo-{screen}",
@@ -225,7 +234,8 @@
    "source": [
     "D13",
     "D39"
-   ]
+   ],
+   "by": "claude"
   },
   {
    "id": "c-state-{screen}",
@@ -242,7 +252,8 @@
    "writes": "spec.screens.{screen}.state",
    "source": [
     "D16"
-   ]
+   ],
+   "by": "claude"
   },
   {
    "id": "c-next-{screen}",
@@ -259,7 +270,8 @@
    "writes": "spec.screens.{screen}.next",
    "source": [
     "S11"
-   ]
+   ],
+   "by": "claude"
   },
   {
    "id": "c-help-{screen}",
@@ -276,7 +288,8 @@
    "writes": "spec.screens.{screen}.decisionHelp",
    "source": [
     "S12"
-   ]
+   ],
+   "by": "claude"
   }
  ]
 }

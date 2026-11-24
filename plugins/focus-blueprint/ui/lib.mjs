@@ -126,8 +126,12 @@ export function whenHolds(when, values) {
   });
 }
 
-/** The visible questions of a round, each with its saved answer (or null). */
-export function questionsFor(projectDir, round, { screens } = {}) {
+/**
+ * The visible questions of a round, each with its saved answer (or null).
+ * Questions marked "by": "claude" are checked by Claude, not asked of the student, so they are left out
+ * unless the caller asks for them with { includeClaude: true }.
+ */
+export function questionsFor(projectDir, round, { screens, includeClaude = false } = {}) {
   let bank = loadBank(round);
   if (!bank) return null;
   const state = readJsonStrict(path.join(projectDir, '.blueprint', 'state.json'), null);
@@ -137,7 +141,7 @@ export function questionsFor(projectDir, round, { screens } = {}) {
   }
   const saved = readAnswers(projectDir, ROUND_FILES[round]).answers || {};
   const values = answerValues(projectDir, state);
-  return bank.filter((q) => whenHolds(q.when, values)).map((q) => ({ ...q, answer: saved[q.id] || null }));
+  return bank.filter((q) => (includeClaude || q.by !== 'claude') && whenHolds(q.when, values)).map((q) => ({ ...q, answer: saved[q.id] || null }));
 }
 
 export const isPrefill = (a) => Boolean(a) && a.from === 'idea' && a.confirmed === false;
@@ -200,6 +204,11 @@ export function parseDirectionHtml(html, n) {
     return m ? plainText(m[1] ?? m[2]) : '';
   };
 
+  const deviceOf = (mainHtml) => {
+    const m = /<main\b[^>]*\bdata-device=(?:"([^"]*)"|'([^']*)')/i.exec(mainHtml || '');
+    return m && String(m[1] ?? m[2]).trim().toLowerCase() === 'desktop' ? 'desktop' : 'phone';
+  };
+
   const screens = [];
   const re = /<!--\s*screen:([A-Za-z0-9_-]+)\s*-->([\s\S]*?)<!--\s*\/screen:\1\s*-->/g;
   let m;
@@ -208,11 +217,11 @@ export function parseDirectionHtml(html, n) {
     if (!SCREEN_KEY.test(key) || screens.some((s) => s.key === key)) continue;
     const mainM = /<main\b[\s\S]*<\/main>/i.exec(m[2]);
     const block = mainM ? mainM[0] : m[2].trim();
-    screens.push({ key, caption: captionOf(block) || key, html: block });
+    screens.push({ key, caption: captionOf(block) || key, device: deviceOf(block), html: block });
   }
   if (!screens.length) {
     const block = bodyInner.replace(symbolsMatch ? symbolsMatch[0] : '', '').trim();
-    screens.push({ key: 'main', caption: captionOf(block) || mainScreenCaption(), html: block });
+    screens.push({ key: 'main', caption: captionOf(block) || mainScreenCaption(), device: deviceOf(block), html: block });
   }
   return {
     n,
@@ -240,8 +249,8 @@ export function loadDirections(projectDir) {
 export function directionsSummary(projectDir) {
   const dirs = loadDirections(projectDir);
   const screens = [];
-  for (const d of dirs) for (const s of d.screens) if (!screens.some((x) => x.key === s.key)) screens.push({ key: s.key, caption: s.caption });
-  return { directions: dirs.map((d) => ({ n: d.n, name: d.name, move: d.move, screens: d.screens.map((s) => ({ key: s.key, caption: s.caption })) })), screens };
+  for (const d of dirs) for (const s of d.screens) if (!screens.some((x) => x.key === s.key)) screens.push({ key: s.key, caption: s.caption, device: s.device });
+  return { directions: dirs.map((d) => ({ n: d.n, name: d.name, move: d.move, screens: d.screens.map((s) => ({ key: s.key, caption: s.caption, device: s.device })) })), screens };
 }
 
 const escAttr = (s) => String(s).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');

@@ -10,7 +10,8 @@ main.dir-page { max-width: 1560px; padding: 24px 24px 32px; gap: 20px; }
 
 /* One grid for the heads and every row, so the three columns always line up. */
 .board { --s: 1; --dw: 390; --dh: 844; --cap: 150px; --gapx: 24px; display: flex; flex-direction: column; gap: 28px; }
-.board[data-mode="desktop"] { --dw: 1280; --dh: 800; }
+.board[data-mode="desktop"], .shot-row[data-mode="desktop"] { --dw: 1280; --dh: 800; }
+.shot-row[data-mode="phone"] { --dw: 390; --dh: 844; }
 .heads, .shot-row { display: grid; grid-template-columns: var(--cap) repeat(3, minmax(0, 1fr)); column-gap: var(--gapx); align-items: start; }
 .heads { align-items: end; padding-block-end: 4px; border-bottom: 1px solid var(--line); }
 .head h2 { font-size: 22px; }

@@ -65,7 +65,7 @@ test('every page carries the app bar; task pages keep their save status in it', 
 
 test('pages register through BP and start on DOMContentLoaded', () => {
   assert.match(js, /window\.BP = \{ h, t, api, register, drawer, popover,/);
-  for (const name of ['brain-dump', 'questionnaire', 'catalog', 'board', 'process']) assert.match(js, new RegExp(`register\\('${name}', `), name);
+  for (const name of ['brain-dump', 'questionnaire', 'board', 'process']) assert.match(js, new RegExp(`register\\('${name}', `), name);
   assert.match(js, /document\.addEventListener\('DOMContentLoaded', start, \{ once: true \}\)/);
 });
 

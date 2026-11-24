@@ -715,43 +715,6 @@
     else { renderQuestion(); updateProgress(); }
   }
 
-  // ---------------------------------------------------------------- catalog
-  const CATALOG_IDS = { visual: 'b-03', nav: 'b-04', density: 'b-05', structure: 'b-06', login: 'b-07' };
-  async function catalog() {
-    const setState = indicator($('#save'));
-    const root = $('#dims');
-    const [cat, saved] = await Promise.all([api('api/catalog'), api('api/answers?name=round-b').catch(() => ({ answers: {} }))]);
-    const chosen = {};
-    for (const [dim, id] of Object.entries(CATALOG_IDS)) { const a = saved.answers && saved.answers[id]; if (a && typeof a.value === 'string') chosen[dim] = a.value; }
-    const dims = ['visual', 'nav', 'structure', 'login', 'density'];
-    if (dims.every((d) => !(cat[d] || []).length)) { root.append(h('p', {}, t('catalog.empty'))); return; }
-    const render = () => {
-      clear(root);
-      for (const dim of dims) {
-        const items = cat[dim] || [];
-        if (!items.length) continue;
-        const cards = h('div', { class: 'cards' });
-        items.forEach((o) => {
-          const on = chosen[dim] === o.id;
-          const frame = h('iframe', { title: `${t('catalog.exampleTitle')}: ${o.name_he}`, sandbox: '', tabindex: '-1' });
-          frame.srcdoc = o.html || '';
-          cards.append(h('div', { class: `card opt${on ? ' chosen' : ''}` },
-            frame,
-            h('div', { class: 'body' },
-              h('h3', {}, o.name_he, ' ', h('span', { class: 'en', lang: 'en' }, o.term_en)),
-              o.fits ? h('p', { class: 'small' }, h('strong', {}, `${t('catalog.fits')}: `), o.fits) : null,
-              o.less ? h('p', { class: 'small muted' }, h('strong', {}, `${t('catalog.less')}: `), o.less) : null,
-              h('button', { type: 'button', class: on ? 'primary' : '', 'aria-pressed': on ? 'true' : 'false', onclick: async () => {
-                chosen[dim] = o.id; render();
-                try { await api('api/answer', { name: 'round-b', id: CATALOG_IDS[dim], value: o.id }); setState('saved'); } catch { setState('failed'); }
-              } }, on ? `✓ ${t('catalog.chosen')}` : t('catalog.choose')))));
-        });
-        root.append(h('section', { class: 'dim' }, h('h2', {}, t(`catalog.dimensions.${dim}`)), cards));
-      }
-    };
-    render();
-  }
-
   // ---------------------------------------------------------------- board
   const STATUS_TONE = { done: 'ok', done_with_concerns: 'warn', blocked: 'bad', needs_context: 'bad', in_progress: '', not_started: 'neutral' };
   const STATUS_ICON = { done: 'check', done_with_concerns: 'check', blocked: 'alert', needs_context: 'help', in_progress: 'half', not_started: 'ring' };
@@ -1513,7 +1476,6 @@
   function register(name, fn) { registry[name] = fn; }
   register('brain-dump', brainDump);
   register('questionnaire', questionnaire);
-  register('catalog', catalog);
   register('board', board);
   register('process', processPage);
 

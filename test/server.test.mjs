@@ -26,17 +26,6 @@ function project() {
   fs.writeFileSync(path.join(bp, 'rulings.json'), JSON.stringify([{ id: 'r-001', at: '2026-11-21T10:00:00.000Z', stage: 12, capability: null, decision: 'בחרתי כפתור אחד', why: 'פשוט יותר', priceIfWrong: 'שעה של עבודה', by: 'claude', reported: false }]));
   return dir;
 }
-function stubCatalog() {
-  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'bp-cat-'));
-  fs.mkdirSync(path.join(dir, 'catalog', 'examples'), { recursive: true });
-  const dims = { visual: ['minimal', 'glass'], nav: ['top-bar'], structure: ['single-page'], login: ['centered-card'], density: ['compact'] };
-  for (const [dim, ids] of Object.entries(dims)) {
-    fs.writeFileSync(path.join(dir, 'catalog', `${dim}.json`), JSON.stringify(ids.map((id) => ({ id, name_he: id, term_en: id, example: `${id}.html`, fits: 'x', less: 'y', default_for: [] }))));
-    for (const id of ids) fs.writeFileSync(path.join(dir, 'catalog', 'examples', `${id}.html`), `<p>${id} example</p>`);
-  }
-  return dir;
-}
-
 async function withUi(dir, fn) {
   const ui = await startUi({ projectDir: dir });
   const get = async (route) => {
@@ -55,17 +44,16 @@ async function withUi(dir, fn) {
 }
 
 test('pages and read routes', async () => {
-  process.env.FOCUS_BLUEPRINT_DATA = stubCatalog();
   const dir = project();
-  try {
+  {
     await withUi(dir, async ({ get }) => {
-      for (const route of ['brain-dump', 'questionnaire?round=a', 'catalog', 'board']) {
+      for (const route of ['brain-dump', 'questionnaire?round=a', 'directions', 'board']) {
         const r = await get(route);
         assert.equal(r.status, 200, route);
         assert.match(r.type, /text\/html/);
         assert.match(r.text, /<html lang="he" dir="rtl">/);
       }
-      for (const f of ['ui.css', 'ui.js', 'strings.he.json']) assert.equal((await get(f)).status, 200, f);
+      for (const f of ['ui.css', 'ui.js', 'directions.js', 'directions.css', 'strings.he.json']) assert.equal((await get(f)).status, 200, f);
       assert.match((await get('ui.js')).text, /^\/\/ Focus Blueprint local pages/, 'static files are served as text');
       assert.ok((await get('strings.he.json')).json.common.saved);
       assert.equal((await get('nothing')).status, 404);
@@ -84,11 +72,9 @@ test('pages and read routes', async () => {
       assert.ok(Array.isArray(st.json.evals) && Array.isArray(st.json.changes));
       assert.equal(st.json.map.schema, 1);
 
-      const cat = await get('api/catalog');
-      assert.deepEqual(Object.keys(cat.json), ['visual', 'nav', 'structure', 'login', 'density']);
-      assert.equal(cat.json.visual[0].html, '<p>minimal example</p>');
+      assert.equal((await get('api/catalog')).status, 404, 'the catalog is gone');
     });
-  } finally { delete process.env.FOCUS_BLUEPRINT_DATA; }
+  }
 });
 
 test('answers: merge, done, both forms, strangers refused', async () => {

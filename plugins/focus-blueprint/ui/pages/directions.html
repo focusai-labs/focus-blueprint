@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light">
+<title>Focus Blueprint</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700&display=swap">
+<script>try{if(localStorage.getItem('bp-theme')==='dark')document.documentElement.dataset.theme='dark'}catch(e){}</script>
+<link rel="stylesheet" href="ui.css">
+<link rel="stylesheet" href="directions.css">
+</head>
+<body data-page="directions" data-title="directions.title">
+<main class="dir-page">
+<header class="top dir-top">
+  <div class="dir-titles">
+    <h1 data-t="directions.title"></h1>
+    <p class="muted" data-t="directions.instruction"></p>
+  </div>
+  <div class="seg" id="mode" role="group" aria-label="תצוגה"></div>
+</header>
+<div id="board" class="board"></div>
+<p id="fatal" class="note" hidden role="alert"></p>
+</main>
+<footer class="dir-foot" id="foot" hidden>
+  <div class="dir-foot-in">
+    <div class="dir-note">
+      <label for="note" data-t="directions.noteLabel"></label>
+      <textarea id="note" rows="2"></textarea>
+    </div>
+    <div class="dir-finish">
+      <button type="button" class="primary" id="done" data-t="directions.done" disabled></button>
+      <p class="small muted" id="missing" aria-live="polite"></p>
+      <span id="save" class="save" role="status" aria-live="polite"></span>
+    </div>
+    <p class="dir-back" id="back" role="status" hidden></p>
+  </div>
+</footer>
+<script src="ui.js" defer></script>
+<script src="directions.js" defer></script>
+</body>
+</html>

@@ -473,15 +473,56 @@
       })));
     }
 
+    // ---- the side panel: one at a time, on the left, closes with Esc or the button
+    let panel = null; let opener = null;
+    function closePanel() {
+      if (!panel) return;
+      panel.remove(); panel = null;
+      if (opener) { opener.removeAttribute('aria-expanded'); opener.setAttribute('aria-expanded', 'false'); if (opener.isConnected) opener.focus(); }
+      opener = null;
+    }
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && panel) { e.preventDefault(); closePanel(); } });
+    function openPanel(rows, from) {
+      const prev = opener;
+      if (panel) { panel.remove(); panel = null; if (prev && prev !== from) prev.setAttribute('aria-expanded', 'false'); }
+      opener = from || prev;
+      if (from) from.setAttribute('aria-expanded', 'true');
+      const none = () => h('span', { class: 'muted' }, t('process.detail.none'));
+      const closeBtn = h('button', { type: 'button', class: 'quiet', onclick: closePanel }, t('process.detail.close'));
+      const title = h('h2', { id: 'step-panel-title' }, t('process.detail.title'));
+      panel = h('aside', { class: 'step-panel', role: 'dialog', 'aria-modal': 'false', 'aria-labelledby': 'step-panel-title', dir: 'rtl', lang: 'he' },
+        h('header', {}, title, closeBtn),
+        h('dl', {}, rows.map(([k, v]) => h('div', { class: 'f' }, h('dt', {}, t(`process.detail.${k}`)), h('dd', {}, v == null || v === '' || (Array.isArray(v) && !v.length) ? none() : v)))));
+      document.body.append(panel);
+      closeBtn.focus();
+    }
+    const fileLink = (rel) => (rel ? h('a', { class: 'link', href: `api/file?path=${encodeURIComponent(rel)}`, target: '_blank', rel: 'noopener' }, rel) : null);
+    const stageName = (p, id) => { const st = (p.stages || []).find((x) => x.id === id); return st ? (st.name || st.id) : (id || ''); };
+    function stepRows(p, s, labels) {
+      const srcText = s.src ? `${labels.src[s.src] || s.src}${s.source ? `: ${s.source}` : ''}` : (s.source || '');
+      return [['what', s.text], ['who', svgMod.actorLabel(map, s.actor, labels)], ['level', labels.kinds[s.kind] || s.kind], ['stage', stageName(p, s.stage)],
+        ['source', srcText], ['failure', s.onFailure], ['screen', fileLink(s.screen)], ['capability', s.capability], ['tables', (s.tables || []).join(', ')], ['permission', s.permission], ['test', fileLink(s.test)]];
+    }
+    function timerRows(p, tm, labels) {
+      return [['what', [svgMod.durationHe(tm.duration), tm.text].filter(Boolean).join(': ')], ['stage', stageName(p, tm.stage)], ['failure', tm.onExpire], ['test', fileLink(tm.test)]];
+    }
+
     function oneView(p) {
+      closePanel();
       clear(root);
       const st = svgMod.processStats(map, p.id);
       root.append(h('header', { class: 'top' }, h('div', {}, h('h1', {}, p.name || p.id), h('p', { class: 'muted small' }, t('process.stats', { steps: st.steps, stages: st.stages }))),
         h('div', { class: 'row' }, procs.length > 1 ? back('process', t('process.all')) : null, back('board', t('process.back')))));
       root.append(legend());
       const frame = h('div', { class: 'proc-frame', tabindex: '0', role: 'region', 'aria-label': p.name || p.id });
-      frame.append(frameSvg(svgMod.processSvg(map, p.id, { labels })));
+      frame.append(frameSvg(svgMod.processSvg(map, p.id, { labels, interactive: true })));
       root.append(frame);
+      const hit = (e) => (e.target.closest ? e.target.closest('.bp-card[role=button], .bp-timer[role=button]') : null);
+      const openFor = (el) => {
+        if (el.classList.contains('bp-card')) { const s = (p.steps || []).find((x) => x.id === el.getAttribute('data-step')); if (s) openPanel(stepRows(p, s, labels), el); } else { const tm = (p.timers || []).find((x) => (x.id || '') === el.getAttribute('data-timer')); if (tm) openPanel(timerRows(p, tm, labels), el); }
+      };
+      frame.addEventListener('click', (e) => { const el = hit(e); if (el) openFor(el); });
+      frame.addEventListener('keydown', (e) => { if (e.target.closest && e.target.closest('.bp-bub')) return; const el = hit(e); if (el && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); openFor(el); } });
 
       const timers = p.timers || [];
       if (timers.length) {
@@ -491,7 +532,7 @@
       const cases = p.cases || [];
       root.append(h('section', { class: 'dim' }, h('h2', {}, t('process.cases')), cases.length ? h('div', {}, cases.map((c) => h('div', { class: 'case-row' },
         h('span', { class: `badge ${c.kind === 'happy' ? 'ok' : c.kind === 'rejection' ? 'bad' : 'warn'}` }, t(`process.caseKinds.${c.kind}`) === `process.caseKinds.${c.kind}` ? c.kind : t(`process.caseKinds.${c.kind}`)),
-        h('span', {}, c.text),
+        h('button', { type: 'button', class: 'case-text', onclick: (e) => openPanel([['what', c.text], ['level', t(`process.caseKinds.${c.kind}`) === `process.caseKinds.${c.kind}` ? c.kind : t(`process.caseKinds.${c.kind}`)], ['test', fileLink(c.eval)]], e.currentTarget) }, c.text),
         c.eval ? h('a', { class: 'link small', href: `api/eval?path=${encodeURIComponent(c.eval)}`, target: '_blank', rel: 'noopener' }, t('process.evalLink')) : h('span', { class: 'badge warn' }, t('process.noTest'))))) : h('p', { class: 'muted small' }, t('process.noCases'))));
     }
 

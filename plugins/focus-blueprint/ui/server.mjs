@@ -62,6 +62,35 @@ const STATIC = { 'ui.css': 'text/css; charset=utf-8', 'ui.js': 'text/javascript;
 const NAME = /^[a-z0-9-]{1,40}$/;
 const QID = /^[A-Za-z0-9_.֐-׿-]{1,100}$/;
 
+// Read-only files the process panel links to: only these folders, only text and HTML.
+const FILE_ROOTS = ['mockup', 'evals', 'docs/rendered'];
+const FILE_TYPES = { '.html': 'text/html; charset=utf-8', '.htm': 'text/html; charset=utf-8', '.md': 'text/plain; charset=utf-8', '.txt': 'text/plain; charset=utf-8' };
+const MAX_FILE = 4 * 1024 * 1024;
+
+/** Resolves a project-relative path to a real file under an allowed folder, or null. */
+export function safeProjectFile(projectDir, relRaw) {
+  const rel = String(relRaw || '').replace(/\\/g, '/');
+  if (!rel || rel.includes('\0') || rel.startsWith('/') || /^[a-zA-Z]:/.test(rel)) return null;
+  const segs = rel.split('/');
+  if (segs.some((x) => x === '' || x === '.' || x === '..')) return null;
+  const root = FILE_ROOTS.find((r) => rel.startsWith(`${r}/`));
+  if (!root) return null;
+  const type = FILE_TYPES[path.extname(rel).toLowerCase()];
+  if (!type) return null;
+  try {
+    const realProject = fs.realpathSync(projectDir);
+    const lexical = path.join(realProject, ...segs);
+    const real = fs.realpathSync(lexical);
+    // any symlink on the way makes the real path differ from the plain one
+    if (real !== lexical) return null;
+    const st = fs.statSync(real);
+    if (!st.isFile() || st.size > MAX_FILE) return null;
+    return { file: real, type };
+  } catch {
+    return null;
+  }
+}
+
 function gitInfo(projectDir) {
   const run = (args) => spawnSync('git', args, { cwd: projectDir, encoding: 'utf8', timeout: 5000, windowsHide: true });
   const status = run(['status', '--porcelain']);
@@ -231,6 +260,12 @@ export async function startUi({ projectDir, once = false, idleMinutes = 30 } = {
           const inside = path.relative(path.join(projectDir, 'evals'), file);
           if (!rel.startsWith('evals/') || !rel.endsWith('.md') || inside.startsWith('..') || path.isAbsolute(inside) || !fs.existsSync(file)) return send(res, 404, { error: 'not found' });
           return send(res, 200, fs.readFileSync(file, 'utf8'), 'text/plain; charset=utf-8');
+        }
+        if (route === 'api/file') {
+          const hit = safeProjectFile(projectDir, query.get('path'));
+          if (!hit) return send(res, 404, { error: 'not found' });
+          res.writeHead(200, { 'Content-Type': hit.type, 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff', 'Content-Security-Policy': 'sandbox allow-scripts allow-forms; default-src * data: blob: \'unsafe-inline\' \'unsafe-eval\'', 'Referrer-Policy': 'no-referrer' });
+          return res.end(fs.readFileSync(hit.file));
         }
         if (route === 'api/state') return send(res, 200, boardState(projectDir));
         if (route === 'api/catalog') return send(res, 200, loadCatalog());

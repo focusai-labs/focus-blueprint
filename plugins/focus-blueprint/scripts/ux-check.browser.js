@@ -226,7 +226,7 @@
     add('motion', 'D3', bad.length === 0, bad, 'warn');
   }
 
-  // --- desktop-width (S5, desktop only): at 1024 and up the content inside <main> spans at least 55% of the viewport
+  // --- desktop-width (D50, desktop only): at 1024 and up the content inside <main> spans at least 55% of the viewport
   if (innerWidth >= 1024) {
     const root = document.querySelector('main') || document.body;
     const hasText = (el) => [...el.childNodes].some((n) => n.nodeType === 3 && n.textContent.trim());
@@ -234,8 +234,8 @@
     let left = Infinity; let right = -Infinity;
     for (const el of els) { const r = el.getBoundingClientRect(); left = Math.min(left, r.left); right = Math.max(right, r.right); }
     const pct = els.length ? Math.round(((right - left) / innerWidth) * 100) : 100;
-    add('desktop-width', 'S5', !els.length || pct >= 55, !els.length || pct >= 55 ? [] : [`ברוחב של מחשב המסך תופס רק ${pct}% מהרוחב. כדאי לפרוס אותו לשתי עמודות או להוסיף חלונית צד.`], 'warn');
-  } else skip('desktop-width', 'S5', 'desktop only');
+    add('desktop-width', 'D50', !els.length || pct >= 55, !els.length || pct >= 55 ? [] : [`ברוחב של מחשב המסך תופס רק ${pct}% מהרוחב. כדאי לפרוס אותו לשתי עמודות או להוסיף חלונית צד.`], 'warn');
+  } else skip('desktop-width', 'D50', 'desktop only');
 
   return { url: location.href, viewport: VIEWPORT, screen: document.querySelector('meta[name="blueprint:screen"]')?.content || null, results };
 }

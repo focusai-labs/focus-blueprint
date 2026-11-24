@@ -60,7 +60,9 @@ test('desktop-width: a two-column layout passes at 1280', () => {
   assert.equal(x.level, 'pass');
   assert.deepEqual(x.details, []);
 });
-test('desktop-width is bound to S5 as an auto check', () => {
-  const p = JSON.parse(readFileSync(fileURLToPath(new URL('../plugins/focus-blueprint/data/ux/principles.json', import.meta.url)), 'utf8')).principles.find((q) => q.id === 'S5');
+test('desktop-width is bound to D50 as an auto check, and S5 stays a review', () => {
+  const p = JSON.parse(readFileSync(fileURLToPath(new URL('../plugins/focus-blueprint/data/ux/principles.json', import.meta.url)), 'utf8')).principles.find((q) => q.id === 'D50');
   assert.equal(p.check, 'auto:desktop-width');
+  const s5 = JSON.parse(readFileSync(fileURLToPath(new URL('../plugins/focus-blueprint/data/ux/principles.json', import.meta.url)), 'utf8')).principles.find((q) => q.id === 'S5');
+  assert.equal(s5.check, 'review');
 });

@@ -15,11 +15,11 @@ test('principles.json follows contract C8', () => {
   const data = load();
   assert.equal(data.schema, 1);
   const list = data.principles;
-  assert.equal(list.length, 78);
+  assert.equal(list.length, 79);
   const ids = list.map((p) => p.id);
   assert.equal(new Set(ids).size, ids.length, 'ids are unique');
   for (const p of list) {
-    assert.match(p.id, /^(R([1-9]|1[01])|S([1-9]|1[0-4])|D([1-9]|[1-3]\d|4[0-9])|T[1-4])$/, p.id);
+    assert.match(p.id, /^(R([1-9]|1[01])|S([1-9]|1[0-4])|D([1-9]|[1-4]\d|50)|T[1-4])$/, p.id);
     for (const f of TEXT_FIELDS) assert.ok(typeof p[f] === 'string' && p[f].trim().length > 0, `${p.id}.${f}`);
     assert.ok(['must', 'should'].includes(p.level), `${p.id}.level`);
     assert.ok(Array.isArray(p.stages) && p.stages.length > 0, `${p.id}.stages`);

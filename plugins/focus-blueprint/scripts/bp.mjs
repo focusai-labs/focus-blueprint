@@ -8,6 +8,7 @@ import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { findProject, profileDir } from '../hooks/lib.mjs';
 import { installGitHook } from './install-git-hook.mjs';
+import { syncProjectFiles } from './project-files.mjs';
 import { impact, migrateMapInPlace, filesHash, NODE_TYPES } from './blueprint-model/map-model.mjs';
 import { renderDoc } from './render-doc.mjs';
 import { replaceBlocks, stampDocument, extractBlocks } from './blueprint-model/render-blocks.mjs';
@@ -269,15 +270,7 @@ export const commands = {
       const src = path.join(tpl, 'project', name);
       if (fs.existsSync(src)) fs.copyFileSync(src, path.join(dir, to, 'README.md'));
     }
-    const check = path.join(PLUGIN, 'scripts', 'check-map.mjs');
-    if (fs.existsSync(check)) fs.copyFileSync(check, path.join(dir, 'scripts', 'blueprint-check.mjs'));
-    const model = path.join(PLUGIN, 'scripts', 'blueprint-model');
-    if (fs.existsSync(model)) fs.cpSync(model, path.join(dir, 'scripts', 'blueprint-model'), { recursive: true });
-    // The dimensions travel with the project, so the commit gate and CI can check rule 27 without the plugin.
-    const dimsSrc = path.join(PLUGIN, 'data', 'dimensions.json');
-    if (fs.existsSync(dimsSrc)) { fs.mkdirSync(path.join(dir, '.blueprint'), { recursive: true }); fs.copyFileSync(dimsSrc, path.join(dir, '.blueprint', 'dimensions.json')); }
-    const yml = path.join(tpl, 'github', 'blueprint-check.yml');
-    if (fs.existsSync(yml)) fs.copyFileSync(yml, path.join(dir, '.github', 'workflows', 'blueprint-check.yml'));
+    syncProjectFiles(PLUGIN, dir);
     // AGENTS.md block
     const rules = fs.readFileSync(path.join(tpl, 'agents-rules.md'), 'utf8');
     const agents = path.join(dir, 'AGENTS.md');
@@ -294,6 +287,13 @@ export const commands = {
     writeJsonAtomic(path.join(dir, '.blueprint', 'state.json'), state);
     const hook = installGitHook(dir);
     return { ok: true, dir, stage: 1, gitHook: hook.installed };
+  },
+
+  update(args, ctx) {
+    const dir = ctx.resolve();
+    if (!fs.existsSync(path.join(dir, '.blueprint', 'state.json'))) fail('not a Blueprint project: .blueprint/state.json is missing');
+    const r = syncProjectFiles(PLUGIN, dir);
+    return { ok: true, dir, changed: r.changed, gitHook: r.gitHook };
   },
 
   state(args, ctx) {

@@ -4,6 +4,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { staleCopies } from '../scripts/project-files.mjs';
 import { readInput, findProject, stages, stageInfo, termsAccepted, haltedItems, haltedLine, unreportedRulings, gitInfo, emit, probeMark, readJson, runGit, mapSupabaseRef, supabaseServerFacts, supabaseServerUnsafe } from './lib.mjs';
 
 const input = await readInput();
@@ -40,6 +41,13 @@ try {
 const hooksPath = git ? runGit(dir, ['config', '--get', 'core.hooksPath']).stdout.trim() : '.githooks';
 const hookLine = git && hooksPath !== '.githooks'
   ? `Git hook: core.hooksPath is not .githooks in this clone, so the commit gate does not run. Run: node "${path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', 'scripts', 'bp.mjs')}" githook install --project "${dir}"`
+  : '';
+
+const pluginRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+let stale = [];
+try { stale = staleCopies(pluginRoot, dir); } catch { stale = []; }
+const staleLine = stale.length
+  ? `The project's copy of the Blueprint checker is older than the installed plugin. Run: node "${path.join(pluginRoot, 'scripts', 'bp.mjs')}" update`
   : '';
 
 /** Supabase MCP connections that are not read-only on this project's own ref. Silent on any read error. */
@@ -86,6 +94,7 @@ const context = [
   'The state file is .blueprint/state.json. The entry command /focus-blueprint:blueprint reports the stage and continues from it.',
   gitLine,
   hookLine,
+  staleLine,
   unscopedLine,
   driftLine,
   rulingsLine,
@@ -111,6 +120,11 @@ if (input.source !== 'compact') {
   output.systemMessage = accepted
     ? `הכלי Focus Blueprint: הפרויקט "${state.project}" בשלב ${state.stage} מתוך ${total}${stage ? `, ${stage.name}` : ''}.`
     : 'הכלי Focus Blueprint ניתן לשימוש כמו שהוא, בלי אחריות. כל החלטה, תוצר, חשבון ותשלום הם באחריותך. לפני שמתחילים צריך לקרוא ולאשר את תנאי השימוש.';
+}
+
+if (stale.length) {
+  const note = 'הבודק שבתוך הפרויקט ישן מהגרסה המותקנת של הכלי. Claude יעדכן אותו עם bp update.';
+  output.systemMessage = output.systemMessage ? `${output.systemMessage}\n${note}` : note;
 }
 
 if (unscoped.length) {

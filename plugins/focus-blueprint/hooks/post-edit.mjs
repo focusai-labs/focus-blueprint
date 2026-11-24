@@ -1,7 +1,9 @@
 // PostToolUse on Write and Edit: compare the edited file with the project map.
 // A screen that the map does not know is a change, and Claude gets a note.
 import path from 'node:path';
-import { readInput, findProject, readJson, relative, emit, probeMark } from './lib.mjs';
+import { readInput, findProject, readJson, relative, emit, probeMark, runGit } from './lib.mjs';
+import { lintMigration, migrationFiles } from '../scripts/blueprint-model/lint-sql.mjs';
+import fs from 'node:fs';
 
 const input = await readInput();
 const project = findProject(input);
@@ -34,6 +36,21 @@ if (/^n8n\/.+\.json$/.test(rel) && !copies.has(rel)) {
 }
 if (rel === 'spec/prd.md' && Number(project.state.stage) >= 6) {
   notes.push('Focus Blueprint: PRD changed after the screens map: run /focus-blueprint:change');
+}
+
+if (migrationFiles(project.dir).all.includes(rel)) {
+  try {
+    const sql = fs.readFileSync(path.join(project.dir, ...rel.split('/')), 'utf8');
+    const untracked = runGit(project.dir, ['ls-files', '--error-unmatch', '--', rel]).status !== 0;
+    const live = project.state.live === true && untracked;
+    const found = lintMigration(sql, map.access || null, map.roles || [], { live });
+    if (found.length) {
+      notes.push(`Focus Blueprint: the migration lint found ${found.length} issue(s) in ${rel}. Fix them before the commit; the commit gate stops on errors. ` +
+        found.slice(0, 10).map((f) => `line ${f.line}, rule ${f.rule}${f.level === 'error' ? '' : ` (${f.level})`}: ${f.message}`).join(' | '));
+    }
+  } catch {
+    // An unreadable file is not a finding.
+  }
 }
 
 const mark = probeMark('PostToolUse');

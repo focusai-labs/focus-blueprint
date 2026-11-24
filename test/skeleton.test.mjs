@@ -117,7 +117,7 @@ test('shell guard: a commit on a branch passes, and so does the first commit of 
   assert.equal(first.status, 0);
 });
 
-test('migration guard: blocked without a matching file, allowed with one', () => {
+test('migration guard: apply_migration is denied with the Git path, even with a matching file', () => {
   const dir = project();
   const query = 'create table documents (\n  id uuid primary key\n);';
   const apply = () =>
@@ -125,15 +125,10 @@ test('migration guard: blocked without a matching file, allowed with one', () =>
 
   const blocked = apply();
   assert.equal(blocked.status, 2);
-  assert.match(blocked.stderr, /no matching migration file/);
-  assert.match(blocked.stderr, /add_documents\.sql/);
+  assert.match(blocked.stderr, /supabase migration new/);
 
-  fs.writeFileSync(path.join(dir, 'db', 'migrations', '20261116_other.sql'), 'create table other (id int);');
+  fs.writeFileSync(path.join(dir, 'db', 'migrations', '20261116_add_documents.sql'), query);
   assert.equal(apply().status, 2);
-
-  // Same SQL, other line breaks and indentation, no closing semicolon.
-  fs.writeFileSync(path.join(dir, 'db', 'migrations', '20261116_add_documents.sql'), 'create table documents (\n      id uuid primary key\n)\n\n');
-  assert.equal(apply().status, 0);
 });
 
 test('probe run: each context hook carries its marker', () => {

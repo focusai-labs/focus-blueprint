@@ -223,3 +223,25 @@ export function sanitizeSql(sql) {
   }
   return out;
 }
+
+/** The production identity of the Supabase project, from the map's supabase service. Never throws. */
+export function supabaseTarget(project) {
+  const map = readJson(path.join(project.dir, '.blueprint', 'map.json')) || {};
+  const svc = (Array.isArray(map.services) ? map.services : []).find((x) => x && x.id === 'supabase') || {};
+  let ref = typeof svc.ref === 'string' && svc.ref.trim() ? svc.ref.trim() : null;
+  if (!ref) {
+    try { ref = fs.readFileSync(path.join(project.dir, 'supabase', '.temp', 'project-ref'), 'utf8').trim() || null; } catch { /* no linked project */ }
+  }
+  return {
+    ref,
+    branch: typeof svc.prodBranch === 'string' && svc.prodBranch.trim() ? svc.prodBranch.trim() : 'main',
+    devTarget: typeof svc.devTarget === 'string' && svc.devTarget.trim() ? svc.devTarget.trim() : null,
+    live: project.state && project.state.live === true,
+  };
+}
+
+/** git with an argument array. Returns { status, stdout }; status is null when git is missing. */
+export function runGit(dir, args) {
+  const r = spawnSync('git', args, { cwd: dir, encoding: 'utf8', maxBuffer: 16 * 1024 * 1024 });
+  return { status: r.error ? null : r.status, stdout: r.stdout || '' };
+}

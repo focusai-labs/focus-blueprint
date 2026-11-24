@@ -7,6 +7,7 @@ import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { findProject, profileDir } from '../hooks/lib.mjs';
+import { installGitHook } from './install-git-hook.mjs';
 import { impact, migrateMapInPlace, filesHash, NODE_TYPES } from './blueprint-model/map-model.mjs';
 import { replaceBlocks, stampDocument, extractBlocks } from './blueprint-model/render-blocks.mjs';
 
@@ -200,7 +201,8 @@ function realMissing(ctx, cap) {
     if (ev.red && ev.green && !(ev.red.at < ev.green.at)) miss.push('red must come before green');
     if (!cap.catches) miss.push('catches');
     const r = cap.review;
-    if (!r || r.spec !== 'pass' || r.quality !== 'pass') miss.push('review (both verdicts must be pass)');
+    if (r && (r.spec === 'not_run' || r.quality === 'not_run')) miss.push('review: הסוקר לא רץ עד הסוף, ולכן אין כאן אישור. מריצים אותו שוב.');
+    else if (!r || r.spec !== 'pass' || r.quality !== 'pass') miss.push('review (both verdicts must be pass)');
   }
   if (cap.openFindings && cap.openFindings.length) miss.push('openFindings not empty');
   if (cap.halted) miss.push('halted');
@@ -253,7 +255,8 @@ export const commands = {
     const add = fs.readFileSync(path.join(tpl, 'project', 'gitignore'), 'utf8').split(/\r?\n/).map((l) => l.trim()).filter((l) => l && !haveLines.has(l));
     if (add.length || !fs.existsSync(gi)) writeTextAtomic(gi, (have ? have.replace(/\s*$/, '\n') : '') + add.join('\n') + '\n');
     writeJsonAtomic(path.join(dir, '.blueprint', 'state.json'), state);
-    return { ok: true, dir, stage: 1 };
+    const hook = installGitHook(dir);
+    return { ok: true, dir, stage: 1, gitHook: hook.installed };
   },
 
   state(args, ctx) {
@@ -476,12 +479,20 @@ export const commands = {
     return { capability: id, color, evidence: cap.evidence[color] };
   },
 
+  githook(args, ctx) {
+    if (args[0] !== 'install') fail('usage: githook install');
+    const dir = ctx.resolve();
+    const r = installGitHook(dir);
+    if (!r.installed) fail('this folder is not a git repository, so there is no commit gate to install');
+    return { ok: true, dir, hooksPath: '.githooks' };
+  },
+
   review(args, ctx) {
     const [sub, id] = args;
-    if (sub !== 'record' || !id) fail('usage: review record <id> --spec pass|findings --quality pass|findings --path <file>');
+    if (sub !== 'record' || !id) fail('usage: review record <id> --spec pass|findings|not_run --quality pass|findings|not_run --path <file>');
     const cap = ctx.capability(id);
     const { spec, quality, path: rp } = ctx.flags;
-    for (const [k, v] of [['spec', spec], ['quality', quality]]) if (!['pass', 'findings'].includes(v)) fail(`--${k} must be pass or findings`);
+    for (const [k, v] of [['spec', spec], ['quality', quality]]) if (!['pass', 'findings', 'not_run'].includes(v)) fail(`--${k} must be pass, findings or not_run`);
     const rel0 = rp ? path.relative(ctx.resolve(), path.resolve(ctx.resolve(), rp)) : '';
     if (rp && (rel0.startsWith('..') || path.isAbsolute(rel0))) fail('review path must be inside the project folder');
     if (!rp || !fs.existsSync(path.resolve(ctx.resolve(), rp))) fail(`review file not found: ${rp || '(no --path)'}`);

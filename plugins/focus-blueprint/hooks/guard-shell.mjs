@@ -6,13 +6,17 @@
 // commits Claude makes, which is how the people this tool is for work.
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
-import { readInput, findProjectForGuard, block, PROTECTED_BRANCHES } from './lib.mjs';
+import { readInput, findProjectForGuard, block, PROTECTED_BRANCHES, supabaseTarget } from './lib.mjs';
+import { checkCommand } from './shell-rules.mjs';
 
 const input = await readInput();
 const project = findProjectForGuard(input);
 if (!project) process.exit(0);
 
 const command = String((input.tool_input && input.tool_input.command) || '');
+
+const denied = checkCommand(command, supabaseTarget(project));
+if (denied) block(denied);
 
 const SECRET_PATTERNS = [/(^|\/)\.env(\..*)?$/i, /\.pem$/i, /key[^/]*\.json$/i];
 const TEMPLATE = /\.(example|sample|template)$/i;

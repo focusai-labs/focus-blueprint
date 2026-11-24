@@ -76,8 +76,8 @@ test('guard-migration: execute_sql DDL is blocked with a pointer to db/migration
     if (/create or replace/i.test(q)) continue;
     const r = sqlTool(dir, 'mcp__supabase__execute_sql', q);
     assert.equal(r.code, 2, q);
-    assert.match(r.err, /db\/migrations\//);
-    assert.match(r.err, /apply_migration/);
+    assert.match(r.err, /supabase migration new/);
+    assert.match(r.err, /supabase\/migrations/);
   }
   assert.equal(sqlTool(dir, 'mcp__supabase__execute_sql', 'select * from documents').code, 0);
 });
@@ -95,7 +95,7 @@ test('guard-migration: after launch, destructive SQL is blocked even through app
   const pre = repo({ state: { live: false } });
   fs.mkdirSync(path.join(pre, 'db', 'migrations'), { recursive: true });
   fs.writeFileSync(path.join(pre, 'db', 'migrations', '0002_drop.sql'), q);
-  assert.equal(sqlTool(pre, 'mcp__supabase__apply_migration', q).code, 0);
+  assert.equal(sqlTool(pre, 'mcp__supabase__apply_migration', q).code, 2); // C9: never through MCP, live or not
 });
 
 test('hooks.json routes apply_migration and execute_sql to guard-migration', () => {
@@ -231,10 +231,13 @@ test('guard-migration: execute_sql blocks every DDL form, passes data statements
   for (const q of blocked) {
     const r = sqlTool(dir, 'mcp__supabase__execute_sql', q);
     assert.equal(r.code, 2, q);
-    assert.match(r.err, /apply_migration/);
+    assert.match(r.err, /supabase migration new/);
+  }
+  for (const q of ['insert into grants_table values (1)', 'update t set c = 1', 'delete from t where id = 1', 'with x as (delete from t returning *) select * from x', 'explain analyze delete from t', 'select * into t2 from t']) {
+    assert.equal(sqlTool(dir, 'mcp__supabase__execute_sql', q).code, 2, q);
   }
   const passes = [
-    'select * from create_log', 'insert into grants_table values (1)', 'update t set c = 1', 'delete from t where id = 1',
+    'select * from create_log', 'with x as (select 1) select * from x', 'explain select 1', 'show search_path', 'values (1)', 'table t',
     'select * from t -- create table x', '/* drop table t */ select 1', 'select 1\n-- grant all\n',
   ];
   for (const q of passes) assert.equal(sqlTool(dir, 'mcp__supabase__execute_sql', q).code, 0, q);
@@ -323,7 +326,7 @@ test('sql scanning: string literals are blanked, comments stripped after', () =>
   for (const s of ["select '--'; drop table x", "select '/*'; drop table x; select '*/'", "select E'it\\'s'; drop table x", 'select $a$ -- $a$; drop table x', "select 'a''b'; create table x (i int)"]) {
     assert.equal(q(s).code, 2, s);
   }
-  for (const s of ["insert into t values ('drop table')", "select 'it''s create table'", 'select $$ drop table x $$', 'select 1 /* nested /* drop table */ still */']) {
+  for (const s of ["select 'drop table'", "select 'it''s create table'", 'select $$ drop table x $$', 'select 1 /* nested /* drop table */ still */']) {
     assert.equal(q(s).code, 0, s);
   }
 });
@@ -363,8 +366,8 @@ test('live project: only additive SQL, through apply_migration with a file and t
   });
   const good = 'alter table t add column c int;';
   fs.writeFileSync(path.join(dir, 'db', 'migrations', '900_ok.sql'), good);
-  assert.equal(sqlRun(dir, 'mcp__supabase__apply_migration', { query: good, name: 'ok' }).code, 0);
-  assert.equal(sqlRun(dir, 'mcp__supabase__execute_sql', { query: 'delete from t where id = 1' }).code, 0);
+  assert.equal(sqlRun(dir, 'mcp__supabase__apply_migration', { query: good, name: 'ok' }).code, 2); // C9: Git path only
+  assert.equal(sqlRun(dir, 'mcp__supabase__execute_sql', { query: 'delete from t where id = 1' }).code, 2);
   assert.equal(sqlRun(dir, 'mcp__supabase__execute_sql', { query: 'select 1' }).code, 0);
 });
 

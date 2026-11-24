@@ -1,5 +1,5 @@
 {
-  "description": "Focus Blueprint: project state at session start, a short reminder on every prompt, a map check after edits, and guards (commit, merge and force push on main, push with a secret file, schema change without a migration file). Every hook stays silent outside a Blueprint project.",
+  "description": "Focus Blueprint: project state at session start, a short reminder on every prompt, a map check after edits and at stop, a migration lint, and guards (commit, merge and force push on main, hook bypasses, push with a secret file, secrets in tracked files, every database change outside Git). Every hook stays silent outside a Blueprint project.",
   "hooks": {
     "SessionStart": [
       {
@@ -31,7 +31,7 @@
     ],
     "PostToolUse": [
       {
-        "matcher": "Write|Edit",
+        "matcher": "Write|Edit|MultiEdit",
         "hooks": [
           {
             "type": "command",
@@ -59,13 +59,26 @@
         ]
       },
       {
-        "matcher": "mcp__.*[Ss]upabase.*__(apply_migration|execute_sql)",
+        "matcher": "mcp__.*[Ss]upabase.*__(apply_migration|execute_sql|deploy_edge_function|create_branch|delete_branch|merge_branch|reset_branch|rebase_branch|create_project|pause_project|restore_project|confirm_cost|create_notebook|run_notebook|delete_notebook)",
         "hooks": [
           {
             "type": "command",
             "command": "node",
             "args": [
               "${CLAUDE_PLUGIN_ROOT}/hooks/guard-migration.mjs"
+            ],
+            "timeout": 15
+          }
+        ]
+      },
+      {
+        "matcher": "Write|Edit|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node",
+            "args": [
+              "${CLAUDE_PLUGIN_ROOT}/hooks/guard-secrets.mjs"
             ],
             "timeout": 15
           }
@@ -82,6 +95,14 @@
               "${CLAUDE_PLUGIN_ROOT}/hooks/stop-summary.mjs"
             ],
             "timeout": 10
+          },
+          {
+            "type": "command",
+            "command": "node",
+            "args": [
+              "${CLAUDE_PLUGIN_ROOT}/hooks/stop-gate.mjs"
+            ],
+            "timeout": 20
           }
         ]
       }

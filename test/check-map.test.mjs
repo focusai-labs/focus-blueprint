@@ -1,4 +1,5 @@
 import test from 'node:test';
+import { pathToFileURL } from 'node:url';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
@@ -8,7 +9,7 @@ import { spawnSync } from 'node:child_process';
 import { PLUGIN, tmpProject, bp } from './helpers.mjs';
 
 const CHECK = path.join(PLUGIN, 'scripts', 'check-map.mjs');
-const { checkMap } = await import(CHECK).catch(() => ({ checkMap: null }));
+const { checkMap } = await import(pathToFileURL(CHECK).href).catch(() => ({ checkMap: null }));
 
 const sha = (s) => crypto.createHash('sha256').update(s).digest('hex');
 const PRD = `# מסמך PRD: מסמכים למשרד

@@ -1,13 +1,14 @@
 // data/dimensions.json (T8): the impact dimensions that bp change open opens and the checker enforces.
 import test from 'node:test';
+import { pathToFileURL } from 'node:url';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import { PLUGIN, tmpProject, bp } from './helpers.mjs';
 
 const FILE = path.join(PLUGIN, 'data', 'dimensions.json');
-const { NODE_TYPES } = await import(path.join(PLUGIN, 'scripts', 'blueprint-model', 'map-model.mjs'));
-const { checkMap } = await import(path.join(PLUGIN, 'scripts', 'check-map.mjs'));
+const { NODE_TYPES } = await import(pathToFileURL(path.join(PLUGIN, 'scripts', 'blueprint-model', 'map-model.mjs')).href);
+const { checkMap } = await import(pathToFileURL(path.join(PLUGIN, 'scripts', 'check-map.mjs')).href);
 
 // bp change open matches opensOn against node types, plus the one change kind that is not a node type
 const TOKENS = new Set([...NODE_TYPES, 'migration']);

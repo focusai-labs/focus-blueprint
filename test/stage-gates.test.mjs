@@ -2,6 +2,7 @@
 // into an error only from the stage after the one whose work produces its data. The end-to-end
 // walk closes every stage with the data that stage writes and runs the commit gate after each close.
 import test from 'node:test';
+import { pathToFileURL } from 'node:url';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
@@ -9,7 +10,7 @@ import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { PLUGIN, bp } from './helpers.mjs';
 
-const { checkMap } = await import(path.join(PLUGIN, 'scripts', 'check-map.mjs'));
+const { checkMap } = await import(pathToFileURL(path.join(PLUGIN, 'scripts', 'check-map.mjs')).href);
 const J = (o) => JSON.stringify(o);
 const hasGit = !spawnSync('git', ['--version']).error;
 

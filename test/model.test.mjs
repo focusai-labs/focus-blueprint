@@ -1,4 +1,5 @@
 import test from 'node:test';
+import { pathToFileURL } from 'node:url';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
@@ -6,8 +7,8 @@ import path from 'node:path';
 import { PLUGIN } from './helpers.mjs';
 
 const M = path.join(PLUGIN, 'scripts', 'blueprint-model');
-const { canonicalHash, migrateMap, nodesOf, impact, filesHash } = await import(path.join(M, 'map-model.mjs'));
-const { renderBlock, replaceBlocks, stampDocument, stampOf, extractBlocks, GEN_KINDS } = await import(path.join(M, 'render-blocks.mjs'));
+const { canonicalHash, migrateMap, nodesOf, impact, filesHash } = await import(pathToFileURL(path.join(M, 'map-model.mjs')).href);
+const { renderBlock, replaceBlocks, stampDocument, stampOf, extractBlocks, GEN_KINDS } = await import(pathToFileURL(path.join(M, 'render-blocks.mjs')).href);
 
 const map = () => ({
   schema: 2,

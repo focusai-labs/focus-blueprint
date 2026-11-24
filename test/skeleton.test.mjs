@@ -7,7 +7,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { test } from 'node:test';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import { makeSampleProject } from './make-sample-project.mjs';
 
 const root = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
@@ -174,7 +174,7 @@ function request(url, { method = 'GET', headers = {}, body } = {}) {
 }
 
 test('local page: serves the page, saves the answer into the project, refuses strangers', async () => {
-  const { startUi } = await import(path.join(plugin, 'ui', 'server.mjs'));
+  const { startUi } = await import(pathToFileURL(path.join(plugin, 'ui', 'server.mjs')).href);
   const dir = project();
 
   // An answer left over from an earlier run must not count.

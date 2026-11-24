@@ -1,12 +1,13 @@
 // Bugs from the first full demo run (T9).
 import { test } from 'node:test';
+import { pathToFileURL } from 'node:url';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import { PLUGIN, tmpProject, bp } from './helpers.mjs';
 
-const { renderBlock } = await import(path.join(PLUGIN, 'scripts', 'blueprint-model', 'render-blocks.mjs'));
-const { renderDoc } = await import(path.join(PLUGIN, 'scripts', 'render-doc.mjs'));
+const { renderBlock } = await import(pathToFileURL(path.join(PLUGIN, 'scripts', 'blueprint-model', 'render-blocks.mjs')).href);
+const { renderDoc } = await import(pathToFileURL(path.join(PLUGIN, 'scripts', 'render-doc.mjs')).href);
 
 const base = () => ({
   roles: [{ id: 'client', name: 'לקוח', kind: 'user' }],

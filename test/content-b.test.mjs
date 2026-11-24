@@ -1,15 +1,16 @@
 // T6 content: the PRD template (gen blocks, voices, the C4 sections), the brief gate,
 // the two Goldfish agents, and the commands and terms the skills now rely on.
 import test from 'node:test';
+import { pathToFileURL } from 'node:url';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import { PLUGIN, tmpProject, bp } from './helpers.mjs';
 
 const M = path.join(PLUGIN, 'scripts', 'blueprint-model');
-const { GEN_KINDS } = await import(path.join(M, 'render-blocks.mjs'));
-const { parseVoices, assumptionsOf } = await import(path.join(M, 'voices.mjs'));
-const { checkMap } = await import(path.join(PLUGIN, 'scripts', 'check-map.mjs'));
+const { GEN_KINDS } = await import(pathToFileURL(path.join(M, 'render-blocks.mjs')).href);
+const { parseVoices, assumptionsOf } = await import(pathToFileURL(path.join(M, 'voices.mjs')).href);
+const { checkMap } = await import(pathToFileURL(path.join(PLUGIN, 'scripts', 'check-map.mjs')).href);
 
 const read = (...p) => fs.readFileSync(path.join(PLUGIN, ...p), 'utf8');
 const PRD = read('templates', 'docs', 'prd.md');

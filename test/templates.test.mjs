@@ -1,4 +1,5 @@
 import test from 'node:test';
+import { pathToFileURL } from 'node:url';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -47,8 +48,8 @@ test('the PRD skeleton has each marker exactly once', () => {
 });
 
 // ---------- C3 reflect-back and C5 milestone templates ----------
-const { parseVoices } = await import(path.join(PLUGIN, 'scripts', 'blueprint-model', 'voices.mjs'));
-const { GEN_KINDS, renderBlock, replaceBlocks, extractBlocks } = await import(path.join(PLUGIN, 'scripts', 'blueprint-model', 'render-blocks.mjs'));
+const { parseVoices } = await import(pathToFileURL(path.join(PLUGIN, 'scripts', 'blueprint-model', 'voices.mjs')).href);
+const { GEN_KINDS, renderBlock, replaceBlocks, extractBlocks } = await import(pathToFileURL(path.join(PLUGIN, 'scripts', 'blueprint-model', 'render-blocks.mjs')).href);
 const FIXTURE_MAP = JSON.parse(fs.readFileSync(path.join(ROOT, 'test', 'fixtures', 'map', 'accountant.json'), 'utf8'));
 const NEW_DOCS = ['reflect-client', 'reflect-org', 'milestone-client', 'milestone-org', 'milestone-self'];
 const read = (d) => fs.readFileSync(path.join(DIR, `${d}.md`), 'utf8');
@@ -165,7 +166,7 @@ test('milestone self: a short checkpoint without acceptance, signature or paymen
 });
 
 test('a reflect and a milestone document copied into spec/ pass the voice and gen-block rules after bp render', async () => {
-  const { checkMap } = await import(path.join(PLUGIN, 'scripts', 'check-map.mjs'));
+  const { checkMap } = await import(pathToFileURL(path.join(PLUGIN, 'scripts', 'check-map.mjs')).href);
   const dir = tmpProject({ state: { schema: 2, project: 't', stage: 4, status: 'in_progress', track: 'supabase-app', live: false, stages: {}, lastDriftCheck: null }, map: FIXTURE_MAP });
   fs.mkdirSync(path.join(dir, 'spec'), { recursive: true });
   // The PRD lists the assumption of the reflect document word for word.

@@ -5,7 +5,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { createRequire } from 'node:module';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import { spawnSync } from 'node:child_process';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
@@ -70,7 +70,7 @@ for (const [dim, items] of Object.entries(dims)) {
 }
 process.env.FOCUS_BLUEPRINT_DATA = cat;
 
-const { startUi } = await import(path.join(PLUGIN, 'ui', 'server.mjs'));
+const { startUi } = await import(pathToFileURL(path.join(PLUGIN, 'ui', 'server.mjs')).href);
 const ui = await startUi({ projectDir: dir });
 const pages = {
   'brain-dump': 'brain-dump', 'brain-dump-why': 'brain-dump', 'questionnaire-a': 'questionnaire?round=a', 'questionnaire-b': 'questionnaire?round=b',

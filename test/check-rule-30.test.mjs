@@ -1,13 +1,14 @@
 // T6: check rule 30. When a service connects to a system that existed before ours (existing: true),
 // the PRD must fill both C4 sections, from stage 4.
 import test from 'node:test';
+import { pathToFileURL } from 'node:url';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { PLUGIN } from './helpers.mjs';
 
-const { checkMap } = await import(path.join(PLUGIN, 'scripts', 'check-map.mjs'));
+const { checkMap } = await import(pathToFileURL(path.join(PLUGIN, 'scripts', 'check-map.mjs')).href);
 
 const SERVICE = { id: 'crm', name: 'Fireberry', purpose: 'ה-CRM שהעסק עובד איתו', existing: true, secrets: [], publicVars: [] };
 const mapWith = (services) => ({ schema: 2, capabilities: [], screens: [], tables: [], automations: [], later: [], roles: [], access: [], services, processes: [] });

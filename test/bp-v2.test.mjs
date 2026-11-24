@@ -1,4 +1,5 @@
 import test from 'node:test';
+import { pathToFileURL } from 'node:url';
 import assert from 'node:assert/strict';
 import crypto from 'node:crypto';
 import fs from 'node:fs';
@@ -258,7 +259,7 @@ test('review record stores reviewedFilesHash over the capability files', () => {
 
 test('the copied model folder works on its own in the project', async () => {
   const dir = setup();
-  const m = await import(path.join(dir, 'scripts', 'blueprint-model', 'map-model.mjs'));
+  const m = await import(pathToFileURL(path.join(dir, 'scripts', 'blueprint-model', 'map-model.mjs')).href);
   assert.equal(typeof m.canonicalHash, 'function');
   assert.match(m.canonicalHash(readJson(dir, '.blueprint', 'map.json')), /^[0-9a-f]{64}$/);
 });

@@ -1,9 +1,10 @@
 import test from 'node:test';
+import { pathToFileURL } from 'node:url';
 import assert from 'node:assert/strict';
 import path from 'node:path';
 import { PLUGIN } from './helpers.mjs';
 
-const { lintMigration } = await import(path.join(PLUGIN, 'scripts', 'blueprint-model', 'lint-sql.mjs'));
+const { lintMigration } = await import(pathToFileURL(path.join(PLUGIN, 'scripts', 'blueprint-model', 'lint-sql.mjs')).href);
 const rules = (sql, access = [], roles) => lintMigration(sql, access, roles).filter((f) => f.level === 'error').map((f) => f.rule);
 const OK_T = 'create table public.t (id int, owner uuid);\nalter table public.t enable row level security;\n';
 const SEL = 'create policy s on public.t for select to authenticated using (owner = auth.uid());\n';

@@ -1,4 +1,5 @@
 import test from 'node:test';
+import { pathToFileURL } from 'node:url';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
@@ -8,10 +9,10 @@ import { PLUGIN, tmpProject, bp } from './helpers.mjs';
 
 const CHECK = path.join(PLUGIN, 'scripts', 'check-map.mjs');
 const M = path.join(PLUGIN, 'scripts', 'blueprint-model');
-const { checkMap } = await import(CHECK);
-const { migrationFiles } = await import(path.join(M, 'lint-sql.mjs'));
-const { migrateMap, canonicalHash, filesHash } = await import(path.join(M, 'map-model.mjs'));
-const { renderBlock, replaceBlocks, stampDocument } = await import(path.join(M, 'render-blocks.mjs'));
+const { checkMap } = await import(pathToFileURL(CHECK).href);
+const { migrationFiles } = await import(pathToFileURL(path.join(M, 'lint-sql.mjs')).href);
+const { migrateMap, canonicalHash, filesHash } = await import(pathToFileURL(path.join(M, 'map-model.mjs')).href);
+const { renderBlock, replaceBlocks, stampDocument } = await import(pathToFileURL(path.join(M, 'render-blocks.mjs')).href);
 
 const baseMap = () => ({
   schema: 2, capabilities: [], screens: [{ file: 'mockup/a.html', name: 'א', persona: 'c', journeyStage: 'u', nav: 'x' }], tables: [], automations: [], later: [],

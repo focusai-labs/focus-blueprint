@@ -1,5 +1,6 @@
 // The local UI: routes, answers API, why-first, prefill, rulings. Run: node --test test/server.test.mjs
 import { test } from 'node:test';
+import { pathToFileURL } from 'node:url';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import http from 'node:http';
@@ -8,7 +9,7 @@ import path from 'node:path';
 import { spawn, spawnSync } from 'node:child_process';
 import { PLUGIN, tmpProject } from './helpers.mjs';
 
-const { startUi } = await import(path.join(PLUGIN, 'ui', 'server.mjs'));
+const { startUi } = await import(pathToFileURL(path.join(PLUGIN, 'ui', 'server.mjs')).href);
 const JSON_H = { 'Content-Type': 'application/json' };
 
 const STATE = {

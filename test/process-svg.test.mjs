@@ -3,10 +3,10 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import { PLUGIN } from './helpers.mjs';
 
-const { processSvg, processStats, wrap, durationHe } = await import(path.join(PLUGIN, 'ui', 'process-svg.mjs'));
+const { processSvg, processStats, wrap, durationHe } = await import(pathToFileURL(path.join(PLUGIN, 'ui', 'process-svg.mjs')).href);
 const here = path.dirname(fileURLToPath(import.meta.url));
 const map = JSON.parse(fs.readFileSync(path.join(here, 'fixtures', 'map', 'accountant.json'), 'utf8'));
 const ID = 'monthly-collection';

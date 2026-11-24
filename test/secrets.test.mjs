@@ -1,11 +1,12 @@
 import test from 'node:test';
+import { pathToFileURL } from 'node:url';
 import assert from 'node:assert/strict';
 import path from 'node:path';
 import { PLUGIN } from './helpers.mjs';
 
 const M = path.join(PLUGIN, 'scripts', 'blueprint-model');
-const { SECRET_PATTERNS, isClientPath, isPublicEnvName, scanText } = await import(path.join(M, 'secrets.mjs'));
-const { parseVoices, assumptionsOf } = await import(path.join(M, 'voices.mjs'));
+const { SECRET_PATTERNS, isClientPath, isPublicEnvName, scanText } = await import(pathToFileURL(path.join(M, 'secrets.mjs')).href);
+const { parseVoices, assumptionsOf } = await import(pathToFileURL(path.join(M, 'voices.mjs')).href);
 
 const jwt = (role) => {
   const b = (o) => Buffer.from(JSON.stringify(o)).toString('base64url');

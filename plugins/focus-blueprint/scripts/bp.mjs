@@ -7,11 +7,24 @@ import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { findProject, profileDir } from '../hooks/lib.mjs';
+import { impact, migrateMapInPlace, filesHash, NODE_TYPES } from './blueprint-model/map-model.mjs';
+import { replaceBlocks, stampDocument, extractBlocks } from './blueprint-model/render-blocks.mjs';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const PLUGIN = path.resolve(here, '..');
 const CAP = 3;
 const BOOL_FLAGS = new Set(['unreported', 'baseline']);
+
+const ROLE_KINDS = ['anon', 'user', 'staff', 'admin', 'service'];
+const ACCESS_KINDS = ['table', 'view', 'function', 'bucket', 'realtime'];
+const STEP_KINDS = ['system', 'human', 'ai', 'external', 'rejection'];
+const CASE_KINDS = ['happy', 'problem', 'rejection'];
+const SRCS = ['client', 'ours', 'assumed'];
+// change kinds: the old log kinds plus any node type; value = the node type the kind itself opens
+const KIND_TYPE = { wording: 'content', track: null };
+const CHANGE_KINDS = ['wording', 'track', 'migration', ...NODE_TYPES];
+const arr = (x) => (Array.isArray(x) ? x : []);
+const validActor = (a) => typeof a === 'string' && (['screen', 'server', 'automation', 'ai'].includes(a) || /^role:.+/.test(a) || /^external:.+/.test(a));
 
 class Fail extends Error {}
 const fail = (msg) => { throw new Fail(msg); };
@@ -81,6 +94,13 @@ function kv(tokens) {
   return out;
 }
 
+function jsonFlag(ctx, what) {
+  if (ctx.flags.json === undefined) fail(`${what} needs --json '<object>'`);
+  let o; try { o = JSON.parse(ctx.flags.json); } catch { fail(`${what}: --json is not valid JSON`); }
+  if (!o || typeof o !== 'object' || Array.isArray(o)) fail(`${what}: --json must be an object`);
+  return o;
+}
+
 function dataFile(...rel) {
   const override = process.env.FOCUS_BLUEPRINT_DATA;
   if (override) {
@@ -98,7 +118,7 @@ function dataDirs(sub) {
 
 // ---------- context ----------
 function makeCtx(flags, { needProject = true } = {}) {
-  const ctx = { flags, dir: null, _state: null, _map: null };
+  const ctx = { flags, dir: null, _state: null, _map: null, mapWasOld: false };
   ctx.resolve = () => {
     if (ctx.dir) return ctx.dir;
     if (flags.project) {
@@ -116,9 +136,16 @@ function makeCtx(flags, { needProject = true } = {}) {
   ctx.p = (...rel) => path.join(ctx.resolve(), ...rel);
   ctx.state = () => (ctx._state ||= readJsonFile(ctx.p('.blueprint', 'state.json')) || fail('state.json is unreadable'));
   ctx.saveState = () => { ctx.state().updatedAt = nowIso(); writeJsonAtomic(ctx.p('.blueprint', 'state.json'), ctx._state); return ctx._state; };
-  ctx.map = () => (ctx._map ||= readJsonFile(ctx.p('.blueprint', 'map.json')) || fail('map.json is unreadable'));
+  ctx.map = () => {
+    if (!ctx._map) {
+      const m = readJsonFile(ctx.p('.blueprint', 'map.json')) || fail('map.json is unreadable');
+      ctx.mapWasOld = m.schema !== 2;
+      ctx._map = migrateMapInPlace(m);   // in memory only; it reaches the disk with the next write
+    }
+    return ctx._map;
+  };
   ctx.touch = () => { const s = ctx.state(); s.updatedAt = nowIso(); writeJsonAtomic(ctx.p('.blueprint', 'state.json'), s); };
-  ctx.saveMap = () => { writeJsonAtomic(ctx.p('.blueprint', 'map.json'), ctx._map); ctx.touch(); return ctx._map; };
+  ctx.saveMap = () => { migrateMapInPlace(ctx._map); ctx.mapWasOld = false; writeJsonAtomic(ctx.p('.blueprint', 'map.json'), ctx._map); ctx.touch(); return ctx._map; };
   ctx.json = (name, fallback) => readJsonFile(ctx.p('.blueprint', name), fallback);
   ctx.saveJson = (name, v) => { writeJsonAtomic(ctx.p('.blueprint', name), v); ctx.touch(); };
   ctx.capability = (id) => ctx.map().capabilities.find((c) => c.id === id) || fail(`unknown capability: ${id}`);
@@ -197,7 +224,7 @@ export const commands = {
       where: { repo: '', supabaseRef: '', vercelProject: '', n8nBase: '' },
       stages: {}, pending: [], superpowers: { installed: false, version: null }, lastDriftCheck: null,
     };
-    writeJsonAtomic(path.join(dir, '.blueprint', 'map.json'), { schema: 1, capabilities: [], screens: [], tables: [], automations: [], later: [] });
+    writeJsonAtomic(path.join(dir, '.blueprint', 'map.json'), migrateMapInPlace({ schema: 2 }));
     writeJsonAtomic(path.join(dir, '.blueprint', 'changes.json'), []);
     writeJsonAtomic(path.join(dir, '.blueprint', 'verified.json'), {});
     writeJsonAtomic(path.join(dir, '.blueprint', 'rulings.json'), []);
@@ -208,6 +235,8 @@ export const commands = {
     }
     const check = path.join(PLUGIN, 'scripts', 'check-map.mjs');
     if (fs.existsSync(check)) fs.copyFileSync(check, path.join(dir, 'scripts', 'blueprint-check.mjs'));
+    const model = path.join(PLUGIN, 'scripts', 'blueprint-model');
+    if (fs.existsSync(model)) fs.cpSync(model, path.join(dir, 'scripts', 'blueprint-model'), { recursive: true });
     const yml = path.join(tpl, 'github', 'blueprint-check.yml');
     if (fs.existsSync(yml)) fs.copyFileSync(yml, path.join(dir, '.github', 'workflows', 'blueprint-check.yml'));
     // AGENTS.md block
@@ -458,6 +487,7 @@ export const commands = {
     if (!rp || !fs.existsSync(path.resolve(ctx.resolve(), rp))) fail(`review file not found: ${rp || '(no --path)'}`);
     if (!cap.evidence || !cap.evidence.green) fail('review refused: no green evidence yet');
     cap.review = { at: nowIso(), spec, quality, path: rel0.split(path.sep).join('/') };
+    cap.reviewedFilesHash = filesHash(ctx.resolve(), cap.files);
     ctx.saveMap();
     return cap.review;
   },
@@ -490,7 +520,7 @@ export const commands = {
       m[key[0]] ||= [];
       if (m[key[0]].some((x) => x[key[1]] === obj[key[1]])) fail(`duplicate ${kind} ${key[1]}: ${obj[key[1]]}`);
       if (kind === 'capability') {
-        obj = { screens: [], data: [], permissions: [], automations: [], test: null, status: 'mock', builtAt: null, ux: null, brief: null, catches: null, review: null, rounds: 0, openFindings: [], halted: false, ...obj };
+        obj = { screens: [], data: [], permissions: [], automations: [], files: [], reviewedFilesHash: null, test: null, status: 'mock', builtAt: null, ux: null, brief: null, catches: null, review: null, rounds: 0, openFindings: [], halted: false, ...obj };
         obj.evidence = { red: null, green: null, adopted: false, ...(obj.evidence || {}) };
       }
       m[key[0]].push(obj); ctx.saveMap();
@@ -501,7 +531,7 @@ export const commands = {
       const [id, ...toks] = rest;
       const cap = ctx.capability(id);
       const o = kv(toks);
-      const own = { evidence: 'evidence red|green', review: 'review record', halted: 'round clear', rounds: 'round add|clear', openFindings: 'round add|clear', builtAt: 'status=real' };
+      const own = { evidence: 'evidence red|green', review: 'review record', halted: 'round clear', rounds: 'round add|clear', openFindings: 'round add|clear', builtAt: 'status=real', reviewedFilesHash: 'review record' };
       for (const k of Object.keys(o)) { const top = k.split('.')[0]; if (own[top]) fail(`map set refuses "${k}": use "${own[top]}"`); }
       const status = o.status;
       if (status !== undefined && !['mock', 'real'].includes(status)) fail('status must be mock or real');
@@ -529,12 +559,191 @@ export const commands = {
       m.later.push(entry); ctx.saveMap();
       return entry;
     }
-    return fail('usage: map add|set|later ...');
+    if (sub === 'impact') {
+      if (!kind) fail('usage: map impact <type:id>');
+      try { return impact(m, kind); } catch (e) { return fail(e.message); }
+    }
+    return fail('usage: map add|set|later|impact ...');
+  },
+
+  role(args, ctx) {
+    const [sub, id] = args;
+    const m = ctx.map();
+    if (sub === 'list') return m.roles;
+    if (sub !== 'add' || !id) fail('usage: role add <id> --name "<name>" --kind anon|user|staff|admin|service | role list');
+    const { name, kind } = ctx.flags;
+    if (!name) fail('role add needs --name');
+    if (!ROLE_KINDS.includes(kind)) fail(`--kind must be ${ROLE_KINDS.join('|')}`);
+    if (m.roles.some((r) => r.id === id)) fail(`duplicate role: ${id}`);
+    const entry = { id, name, kind };
+    m.roles.push(entry); ctx.saveMap();
+    return entry;
+  },
+
+  access(args, ctx) {
+    const [sub, object] = args;
+    if (sub !== 'set' || !object) fail('usage: access set <object> --json \'<obj>\'');
+    const o = jsonFlag(ctx, 'access set');
+    const entry = { object, kind: 'table', exposed: true, serviceOnly: false, owner: null, sensitive: [], rules: [], ...o };
+    entry.object = object;
+    if (!ACCESS_KINDS.includes(entry.kind)) fail(`kind must be ${ACCESS_KINDS.join('|')}`);
+    if (!Array.isArray(entry.rules) || !Array.isArray(entry.sensitive)) fail('rules and sensitive must be arrays');
+    for (const r of entry.rules) {
+      if (!r || typeof r.role !== 'string' || !Array.isArray(r.ops) || !['own', 'all', 'none'].includes(r.scope)) fail('each rule needs role, ops[] and scope own|all|none');
+      r.rowRule ??= ''; r.columns ??= null;
+    }
+    const m = ctx.map();
+    const i = m.access.findIndex((a) => a.object === object);
+    if (i < 0) m.access.push(entry); else m.access[i] = entry;
+    ctx.saveMap();
+    return entry;
+  },
+
+  service(args, ctx) {
+    const [sub, id] = args;
+    if (!['add', 'set'].includes(sub) || !id) fail('usage: service add|set <id> --json \'<obj>\'');
+    const o = jsonFlag(ctx, `service ${sub}`);
+    for (const k of ['owner', 'payer']) if (o[k] !== undefined && o[k] !== null && !['client', 'me', 'org'].includes(o[k])) fail(`${k} must be client|me|org`);
+    const m = ctx.map();
+    const i = m.services.findIndex((x) => x.id === id);
+    let entry;
+    if (sub === 'add') {
+      if (i >= 0) fail(`duplicate service: ${id}`);
+      if (!o.name) fail('service add needs "name" in the JSON');
+      entry = { name: id, purpose: '', owner: null, payer: null, plan: null, planReason: '', docs: '', secrets: [], publicVars: [], webhooksIn: [], webhooksOut: [], capabilities: [], renewal: null, ...o, id };
+      m.services.push(entry);
+    } else {
+      if (i < 0) fail(`unknown service: ${id}`);
+      entry = m.services[i] = { ...m.services[i], ...o, id };
+    }
+    ctx.saveMap();
+    return entry;
+  },
+
+  process(args, ctx) {
+    const [sub, a2, a3] = args;
+    const m = ctx.map();
+    if (sub === 'add') {
+      if (!a2) fail('usage: process add <id> --name "<name>"');
+      if (!ctx.flags.name) fail('process add needs --name');
+      if (m.processes.some((p) => p.id === a2)) fail(`duplicate process: ${a2}`);
+      const entry = { id: a2, name: ctx.flags.name, stages: [], actors: [], steps: [], timers: [], cases: [] };
+      m.processes.push(entry); ctx.saveMap();
+      return entry;
+    }
+    const lists = { stage: 'stages', step: 'steps', timer: 'timers', case: 'cases' };
+    if (!lists[sub] || a2 !== 'add' || !a3) fail('usage: process add <id> --name ... | process stage|step|timer|case add <process> --json \'<obj>\'');
+    const proc = m.processes.find((p) => p.id === a3) || fail(`unknown process: ${a3}`);
+    const o = jsonFlag(ctx, `process ${sub} add`);
+    if (!o.id || typeof o.id !== 'string') fail(`${sub} needs "id"`);
+    if (proc[lists[sub]].some((x) => x.id === o.id)) fail(`duplicate ${sub} id: ${o.id}`);
+    let entry;
+    if (sub === 'stage') {
+      if (!o.name) fail('stage needs "name"');
+      entry = o;
+    } else if (sub === 'step') {
+      if (!o.text) fail('step needs "text"');
+      if (!STEP_KINDS.includes(o.kind)) fail(`step kind must be ${STEP_KINDS.join('|')}`);
+      if (!o.stage || !proc.stages.some((x) => x.id === o.stage)) fail(`step stage must be one of the process stages: ${proc.stages.map((x) => x.id).join(', ') || '(none yet)'}`);
+      if (!validActor(o.actor)) fail('step actor must be role:<id>, screen, server, automation, ai or external:<name>');
+      if (o.src !== undefined && o.src !== null && !SRCS.includes(o.src)) fail(`src must be ${SRCS.join('|')}`);
+      entry = { screen: null, capability: null, tables: [], permission: null, test: null, onFailure: null, next: [], src: null, source: '', ...o };
+      if (typeof entry.actor === 'string' && !proc.actors.includes(entry.actor)) proc.actors.push(entry.actor);
+    } else if (sub === 'timer') {
+      if (!o.text) fail('timer needs "text"');
+      entry = { duration: null, onExpire: null, test: null, ...o };
+    } else {
+      if (!o.text) fail('case needs "text"');
+      if (!CASE_KINDS.includes(o.kind)) fail(`case kind must be ${CASE_KINDS.join('|')}`);
+      entry = { eval: null, ...o };
+    }
+    proc[lists[sub]].push(entry); ctx.saveMap();
+    return entry;
+  },
+
+  render(args, ctx) {
+    const rel = ctx.flags.file || path.join('spec', 'prd.md');
+    const file = path.resolve(ctx.resolve(), rel);
+    const inside = path.relative(ctx.resolve(), file);
+    if (inside.startsWith('..') || path.isAbsolute(inside)) fail('--file must be inside the project folder');
+    if (!fs.existsSync(file)) fail(`file not found: ${rel}`);
+    const m = ctx.map();
+    if (ctx.mapWasOld) ctx.saveMap();   // the stamp must match the map as it is on disk
+    const before = fs.readFileSync(file, 'utf8');
+    const out = stampDocument(replaceBlocks(before, m), m);
+    if (out !== before) writeTextAtomic(file, out);
+    return { file: inside.split(path.sep).join('/'), stamp: out.split('\n')[0], blocks: extractBlocks(out).map((b) => b.kind), changed: out !== before };
+  },
+
+  change(args, ctx) {
+    const [sub, a2, a3] = args;
+    if (sub === 'open') {
+      const text = a2;
+      if (!text) fail('usage: change open "<text>" --kind <k> [--ref type:id,type:id] [--decision now|later]');
+      const kind = ctx.flags.kind;
+      if (!CHANGE_KINDS.includes(kind)) fail(`--kind must be ${CHANGE_KINDS.join('|')}`);
+      const decision = ctx.flags.decision || 'now';
+      if (!['now', 'later'].includes(decision)) fail('--decision must be now or later');
+      const refs = (ctx.flags.ref || '').split(',').map((x) => x.trim()).filter(Boolean);
+      const m = ctx.map();
+      const nodes = new Set(); const opens = new Set();
+      for (const r of refs) { let i; try { i = impact(m, r); } catch (e) { fail(e.message); } i.nodes.forEach((n) => nodes.add(n)); i.opens.forEach((t) => opens.add(t)); }
+      const own = KIND_TYPE[kind] === undefined ? kind : KIND_TYPE[kind];
+      if (own) opens.add(own);
+      const dimFile = dataFile('dimensions.json');
+      let dims = []; let note;
+      const all = fs.existsSync(dimFile) ? readJsonFile(dimFile, []) : null;
+      if (!Array.isArray(all)) note = 'הקובץ data/dimensions.json חסר, אז לא נפתח אף מימד.';
+      else dims = all.filter((d) => arr(d.opensOn).some((t) => opens.has(t))).map((d) => ({ id: d.id, status: 'open', proof: null, reason: '', at: '' }));
+      const list = ctx.json('changes.json', []);
+      const ns = [...nodes];
+      const entry = {
+        at: nowIso(), kind, text, decision, stage: ctx.state().stage,
+        impact: { tables: ns.filter((n) => n.startsWith('table:')).length, permissions: ns.filter((n) => n.startsWith('permission:')).length, automations: ns.filter((n) => n.startsWith('automation:')).length, screens: ns.filter((n) => n.startsWith('screen:')).map((n) => n.slice(7)) },
+        nodes: ns, dimensions: dims,
+      };
+      list.push(entry); ctx.saveJson('changes.json', list);
+      return { index: list.length - 1, ...entry, opens: [...opens].sort(), ...(note ? { note } : {}) };
+    }
+    if (sub === 'dimension') {
+      const [idx, dim] = [a2, a3];
+      const status = ctx.flags.status;
+      if (idx === undefined || !dim || !['closed', 'na'].includes(status)) fail('usage: change dimension <index> <dim> --status closed|na --proof <file> [--reason "..."]');
+      const list = ctx.json('changes.json', []);
+      const entry = list[Number(idx)] || fail(`no change at index ${idx}`);
+      const d = arr(entry.dimensions).find((x) => x.id === dim) || fail(`the change has no dimension ${dim}`);
+      if (status === 'closed') {
+        if (!ctx.flags.proof) fail('closed needs --proof <file>');
+        const abs = path.resolve(ctx.resolve(), ctx.flags.proof);
+        const rel = path.relative(ctx.resolve(), abs);
+        if (rel.startsWith('..') || path.isAbsolute(rel)) fail('proof must be inside the project folder');
+        if (!fs.existsSync(abs)) fail(`proof file not found: ${ctx.flags.proof}`);
+        d.proof = rel.split(path.sep).join('/');
+      } else {
+        if (!ctx.flags.reason || !ctx.flags.reason.trim()) fail('na needs --reason');
+        d.proof = null;
+      }
+      d.status = status; d.reason = ctx.flags.reason || ''; d.at = nowIso();
+      ctx.saveJson('changes.json', list);
+      return { index: Number(idx), dimensions: entry.dimensions };
+    }
+    return fail('usage: change open "<text>" --kind <k> | change dimension <index> <dim> --status ...');
   },
 
   log(args, ctx) {
     const [sub, ...rest] = args;
-    if (sub !== 'add') fail('usage: log add kind=<kind> text="<text>" decision=now|later');
+    if (sub === 'done') {
+      const list = ctx.json('changes.json', []);
+      const entry = list[Number(rest[0])];
+      if (rest[0] === undefined || !/^\d+$/.test(rest[0]) || !entry) fail('usage: log done <index> (index into changes.json, from 0)');
+      if (entry.decision !== 'now') fail('only a change with decision now can be marked done');
+      const open = arr(entry.dimensions).filter((d) => d.status === 'open').map((d) => d.id);
+      if (open.length) fail(`אי אפשר לסגור את השינוי, עוד פתוחים: ${open.join(', ')}`);
+      entry.done = true; entry.doneAt = nowIso();
+      ctx.saveJson('changes.json', list);
+      return { index: Number(rest[0]), done: true };
+    }
+    if (sub !== 'add') fail('usage: log add kind=<kind> text="<text>" decision=now|later | log done <index>');
     const o = kv(rest);
     if (!['wording', 'field', 'screen', 'capability', 'permission', 'track'].includes(o.kind)) fail('kind must be wording|field|screen|capability|permission|track');
     if (!o.text) fail('log add needs text');

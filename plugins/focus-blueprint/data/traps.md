@@ -1,14 +1,25 @@
 # מלכודות ידועות
 
-בדקנו את הרשימה ב-2026-11-21. לכל מלכודת יש מקור רשמי, או שכתוב לידה שגילינו אותה בהרצות שלנו.
+בדקנו את הרשימה ב-2026-11-21, ושורות שהוספנו או עדכנו אחר כך מסומנות בתאריך שבו נבדקו. לכל מלכודת יש מקור רשמי, או שכתוב לידה שגילינו אותה בהרצות שלנו.
 
 - דפדפן אוטומטי לא עובר את שער Turnstile. שער האימות של Cloudflare מזהה דפדפן שנשלט ב-Playwright וחוסם אותו, ולכן בדיקה אוטומטית של טופס שיש בו שער כזה נתקעת. גילינו את זה בהרצות שלנו. הסבר על השער: https://developers.cloudflare.com/turnstile/
-- בתוכנית החינמית של GitHub, חסימת מיזוג לא נאכפת ב-repo פרטי. בתוכנית החינמית הגנת ענפים זמינה רק ב-repo ציבורי, וב-repo פרטי היא זמינה רק בתוכניות בתשלום. מקור: https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches/about-protected-branches
-- התוכנית Hobby של Vercel מיועדת לשימוש אישי או לא מסחרי. כך כתוב בתנאי השירות, ולכן אתר של עסק צריך תוכנית בתשלום. מקור: https://vercel.com/legal/terms (סעיף Hobby)
-- בתוכנית החינמית של Supabase אפשר להחזיק שני פרויקטים פעילים. פרויקט שהייתה בו מעט פעילות במשך שבעה ימים עלול להיעצר, ואפשר להפעיל אותו שוב מהדשבורד. מקורות: https://supabase.com/docs/guides/platform/billing-faq ו-https://supabase.com/docs/guides/deployment/going-into-prod
-- כשיש CLAUDE.md בשורש, Claude Code קורא אותו ולא את AGENTS.md. ההוראות ב-AGENTS.md נטענות רק אם מייבאים אותן מתוך CLAUDE.md. מקור: https://code.claude.com/docs/en/memory
+- במאגר פרטי, GitHub עצמו חוסם מיזוג רק כשיש כלל על main, וכלל כזה במאגר פרטי זמין ב-GitHub Pro, ב-GitHub Team וב-GitHub Enterprise Cloud. בפרויקט של לקוח צריך את אחת התוכניות האלה. בתוכנית החינמית השער הוא רק ה-hook המקומי, ומי שממזג בדפדפן עוקף אותו. נבדק ב-2026-11-24. מקור: https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-rulesets/about-rulesets
+- אתר של עסק צריך את תוכנית Pro של Vercel, כי לפי תנאי השירות התוכנית Hobby מיועדת לשימוש אישי או לא מסחרי. ב-Hobby גם אפשר לחזור רק לגרסה הקודמת, ואין הגנה בסיסמה לסביבות התצוגה. נבדק ב-2026-11-24. מקורות: https://vercel.com/legal/terms (סעיף Hobby) ו-https://vercel.com/docs/instant-rollback
+- מערכת עם משתמשים אמיתיים צריכה את תוכנית Pro של Supabase. בתוכנית החינמית אפשר להחזיק שני פרויקטים פעילים, פרויקט שהייתה בו מעט פעילות במשך שבעה ימים עלול להיעצר, ואין גיבוי אוטומטי. נבדק ב-2026-11-24. מקורות: https://supabase.com/pricing ו-https://supabase.com/docs/guides/deployment/going-into-prod
+- כשיש CLAUDE.md בשורש, Claude Code קורא אותו ולא את AGENTS.md. ההוראות ב-AGENTS.md נטענות רק אם מייבאים אותן מתוך CLAUDE.md. נבדק ב-2026-11-24. מקור: https://code.claude.com/docs/en/memory
 - ב-Claude Code, פקודת shell אחת יכולה לרוץ לכל היותר 10 דקות. זו ברירת המחדל של התקרה שהמודל יכול לקבוע, ולכן תהליך ארוך צריך לרוץ ברקע. מקור: https://code.claude.com/docs/en/env-vars (BASH_MAX_TIMEOUT_MS)
 - כשה-sandbox פועל, פקודה עלולה לא להגיע לשרת מקומי. שרת פיתוח שרץ על המחשב לא תמיד נגיש לבדיקה מתוך ה-sandbox, ובמק ראינו את זה בהרצות שלנו. מקור: https://code.claude.com/docs/en/sandboxing
+- מגרסה 3 של ה-CLI של Supabase, הפקודות `db push`, `db reset`, `migration repair`, `db query` ו-`db advisors` פועלות על המסד המקומי כשלא כותבים `--remote`. הדגל `--remote` לבד מכוון לפרויקט המקושר, והצורה `--remote=<ref>` מכוונת לפרויקט אחר או לענף. כדי לשנות מסד מרוחק, סוכן צריך גם `--yes`, ו-`SUPABASE_YES` בקובץ `supabase/.env` לא מספיק. נבדק ב-2026-11-24. מקורות: https://supabase.com/docs/reference/cli/supabase-db-push ו-https://supabase.com/llms/cli.txt
+- כשבהיסטוריית המיגרציות של המסד יש גרסה שאין לה קובץ במאגר, ההעלאה של האינטגרציה עם GitHub נכשלת. זה קורה כשמריצים מיגרציה דרך כלי של MCP, או כשמשנים שם של קובץ שכבר נדחף. נבדק ב-2026-11-24. מקור: https://supabase.com/docs/guides/deployment/branching/github-integration
+- ענף של Supabase מריץ כל מיגרציה בטרנזקציה אחת, ולכן מיגרציה עם `create index concurrently` עולה עם `db push` ונכשלת בענף. נבדק ב-2026-11-24. מקור: https://supabase.com/docs/guides/deployment/branching/github-integration
+- בדיקה נדרשת ב-GitHub שאף פעם לא מדווחת משאירה את ה-PR חסום, עם ההודעה Waiting for status to be reported. לכן כשהבדיקה Supabase Preview נדרשת, משאירים כבויה את האפשרות Supabase changes only, כדי שכל PR יקבל אותה. נבדק ב-2026-11-24. מקורות: https://docs.github.com/en/pull-requests/how-tos/merge-and-close-pull-requests/troubleshooting-required-status-checks ו-https://supabase.com/docs/guides/deployment/branching/github-integration
+- בלי האינטגרציה של Supabase עם Vercel, סביבות התצוגה של Vercel משתמשות במפתחות שמוגדרים בפרויקט, ובדרך כלל אלה המפתחות של הפרודקשן. כך תצוגה של שינוי בסכמה קוראת וכותבת בנתונים אמיתיים. נבדק ב-2026-11-24. מקור: https://supabase.com/docs/guides/integrations/vercel-preview-branches
+- שחזור לפרויקט חדש ב-Supabase מעתיק את כל המסד, ומשימות של pg_cron, pg_net ו-wrappers מתחילות לרוץ שם מיד. לפני תרגיל שחזור בודקים אם יש כאלה, כי הן עלולות לשלוח הודעות אמיתיות. נבדק ב-2026-11-24. מקור: https://supabase.com/docs/guides/platform/clone-project
+- שרת המיילים המובנה של Supabase שולח 2 הודעות בשעה, ורק לכתובות של חברי הצוות. משתמש בדיקה עם כתובת אחרת לא יקבל מייל אישור עד שמחברים שרת מיילים משלכם. נבדק ב-2026-11-24. מקור: https://supabase.com/docs/guides/auth/auth-smtp
+- שירות מיילים שעוקב אחרי לחיצות על קישורים משבש את קישורי האישור של Supabase. בשירות שמשמש כשרת המיילים של ההתחברות מכבים את המעקב. נבדק ב-2026-11-24. מקור: https://supabase.com/docs/guides/deployment/going-into-prod
+- הטוקן ש-`supabase login` יוצר בדפדפן נותן גישה מלאה לכל הארגונים והפרויקטים בחשבון. ב-CI ובסקריפטים משתמשים בטוקן שמוגבל לפרויקט ולהרשאות שצריך. נבדק ב-2026-11-24. מקור: https://supabase.com/docs/guides/platform/personal-access-tokens
+- התוספים הרשמיים של Supabase מוסיפים שרת MCP בלי `project_ref`, עם `features=docs` בלבד. השרת הזה מחפש רק בתיעוד, ולכן הבדיקה של `claude mcp list` לא עוצרת בגללו. נבדק ב-2026-11-24. מקור: https://github.com/supabase/agent-skills
+- תזמון ב-GitHub Actions רץ רק מהענף הראשי, אחרי שקובץ ה-workflow נמצא בו, וגם הרצה ידנית דורשת שהקובץ יהיה שם. נבדק ב-2026-11-24. מקור: https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows
 
 ## Compatibility runs
 

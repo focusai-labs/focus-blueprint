@@ -13,9 +13,9 @@
       "fits": "האתר כבר רץ ב-Vercel ואתם רוצים מדידה בלי הגדרות.",
       "less": "המדידה בסיסית, ואין בה ניתוח מתקדם של קהלים.",
       "cost": {
-        "text": "בתוכנית Hobby כלולים 50,000 אירועים בחודש, ובתוכנית Pro התשלום הוא 3 דולר לכל 100,000 אירועים.",
-        "source": "https://vercel.com/pricing",
-        "checkedAt": "2026-11-21"
+        "text": "באתר של עסק, שצריך ממילא את תוכנית Pro של Vercel, כל 1,000 אירועים עולים 0.03 דולר מתוך הקרדיט החודשי. בתוכנית Hobby כלולים 50,000 אירועים בחודש, ואחריהם האיסוף נעצר.",
+        "source": "https://vercel.com/docs/analytics/limits-and-pricing",
+        "checkedAt": "2026-11-24"
       },
       "connection": "vercel",
       "taught": true,

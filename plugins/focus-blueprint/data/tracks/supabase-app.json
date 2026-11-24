@@ -7,18 +7,86 @@
     {
       "id": "sb-create-project",
       "stage": 10,
-      "intent": "פרויקט Supabase חדש נפתח בחשבון של מי שיהיה הבעלים ובאזור הקרוב, והמפתחות שמורים רק ב-.env.local",
+      "intent": "פרויקט Supabase נפתח בחשבון של מי שיהיה הבעלים, באזור הקרוב למשתמשים ובתוכנית שנבחרה לפי מה שהפרויקט צריך, כמו שרשום במפה בשדות plan ו-planReason של השירות supabase",
       "docs": ["https://supabase.com/docs/guides/getting-started", "https://supabase.com/docs/guides/platform"],
-      "safety": "לא פותחים פרויקט לפני שבודקים שיש מקום בתוכנית החינמית, ולא מדביקים מפתח סודי בשום קובץ שעולה ל-Git",
-      "proof": "node -e one-liner that reads the URL from .env.local and gets 200 from /rest/v1/"
+      "safety": "פתיחת פרויקט עולה כסף או תופסת מקום בתוכנית, ולכן שואלים את הסטודנט לפני. את סיסמת המסד הסטודנט שומר במנהל סיסמאות, ושום מפתח או סיסמה לא נכנסים לקובץ שעולה ל-Git",
+      "onFree": "בתוכנית החינמית פרויקט שהייתה בו מעט פעילות במשך שבוע עלול להיעצר, ואין בה גיבוי אוטומטי. כשנשארים בה, רושמים את הפער ואת הסיכון שלו עם bp ruling add",
+      "proof": "supabase projects list shows the project ref in the chosen organization and region"
+    },
+    {
+      "id": "sb-skills",
+      "stage": 10,
+      "intent": "הסקילים הרשמיים של Supabase מותקנים ברמת הפרויקט, ו-Claude לוקח מהם את העובדות על Supabase",
+      "docs": ["https://supabase.com/docs/guides/getting-started/ai-skills", "https://code.claude.com/docs/en/discover-plugins"],
+      "safety": "מתקינים רק את supabase@supabase-agent-skills ואת postgres-best-practices@supabase-agent-skills. את התוסף המשולב supabase-community/supabase-plugin לא מתקינים, כי הוא מוסיף שרת MCP שרואה כל פרויקט בחשבון ויכול לשנות אותו",
+      "proof": "claude plugin list shows both plugins, and the committed .claude/settings.json enables them"
+    },
+    {
+      "id": "sb-cli",
+      "stage": 10,
+      "intent": "ה-CLI של Supabase בגרסה 3 מותקן לפי מערכת ההפעלה, מחובר לחשבון ומקושר לפרויקט, כך שפקודות שפונות לפרויקט המרוחק מגיעות לפרויקט הנכון",
+      "docs": ["https://supabase.com/docs/guides/local-development/cli/getting-started", "https://supabase.com/docs/reference/cli/supabase-link"],
+      "safety": "הסטודנט מריץ בעצמו את supabase login ואת supabase link, כי ההתחברות נותנת גישה מלאה לחשבון והקישור שואל את סיסמת המסד. Claude לא מבקש את הסיסמה או את הטוקן, והם לא נכנסים לשום קובץ",
+      "proof": "supabase --version prints 3.x, and supabase/.temp/project-ref holds the same ref as the supabase service in the map"
+    },
+    {
+      "id": "sb-mcp",
+      "stage": 10,
+      "intent": "חיבור ה-MCP של הפרויקט מוגבל לפרויקט אחד ולקריאה בלבד, ופתוח רק לקבוצות הכלים database, debugging, development ו-docs",
+      "docs": ["https://supabase.com/docs/guides/getting-started/mcp", "https://code.claude.com/docs/en/mcp"],
+      "safety": "לפני שממשיכים מריצים claude mcp list. כשמחובר שרת של Supabase שבכתובת שלו אין project_ref, חוץ משרת התיעוד שהסקילים מוסיפים עם features=docs, עוצרים ומבקשים מהסטודנט לכבות אותו לפרויקט הזה דרך /mcp",
+      "proof": ".mcp.json holds one supabase server with project_ref=<ref>, read_only=true and features=database,debugging,development,docs, and claude mcp list shows every other Supabase server as docs-only or disabled for this project"
+    },
+    {
+      "id": "sb-github",
+      "stage": 10,
+      "intent": "האינטגרציה של Supabase עם GitHub מחוברת למאגר עם האפשרות Deploy to production, כך שמיזוג ל-main מעלה לפרודקשן את המיגרציות החדשות. האפשרות הזאת זמינה בכל תוכנית",
+      "docs": ["https://supabase.com/docs/guides/deployment/branching/github-integration", "https://supabase.com/docs/guides/deployment/branching"],
+      "safety": "את החיבור עושה הסטודנט בלוח הבקרה, ו-Claude מוביל אותו פעולה אחרי פעולה. תיקיית העבודה היא התיקייה שבה נמצאת התיקייה supabase, ובדרך כלל זה שורש המאגר. אף אחד לא משנה סכמה בלוח הבקרה, כי שינוי כזה לא נמצא בקבצים והמיזוג הבא לא יודע עליו",
+      "proof": "the first migration is never pushed by hand: after its pull request is merged, supabase migration list --remote shows its version on the linked project"
+    },
+    {
+      "id": "sb-branching",
+      "stage": 10,
+      "when": "התוכנית של Supabase היא Pro ומעלה",
+      "intent": "כל PR מקבל ענף תצוגה שבונה את המסד מהמיגרציות, והבדיקה Supabase Preview חייבת לעבור לפני מיזוג ל-main",
+      "docs": ["https://supabase.com/docs/guides/deployment/branching", "https://supabase.com/docs/guides/platform/manage-your-usage/branching", "https://docs.github.com/en/pull-requests/how-tos/merge-and-close-pull-requests/troubleshooting-required-status-checks"],
+      "safety": "ענף תצוגה עולה כסף לפי שעה ולא נכנס לתקרת ההוצאה, ולכן ממזגים או סוגרים PR כשהוא מוכן. האפשרות Supabase changes only נשארת כבויה, כי בדיקה נדרשת שלא מדווחת משאירה את ה-PR חסום",
+      "paid": { "vendor": "supabase", "tier": "pro", "cost": "תוכנית Pro מתחילה ב-25 דולר לחודש, וענף תצוגה עולה מ-0.01344 דולר לשעה", "source": "https://supabase.com/pricing", "checkedAt": "2026-11-24" },
+      "onFree": "בתוכנית החינמית אין ענפים. לפני ההשקה מיגרציה נבדקת בפרויקט המקושר, ואחרי ההשקה בפרויקט פיתוח נפרד. רושמים את הפער, כי שום בדיקה אוטומטית לא מריצה את המיגרציה לפני המיזוג",
+      "proof": "gh pr checks on the first pull request with a migration lists Supabase Preview as passing, and gh api repos/{owner}/{repo}/rules/branches/main lists required_status_checks with check and Supabase Preview"
     },
     {
       "id": "sb-migrations",
       "stage": 10,
-      "intent": "כל שינוי במסד הנתונים נכתב כקובץ migration בתיקיית db, ורק אחר כך מריצים אותו עם apply_migration",
-      "docs": ["https://supabase.com/docs/guides/deployment/database-migrations"],
-      "safety": "לא משנים את המסד ישירות בלי קובץ, ולא מוחקים טבלה או עמודה לפני שבודקים מי משתמש בהן",
-      "proof": "every file in db/migrations appears in list_migrations and the order matches"
+      "intent": "כל שינוי במסד מתחיל בקובץ שנוצר עם supabase migration new בתיקייה supabase/migrations. לפני ההשקה הקובץ עולה לפרויקט המקושר ואחרי ההשקה ליעד הפיתוח. לפרודקשן הוא מגיע רק במיזוג",
+      "docs": ["https://supabase.com/docs/guides/deployment/database-migrations", "https://supabase.com/docs/reference/cli/supabase-migration-new", "https://supabase.com/docs/reference/cli/supabase-db-push"],
+      "safety": "לא משנים את המסד ישירות, גם לא עם apply_migration או עם execute_sql. קובץ שכבר עלה לא עורכים ולא משנים לו את השם, כי גרסה בהיסטוריה של המסד שאין לה קובץ מכשילה את ההעלאה לפרודקשן. תיקון נכתב כמיגרציה חדשה",
+      "proof": "supabase migration list on the same remote target as the push shows every file in supabase/migrations as applied, with the same versions"
+    },
+    {
+      "id": "sb-data-api",
+      "stage": 10,
+      "intent": "טבלה חדשה לא נחשפת אוטומטית ל-Data API. כל טבלה מקבלת grant מפורש לכל תפקיד לפי מטריצת ההרשאות, באותה מיגרציה שמפעילה עליה RLS",
+      "docs": ["https://supabase.com/docs/guides/api/securing-your-api"],
+      "safety": "לא נותנים לתפקיד פעולה שהמטריצה לא נותנת לו, ולא מחזירים את החשיפה האוטומטית כדי לחסוך grant",
+      "proof": "the default privileges query from the docs returns no rows, and the grants on each table match its access rows in the map"
+    },
+    {
+      "id": "sb-rls-trigger",
+      "stage": 10,
+      "intent": "המיגרציה הראשונה מתקינה את טריגר האירוע המתועד, שמפעיל RLS על כל טבלה חדשה ב-public",
+      "docs": ["https://supabase.com/docs/guides/database/postgres/event-triggers"],
+      "safety": "הטריגר הוא רשת ביטחון, וכל מיגרציה עדיין מפעילה RLS בעצמה. הוא חל רק על טבלאות שנוצרות אחריו ורק ב-public, הוא לא כותב מדיניות ולא מגן על views",
+      "proof": "select evtname, evtenabled from pg_event_trigger shows ensure_rls enabled, and a table created by a later migration has rowsecurity true"
+    },
+    {
+      "id": "sb-keys",
+      "stage": 10,
+      "intent": "המערכת עובדת עם המפתחות החדשים של Supabase. בדפדפן משתמשים במפתח publishable, ובמפתח secret משתמשים רק בצד השרת",
+      "docs": ["https://supabase.com/docs/guides/api/api-keys"],
+      "safety": "מפתח ארוך שמתחיל ב-eyJ הוא מפתח ישן, ו-Supabase מוציאה את anon ואת service_role משימוש עד סוף 2026. מפתח secret עוקף את RLS, ולכן הוא לא נכנס לשום משתנה שמתחיל ב-NEXT_PUBLIC",
+      "proof": ".env.local holds only sb_publishable_ and sb_secret_ keys, and a search for eyJ in the code and the env files finds nothing"
     },
     {
       "id": "sb-rls",
@@ -31,10 +99,10 @@
     {
       "id": "sb-advisors",
       "stage": 10,
-      "intent": "אחרי כל שינוי בנתונים מריצים את בדיקות האבטחה של Supabase ומתקנים כל ממצא חמור",
-      "docs": ["https://supabase.com/docs/guides/observability/advisors"],
+      "intent": "אחרי כל שינוי בנתונים מריצים את בדיקות האבטחה של Supabase על המסד שאליו השינוי עלה, ומתקנים כל ממצא חמור",
+      "docs": ["https://supabase.com/docs/guides/database/database-advisors", "https://supabase.com/docs/reference/cli/supabase-db-advisors"],
       "safety": "לא מתעלמים מממצא אבטחה רק כי האפליקציה עובדת, ולא מכבים בדיקה כדי שהיא תעבור",
-      "proof": "get_advisors(security) returns no ERROR level item"
+      "proof": "supabase db advisors --type security on the same remote target as the push, or get_advisors(security), returns no ERROR level item, saved to a file whose first line is # supabase advisors <date>"
     },
     {
       "id": "sb-template",
@@ -47,15 +115,26 @@
     {
       "id": "sb-vercel-env",
       "stage": 11,
-      "intent": "משתני הסביבה של Supabase מוגדרים ב-Vercel לכל סביבה, והאפליקציה עולה לכתובת חיה",
+      "intent": "משתני הסביבה של Supabase מוגדרים ב-Vercel לכל סביבה, עם המפתח publishable לדפדפן והמפתח secret לשרת, והאפליקציה עולה לכתובת חיה",
       "docs": ["https://vercel.com/docs/environment-variables", "https://vercel.com/docs/git"],
-      "safety": "המפתח הסודי נשמר רק כמשתנה סביבה בצד השרת, ולעולם לא במשתנה שמתחיל ב-NEXT_PUBLIC",
-      "proof": "the live URL returns 200 and the bundle does not contain the service role key"
+      "safety": "המפתח secret נשמר רק כמשתנה סביבה בצד השרת, ולעולם לא במשתנה שמתחיל ב-NEXT_PUBLIC",
+      "proof": "the live URL returns 200 and the client bundle contains no sb_secret_ key"
+    },
+    {
+      "id": "sb-preview-protection",
+      "stage": 11,
+      "when": "לקוח בלי חשבון Vercel צריך לראות סביבת תצוגה, או שסביבת תצוגה מגיעה לנתונים אמיתיים",
+      "intent": "סביבות התצוגה של Vercel מוגנות בסיסמה, כך שהלקוח רואה אותן ומי שאין לו את הסיסמה לא רואה",
+      "docs": ["https://vercel.com/docs/deployment-protection", "https://vercel.com/docs/deployment-protection/methods-to-protect-deployments/password-protection"],
+      "safety": "את הסיסמה שולחים ללקוח בערוץ אחר מזה של הקישור, והיא לא נשמרת בקוד או ב-Git. כשרק הצוות צריך לראות תצוגות, מספיקה ההגנה של Vercel Authentication, שזמינה בכל התוכניות",
+      "paid": { "vendor": "vercel", "tier": "pro", "cost": "הגנה בסיסמה זמינה בתוכנית Pro ועולה 20 דולר לחודש לכל פרויקט מוגן", "source": "https://vercel.com/docs/deployment-protection/methods-to-protect-deployments/password-protection", "checkedAt": "2026-11-24" },
+      "onFree": "בתוכנית Hobby אין הגנה בסיסמה. משתמשים בהגנה של Vercel Authentication, משתפים תצוגה עם לקוח בקישור שיתוף ורושמים את הפער",
+      "proof": "a preview URL opened in a private window shows the Vercel password page and not the app"
     },
     {
       "id": "sb-cap-table",
       "stage": 12,
-      "intent": "לכל יכולת יש טבלה עם הנתונים שלה, שנוספה בקובץ migration ומתועדת ב-db/schema.md",
+      "intent": "לכל יכולת יש טבלה עם הנתונים שלה, שנוספה בקובץ של supabase migration new ומתועדת ב-db/schema.md",
       "docs": ["https://supabase.com/docs/guides/deployment/database-migrations"],
       "safety": "לא נוגעים בטבלאות של יכולות אחרות כשמוסיפים טבלה חדשה",
       "proof": "check-map passes and the table appears in map.tables for the capability"
@@ -96,9 +175,9 @@
       "id": "sb-launch-advisors",
       "stage": 13,
       "intent": "לפני העלייה לאוויר, בדיקות האבטחה והביצועים של Supabase עוברות בלי ממצאים, וכל חריגה מוסברת",
-      "docs": ["https://supabase.com/docs/guides/observability/advisors"],
+      "docs": ["https://supabase.com/docs/guides/database/database-advisors", "https://supabase.com/docs/reference/cli/supabase-db-advisors"],
       "safety": "לא עולים לאוויר עם ממצא אבטחה פתוח",
-      "proof": "get_advisors(security) is clean, quoted in docs/launch-checklist.md"
+      "proof": "supabase db advisors --remote --type all, or get_advisors for security and performance, is clean, quoted in docs/launch-checklist.md"
     },
     {
       "id": "sb-domain",
@@ -111,10 +190,95 @@
     {
       "id": "sb-alert",
       "stage": 13,
-      "intent": "כשמשהו מפסיק לעבוד, מישהו מקבל הודעה, דרך התראה של Vercel על פריסה שנכשלה או דרך בדיקת תקינות ב-n8n",
+      "intent": "כשמשהו מפסיק לעבוד, מישהו מקבל הודעה. לכל צעד שרץ בלי אדם במפת התהליך יש בשדה onFailure התראה שבאמת מגיעה, דרך Vercel, דרך בדיקת תקינות ב-n8n או דרך שירות המיילים",
       "docs": ["https://vercel.com/docs/notifications", "https://docs.n8n.io/build/flow-logic/handle-errors-gracefully"],
       "safety": "ההתראה נשלחת רק לכתובת שהבעלים אישר, ובלי פרטי משתמשים בגוף ההודעה",
-      "proof": "a deliberate failure produces a message in the owner inbox, quoted in the launch checklist"
+      "proof": "for every system or ai step in map.processes, a deliberate failure produces its onFailure alert in the owner inbox, quoted in docs/launch-checklist.md"
+    },
+    {
+      "id": "sb-timers",
+      "stage": 13,
+      "intent": "לכל טיימר במפת התהליך יש בדיקה או משימה מתוזמנת שמוכיחה שהוא פועל, ומה שאמור לקרות כשהזמן נגמר באמת קורה",
+      "docs": ["https://supabase.com/docs/guides/cron", "https://docs.n8n.io/integrations/builtin/core-nodes/n8n-nodes-base.scheduletrigger"],
+      "safety": "בבדיקה מקצרים את הזמן או משנים את התאריך של נתוני הבדיקה, בלי לחכות שהזמן האמיתי יעבור, ואף פעם לא על נתונים של לקוחות",
+      "proof": "for every timer in map.processes, a test run or a scheduled job run shows the onExpire action happened, quoted in docs/launch-checklist.md"
+    },
+    {
+      "id": "sb-backups",
+      "stage": 13,
+      "when": "המערכת שומרת נתונים של משתמשים אמיתיים",
+      "intent": "יש גיבוי יומי של המסד, ויודעים לשחזר ממנו",
+      "docs": ["https://supabase.com/docs/guides/platform/backups", "https://supabase.com/docs/guides/platform/clone-project"],
+      "safety": "תרגיל השחזור נעשה לפרויקט חדש, ואף פעם לא על הפרודקשן. לפני השחזור בודקים אם יש במסד משימות pg_cron, קריאות pg_net או webhooks, כי הן מתחילות לרוץ מיד בפרויקט החדש ועלולות לשלוח הודעות אמיתיות. הגיבוי לא כולל את הקבצים שב-Storage",
+      "paid": { "vendor": "supabase", "tier": "pro", "cost": "בתוכנית Pro יש גיבוי יומי שנשמר 7 ימים, והתוכנית מתחילה ב-25 דולר לחודש", "source": "https://supabase.com/pricing", "checkedAt": "2026-11-24" },
+      "onFree": "בתוכנית החינמית אין גיבוי אוטומטי. מריצים supabase db dump לפי לוח זמנים, שומרים את הקובץ מחוץ ל-Git ומחוץ ל-Supabase, ורושמים את הפער",
+      "proof": "one restore drill: a backup restored to a new project, a query there finds a known row, and the date and duration are written in docs/launch-checklist.md"
+    },
+    {
+      "id": "sb-pitr",
+      "stage": 13,
+      "when": "אסור לאבד אפילו יום של נתונים, למשל תשלומים או מסמכים שלקוחות מעלים פעם אחת",
+      "intent": "מפעילים שחזור לנקודת זמן, כך שאפשר לחזור לכל רגע בטווח השמירה",
+      "docs": ["https://supabase.com/docs/guides/platform/backups", "https://supabase.com/docs/guides/platform/manage-your-usage/point-in-time-recovery"],
+      "safety": "שחזור לנקודת זמן מחליף את המצב הנוכחי של המסד, ולכן התרגיל נעשה לפרויקט חדש",
+      "paid": { "vendor": "supabase", "tier": "pro", "cost": "תוספת שחזור לנקודת זמן עם 7 ימי שמירה עולה בערך 100 דולר לחודש, מעל תוכנית Pro", "source": "https://supabase.com/docs/guides/platform/backups", "checkedAt": "2026-11-24" },
+      "proof": "one restore drill to a point in time into a new project, and a row written just before that time is found there"
+    },
+    {
+      "id": "sb-leaked-passwords",
+      "stage": 13,
+      "when": "משתמשים נכנסים עם סיסמה",
+      "intent": "ההתחברות של Supabase דוחה סיסמה שכבר דלפה, ומוגדרים אורך מינימלי וסוגי תווים לסיסמה",
+      "docs": ["https://supabase.com/docs/guides/auth/password-security"],
+      "safety": "בודקים רק עם משתמש בדיקה, ולא עם סיסמה של אדם אמיתי",
+      "paid": { "vendor": "supabase", "tier": "pro", "cost": "ההגנה מסיסמאות שדלפו זמינה מתוכנית Pro, שמתחילה ב-25 דולר לחודש", "source": "https://supabase.com/docs/guides/auth/password-security", "checkedAt": "2026-11-24" },
+      "onFree": "בתוכנית החינמית אין הגנה מסיסמאות שדלפו. מגדירים אורך מינימלי של 8 תווים לפחות ודורשים כמה סוגי תווים, ורושמים את הפער",
+      "proof": "a sign-up attempt with a well known leaked password is refused, and the error is quoted"
+    },
+    {
+      "id": "sb-smtp",
+      "stage": 13,
+      "when": "משתמשים נרשמים, מקבלים קישור התחברות או מאפסים סיסמה במייל",
+      "intent": "מיילי ההתחברות יוצאים מהדומיין של העסק דרך שרת מיילים משלכם, ומגבלת השליחה מתאימה לכמות שמצפים לה",
+      "docs": ["https://supabase.com/docs/guides/auth/auth-smtp", "https://supabase.com/docs/guides/deployment/going-into-prod"],
+      "safety": "מכבים מעקב קישורים בשירות המיילים, כי הוא משבש את קישורי האישור. סיסמת ה-SMTP נשמרת רק בהגדרות של Supabase",
+      "proof": "a sign-up from an address outside the project team receives the confirmation from the custom sender, and the auth email rate limit matches the expected volume"
+    },
+    {
+      "id": "sb-vercel-rollback",
+      "stage": 13,
+      "when": "המערכת באוויר ואנשים תלויים בה",
+      "intent": "אפשר להחזיר את האתר לכל גרסה קודמת שעלתה לפרודקשן, ויודעים מה קורה אחרי החזרה",
+      "docs": ["https://vercel.com/docs/instant-rollback", "https://vercel.com/docs/cli/rollback"],
+      "safety": "חזרה לגרסה קודמת לא מחזירה את המסד ולא את משתני הסביבה. אחרי ההשקה מיגרציה רק מוסיפה, ולכן הקוד הישן ממשיך לעבוד מול הסכמה החדשה",
+      "paid": { "vendor": "vercel", "tier": "pro", "cost": "בתוכנית Pro, שעולה 20 דולר לחודש, אפשר לחזור לכל גרסה שעלתה לפרודקשן", "source": "https://vercel.com/docs/instant-rollback", "checkedAt": "2026-11-24" },
+      "onFree": "בתוכנית Hobby אפשר לחזור רק לגרסה הקודמת, והתוכנית מיועדת לשימוש אישי או לא מסחרי. רושמים את הפער",
+      "proof": "one rollback drill: vercel rollback to an earlier production deployment and back, with both deployment URLs and the time quoted in docs/launch-checklist.md"
+    },
+    {
+      "id": "sb-dev-target",
+      "stage": 13,
+      "intent": "אחרי ההשקה כל שינוי במסד נבדק קודם ביעד פיתוח, ורק המיזוג מעלה אותו לפרודקשן. בתוכנית Pro היעד הוא ענף של Supabase, ובתוכנית החינמית פרויקט פיתוח נפרד",
+      "docs": ["https://supabase.com/docs/guides/deployment/branching", "https://supabase.com/docs/guides/deployment/managing-environments", "https://supabase.com/docs/guides/integrations/vercel-preview-branches"],
+      "safety": "ביעד הפיתוח אין נתונים אמיתיים. חיבור ה-MCP של הפרודקשן נשאר מוגבל לפרויקט אחד ולקריאה בלבד. סביבות התצוגה של Vercel מצביעות על יעד הפיתוח, כי אחרת הן קוראות וכותבות בפרודקשן",
+      "onFree": "פותחים פרויקט פיתוח חדש ומעלים אליו את כל המיגרציות מהקבצים. בתוכנית החינמית יש מקום לשני פרויקטים פעילים בלבד. רושמים את הפער ואת הסיכון שלו. שום בדיקה אוטומטית לא רצה לפני המיזוג, ושני הפרויקטים עלולים להיעצר אחרי שבוע עם מעט פעילות",
+      "proof": "the supabase service in the map holds ref, prodBranch and devTarget (on Pro without a fixed dev branch, devTarget stays empty and the first pull request after launch shows Supabase Preview green), and supabase db push --remote=<devTarget> --dry-run prints a Target line that names the dev target"
+    },
+    {
+      "id": "sb-weekly-advisors",
+      "stage": 13,
+      "intent": "בדיקות האבטחה והביצועים של Supabase רצות פעם בשבוע מול הפרודקשן ב-GitHub Actions, ותופסות שינוי שנעשה ישירות בלוח הבקרה",
+      "docs": ["https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows", "https://supabase.com/docs/guides/platform/personal-access-tokens", "https://supabase.com/docs/reference/cli/supabase-db-advisors"],
+      "safety": "הטוקן ב-CI מוגבל לפרויקט אחד ולהרשאה Advisors לקריאה בלבד, ונשמר כסוד של GitHub. הטוקן ש-supabase login יוצר נותן גישה מלאה לחשבון, ולכן הוא לא נכנס ל-CI",
+      "proof": "a manual run with gh workflow run supabase-advisors.yml finishes, and its log shows the Target line with the production ref"
+    },
+    {
+      "id": "sb-lockfile",
+      "stage": 13,
+      "intent": "הגרסאות של החבילות נעולות בקובץ הנעילה, והוא נמצא ב-Git",
+      "docs": ["https://supabase.com/docs/guides/security/npm-security"],
+      "safety": "לא מתקינים גרסה שיצאה לפני פחות משבוע, כמו שהמדריך של Supabase ממליץ, ולא מוחקים את קובץ הנעילה כדי לפתור התנגשות",
+      "proof": "git ls-files lists the lockfile, and a clean install from it builds the app"
     }
   ]
 }

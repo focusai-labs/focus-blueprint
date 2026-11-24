@@ -1,0 +1,44 @@
+# Weekly Supabase advisors scan of the live project (Focus Blueprint). Stage 13 adds this file at launch.
+# It catches changes made straight in the Supabase dashboard, which no pull request ever saw.
+#
+# GitHub runs a schedule only from the default branch, so the scan starts once this file is on main:
+# https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows#schedule
+# A failed scheduled run is emailed to the GitHub user who added the workflow.
+#
+# Set once in the repository settings:
+#   secret   SUPABASE_ACCESS_TOKEN  a personal access token made in the Supabase dashboard, scoped to the
+#                                   production project with the Advisors (Read) permission only. Never the
+#                                   token that "supabase login" creates, which has full account access.
+#                                   https://supabase.com/docs/guides/platform/personal-access-tokens
+#   variable SUPABASE_PROJECT_REF   the production project ref
+#
+# --remote=<ref> targets that project, so the job needs no "supabase link" and no database password.
+# --fail-on error fails the job on any ERROR level finding:
+# https://supabase.com/docs/reference/cli/supabase-db-advisors
+name: supabase-advisors
+on:
+  schedule:
+    # Mondays 05:23 UTC. Off the top of the hour, when scheduled runs are delayed the most.
+    - cron: '23 5 * * 1'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  advisors:
+    name: advisors
+    runs-on: ubuntu-latest
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      SUPABASE_PROJECT_REF: ${{ vars.SUPABASE_PROJECT_REF }}
+    steps:
+      - uses: actions/checkout@v7
+      # https://github.com/supabase/setup-cli (v3 is the current major; ^3 keeps the CLI on major 3).
+      - uses: supabase/setup-cli@v3
+        with:
+          version: ^3
+      - name: Check the settings
+        run: |
+          test -n "$SUPABASE_ACCESS_TOKEN" || { echo "The SUPABASE_ACCESS_TOKEN secret is not set."; exit 1; }
+          test -n "$SUPABASE_PROJECT_REF" || { echo "The SUPABASE_PROJECT_REF variable is not set."; exit 1; }
+      - name: Advisors on the live project
+        run: supabase db advisors --remote="$SUPABASE_PROJECT_REF" --type all --level warn --fail-on error

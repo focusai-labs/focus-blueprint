@@ -55,6 +55,20 @@ const PRD_REQUIRED = [
   ['prd:done', 'מתי העבודה גמורה'],
 ];
 const listHe = (xs) => (xs.length < 2 ? xs.join('') : `${xs.slice(0, -1).join(', ')} ו${xs[xs.length - 1]}`);
+// The two PRD sections that rule 30 asks for when the system connects to a system that existed before it (C4).
+const PRD_EXISTING = [
+  ['prd:source-of-truth', 'איזו מערכת היא הבעלים של כל סוג מידע'],
+  ['prd:existing-data', 'מידע שקיים עוד לפני המערכת'],
+];
+/** A section counts as filled when, without comments, it has a line that is not a table header or separator, and no fill marker. */
+function sectionFilled(text, marker) {
+  const body = text && sectionLines(text, marker);
+  if (!body) return false;
+  const ls = body.join('\n').replace(/<!--[\s\S]*?-->/g, ' ').split('\n').map((l) => l.trim());
+  if (ls.some((l) => l.includes('<<fill>>'))) return false;
+  const sep = (l) => /^\|?[\s|:-]+\|?$/.test(l) && l.includes('-');
+  return ls.some((l, i) => l && !sep(l) && !(l.startsWith('|') && sep(ls[i + 1] || '')));
+}
 
 // Same extraction as bp.mjs: the rest of the marker line, or the first non-empty line after it.
 function catchesOf(text) {
@@ -81,12 +95,23 @@ function createsTable(sql, name) {
   return re.test(clean);
 }
 
+// The migration that creates a table: the path the map records, the same file name under
+// supabase/migrations (where stage 10 writes them), or any migration file that creates it.
+function migrationCreates(ctx, entry, table, migs) {
+  const rec = entry.migration ? String(entry.migration).replace(/\\/g, '/') : '';
+  const cands = [...new Set([rec, rec && !rec.includes('/') ? `supabase/migrations/${rec}` : '', ...migs].filter(Boolean))];
+  return cands.some((f) => { const sql = ctx.read(f); return sql !== null && createsTable(sql, table); });
+}
+
+// Gates. `bp stage done N` moves the stage to N+1 before the closing commit, so a rule is an error
+// only from the stage after the one whose work produces its data, and a warning before that.
 const isReal = (c) => c.status === 'real';
 const isAdopted = (c) => !!c.evidence && c.evidence.adopted === true;
 
 const rules = [
-  { id: '1', run({ map, ctx, err }) {
-    for (const s of map.screens) if (!ctx.exists(s.file)) err('1', s.file, `המסך ${s.file} רשום במפה, אבל הקובץ לא קיים.`);
+  { id: '1', run({ map, ctx, stage, err, warn }) {
+    const out = stage >= 8 ? err : warn;   // stage 7 builds the screen files
+    for (const s of map.screens) if (!ctx.exists(s.file)) out('1', s.file, `המסך ${s.file} רשום במפה, אבל הקובץ לא קיים.`);
   } },
   { id: '2', run({ map, ctx, err }) {
     const known = new Set(map.screens.map((s) => String(s.file).replace(/\\/g, '/')));
@@ -96,17 +121,17 @@ const rules = [
       for (const e of fs.readdirSync(d, { withFileTypes: true })) {
         const r = `${rel}/${e.name}`;
         if (e.isDirectory()) walk(r);
-        else if (/\.html$/i.test(e.name) && !known.has(r)) err('2', r, `הקובץ ${r} נמצא בתיקיית mockup, אבל הוא לא רשום במפה כמסך.`);
+        else if (/\.html$/i.test(e.name) && !e.name.startsWith('_') && !known.has(r)) err('2', r, `הקובץ ${r} נמצא בתיקיית mockup, אבל הוא לא רשום במפה כמסך.`);
       }
     };
     walk('mockup');
   } },
-  { id: '3', run({ map, ctx, err }) {
+  { id: '3', run({ map, ctx, stage, err, warn }) {
+    const out = stage >= 11 ? err : warn;   // stage 10 writes the migrations
+    const migs = migrationFiles(ctx.dir).all;
     for (const c of map.capabilities) for (const t of c.data || []) {
       const entry = map.tables.find((x) => x.name === t);
-      const sql = entry && ctx.read(entry.migration);
-      const ok = sql && createsTable(sql, t);
-      if (!ok) err('3', c.id, `היכולת ${c.id} משתמשת בטבלה ${t}, ואין קובץ מיגרציה שיוצר אותה.`);
+      if (!entry || !migrationCreates(ctx, entry, t, migs)) out('3', c.id, `היכולת ${c.id} משתמשת בטבלה ${t}, ואין קובץ מיגרציה שיוצר אותה.`);
     }
   } },
   { id: '4', run({ map, ctx, err }) {
@@ -327,7 +352,7 @@ const newRules = [
     }
   } },
   { id: '21', run({ map, stage, err, warn }) {
-    const out = stage >= 12 ? err : warn;
+    const out = stage >= 13 ? err : warn;   // stage 12 turns the cases into acceptance tests
     for (const p of map.processes) {
       const cs = p.cases || [];
       if (!cs.some((c) => c.kind === 'happy') || !cs.some((c) => c.kind === 'problem' || c.kind === 'rejection')) out('21', p.id, `בתהליך ${p.id} חסרים מקרים. צריך לפחות מקרה תקין אחד ולפחות מקרה אחד של תקלה או דחייה.`);
@@ -340,16 +365,17 @@ const newRules = [
       if (c.decision === 'now' && c.done && open.length) err('22', `change:${i}`, `השינוי "${c.text}" סומן כגמור, אבל עוד פתוחים בו הממדים ${open.join(', ')}.`);
     });
   } },
-  { id: '23', run({ ctx, stage, err }) {
+  { id: '23', run({ ctx, stage, err, warn }) {
     if (stage < 4) return;
+    const out = stage >= 5 ? err : warn;   // stage 4 writes the PRD
     const prd = ctx.read('spec/prd.md') || '';
     const listed = assumptionsOf(prd);
     for (const f of specDocs(ctx)) {
       const text = ctx.read(f);
       for (const v of parseVoices(text)) {
-        if (!v.src) { err('23', `${f}:${v.line}`, `בקובץ ${f} בשורה ${v.line} חסר סימון מקור. מסמנים מי אמר את זה, או שזו הנחה.`); continue; }
+        if (!v.src) { out('23', `${f}:${v.line}`, `בקובץ ${f} בשורה ${v.line} חסר סימון מקור. מסמנים מי אמר את זה, או שזו הנחה.`); continue; }
         if (v.src === 'assumed' && !listed.some((a) => a === v.text.replace(/\s*$/, '') || (a.length > 8 && v.text.includes(a)) || (v.text.length > 8 && a.includes(v.text)))) {
-          err('23', `${f}:${v.line}`, `בקובץ ${f} השורה ${v.line} מסומנת כהנחה, אבל היא לא מופיעה ברשימת ההנחות ב-PRD.`);
+          out('23', `${f}:${v.line}`, `בקובץ ${f} השורה ${v.line} מסומנת כהנחה, אבל היא לא מופיעה ברשימת ההנחות ב-PRD.`);
         }
       }
     }
@@ -397,12 +423,13 @@ const newRules = [
       while ((m = re.exec(text))) { const n = m[1] || m[2]; if (isPublicEnvName(n) && isSecretishName(n)) err('25', f, `בקובץ ${f} הקוד קורא למשתנה ${n}. לפי השם הוא סוד, ובגלל הקידומת שלו הוא נשלח לדפדפן.`); }
     }
   } },
-  { id: '26', run({ map, stage, err }) {
+  { id: '26', run({ map, stage, err, warn }) {
     if (stage < 10) return;
+    const out = stage >= 11 ? err : warn;   // stage 10 writes the tables and their access rows
     const tb = tableNames(map);
     const rows = new Set(map.access.filter((a) => !a.kind || a.kind === 'table').map((a) => a.object));
-    for (const t of tb) if (!rows.has(t)) err('26', t, `לטבלה ${t} אין עדיין שורות במטריצת ההרשאות.`);
-    for (const o of rows) if (!tb.has(o)) err('26', o, `במטריצת ההרשאות יש שורות לטבלה ${o}, שלא רשומה ברשימת הטבלאות.`);
+    for (const t of tb) if (!rows.has(t)) out('26', t, `לטבלה ${t} אין עדיין שורות במטריצת ההרשאות.`);
+    for (const o of rows) if (!tb.has(o)) out('26', o, `במטריצת ההרשאות יש שורות לטבלה ${o}, שלא רשומה ברשימת הטבלאות.`);
   } },
   { id: '27', run({ ctx, state, changes, err, dimensions }) {
     if (!state || state.track !== 'supabase-app' || !Array.isArray(dimensions)) return;
@@ -455,6 +482,16 @@ const newRules = [
         if (errors.some((e) => e.rule === '25' && e.item === k)) continue;
         err('29', k, `בקובץ ${f} בשורה ${h.line} יש ${h.name}. סוד שנכנס ל-Git נשאר בהיסטוריה גם אחרי שמוחקים אותו. מעבירים אותו למשתנה סביבה בקובץ שלא נכנס ל-Git.`);
       }
+    }
+  } },
+  { id: '30', run({ map, ctx, stage, err, warn }) {
+    if (stage < 4) return;
+    const out = stage >= 5 ? err : warn;   // stage 4 writes the PRD
+    const olds = map.services.filter((s) => s && s.existing === true).map((s) => s.name || s.id);
+    if (!olds.length) return;
+    const prd = ctx.read('spec/prd.md') || '';
+    for (const [m, heading] of PRD_EXISTING) {
+      if (!sectionFilled(prd, m)) out('30', 'spec/prd.md', `המערכת מתחברת למערכת שכבר הייתה בשימוש לפניה (${olds.join(', ')}), ולכן ב-PRD צריך למלא את הסעיף "${heading}", עם הסימון ${mk(m)}.`);
     }
   } },
 ];

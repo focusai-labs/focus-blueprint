@@ -88,14 +88,14 @@ T('rule 20: automatic step needs onFailure from stage 5', () => {
 });
 
 // 21
-T('rule 21: cases warn before stage 12 and fail from stage 12', () => {
+T('rule 21: cases warn before stage 13 and fail from stage 13', () => {
   const noCases = (m) => { m.processes[0].cases = [{ id: 'c1', kind: 'happy', text: 'x', eval: null }]; return m; };
-  const early = proj({ map: noCases, state: { stage: 8, track: 'supabase-app' } }).report;
-  assert.ok(has(early, 21, 'warnings') && !has(early, 21));
-  const late = proj({ map: noCases, state: { stage: 12, track: 'supabase-app' } }).report;
+  const early = proj({ map: noCases, state: { stage: 12, track: 'supabase-app' } }).report;
+  assert.ok(has(early, 21, 'warnings') && !has(early, 21), 'stage 12 writes the case tests, so its own close only warns');
+  const late = proj({ map: noCases, state: { stage: 13, track: 'supabase-app' } }).report;
   assert.ok(has(late, 21));
-  assert.ok(!has(proj({ state: { stage: 12, track: 'supabase-app' } }).report, 21));
-  assert.ok(!has(proj({ map: (m) => { m.processes[0].cases = [{ id: 'a', kind: 'happy', text: 'x', eval: 'evals/e.md' }, { id: 'b', kind: 'rejection', text: 'x', eval: 'evals/e.md' }]; return m; }, state: { stage: 12, track: 'supabase-app' } }).report, 21));
+  assert.ok(!has(proj({ state: { stage: 13, track: 'supabase-app' } }).report, 21));
+  assert.ok(!has(proj({ map: (m) => { m.processes[0].cases = [{ id: 'a', kind: 'happy', text: 'x', eval: 'evals/e.md' }, { id: 'b', kind: 'rejection', text: 'x', eval: 'evals/e.md' }]; return m; }, state: { stage: 13, track: 'supabase-app' } }).report, 21));
 });
 
 // 22
@@ -108,10 +108,13 @@ T('rule 22: now change marked done with an open dimension fails', () => {
 
 // 23
 const VO = (lines) => `# x\n<!-- voices -->\n${lines}\n<!-- /voices -->\n<!-- prd:assumptions -->\n- הנחה אחת\n`;
-T('rule 23: voices markers from stage 4', () => {
-  assert.ok(has(proj({ files: { 'spec/prd.md': VO('שורה בלי סימון') }, state: { stage: 4, track: 'supabase-app' } }).report, 23));
-  assert.ok(!has(proj({ files: { 'spec/prd.md': VO('שורה בלי סימון') }, state: { stage: 3, track: 'supabase-app' } }).report, 23));
-  assert.ok(!has(proj({ files: { 'spec/prd.md': VO('שורה <!-- src:client -->\nעוד <!-- src:ours -->') }, state: { stage: 4, track: 'supabase-app' } }).report, 23));
+T('rule 23: voices markers warn in stage 4 and fail from stage 5', () => {
+  const at = (stage, text) => proj({ files: { 'spec/prd.md': VO(text) }, state: { stage, track: 'supabase-app' } }).report;
+  assert.ok(has(at(5, 'שורה בלי סימון'), 23));
+  const four = at(4, 'שורה בלי סימון');
+  assert.ok(!has(four, 23) && has(four, 23, 'warnings'), 'stage 4 writes the PRD, so its own close only warns');
+  assert.ok(!has(at(3, 'שורה בלי סימון'), 23) && !has(at(3, 'שורה בלי סימון'), 23, 'warnings'));
+  assert.ok(!has(at(5, 'שורה <!-- src:client -->\nעוד <!-- src:ours -->'), 23));
 });
 T('rule 23: an assumed line must be listed in the PRD assumptions', () => {
   assert.ok(!has(proj({ files: { 'spec/prd.md': VO('הנחה אחת <!-- src:assumed -->') }, state: { stage: 5, track: 'supabase-app' } }).report, 23));
@@ -174,14 +177,17 @@ T('rule 4 also uses the secret patterns', () => {
 });
 
 // 26
-T('rule 26: tables and access rows must match from stage 10', () => {
+T('rule 26: tables and access rows warn in stage 10 and must match from stage 11', () => {
   const tab = (m) => { m.tables = [{ name: 'docs', migration: 'x.sql' }]; return m; };
   const both = (m) => { tab(m); m.access = [{ object: 'docs', kind: 'table', rules: [] }]; return m; };
   const ghost = (m) => { m.access = [{ object: 'ghost', kind: 'table', rules: [] }]; return m; };
-  assert.ok(has(proj({ map: tab, state: { stage: 10, track: 'supabase-app' } }).report, 26));
-  assert.ok(!has(proj({ map: tab, state: { stage: 9, track: 'supabase-app' } }).report, 26));
-  assert.ok(has(proj({ map: ghost, state: { stage: 10, track: 'supabase-app' } }).report, 26));
-  assert.ok(!has(proj({ map: both, state: { stage: 10, track: 'supabase-app' } }).report, 26));
+  const at = (map, stage) => proj({ map, state: { stage, track: 'supabase-app' } }).report;
+  assert.ok(has(at(tab, 11), 26));
+  assert.ok(!has(at(tab, 10), 26) && has(at(tab, 10), 26, 'warnings'), 'stage 10 writes the tables, so its own close only warns');
+  assert.ok(!has(at(tab, 9), 26) && !has(at(tab, 9), 26, 'warnings'));
+  assert.ok(has(at(ghost, 11), 26));
+  assert.ok(!has(at(ghost, 10), 26), 'access rows from stage 4 wait for their tables');
+  assert.ok(!has(at(both, 11), 26));
 });
 
 // 27

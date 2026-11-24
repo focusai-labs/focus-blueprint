@@ -27,6 +27,15 @@ const KIND_TYPE = { wording: 'content', track: null };
 const CHANGE_KINDS = ['wording', 'track', 'migration', ...NODE_TYPES];
 const arr = (x) => (Array.isArray(x) ? x : []);
 const validActor = (a) => typeof a === 'string' && (['screen', 'server', 'automation', 'ai'].includes(a) || /^role:.+/.test(a) || /^external:.+/.test(a));
+const isText = (v) => typeof v === 'string' && v.trim() !== '';
+const textOrNull = (v) => v === undefined || v === null || typeof v === 'string';
+const idList = (v) => v === undefined || (Array.isArray(v) && v.every((x) => typeof x === 'string'));
+const PROCESS_DEFAULTS = {
+  stage: {},
+  step: { screen: null, capability: null, tables: [], permission: null, test: null, onFailure: null, next: [], src: null, source: '' },
+  timer: { duration: null, onExpire: null, test: null },
+  case: { eval: null },
+};
 
 class Fail extends Error {}
 const fail = (msg) => { throw new Fail(msg); };
@@ -182,6 +191,28 @@ function catchesOf(file) {
   return null;
 }
 const sha256 = (file) => crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex');
+
+/** One validation for a stage, step, timer or case, used by both `add` and `set`. */
+function checkProcessItem(sub, e, proc) {
+  const stageIds = arr(proc.stages).map((x) => x.id);
+  const stageList = stageIds.join(', ') || '(none yet)';
+  if (sub === 'stage') { if (!isText(e.name)) fail('stage needs "name"'); return; }
+  if (!isText(e.text)) fail(`${sub} needs "text"`);
+  if (sub === 'step') {
+    if (!STEP_KINDS.includes(e.kind)) fail(`step kind must be ${STEP_KINDS.join('|')}`);
+    if (!stageIds.includes(e.stage)) fail(`step stage must be one of the process stages: ${stageList}`);
+    if (!validActor(e.actor)) fail('step actor must be role:<id>, screen, server, automation, ai or external:<name>');
+    if (e.src !== undefined && e.src !== null && !SRCS.includes(e.src)) fail(`src must be ${SRCS.join('|')}`);
+    for (const k of ['tables', 'next']) if (!idList(e[k])) fail(`step ${k} must be a list of ids`);
+    for (const k of ['screen', 'capability', 'permission', 'test', 'onFailure', 'source']) if (!textOrNull(e[k])) fail(`step ${k} must be text or null`);
+  } else if (sub === 'timer') {
+    if (e.stage !== undefined && e.stage !== null && !stageIds.includes(e.stage)) fail(`timer stage must be one of the process stages: ${stageList}`);
+    for (const k of ['duration', 'onExpire', 'test']) if (!textOrNull(e[k])) fail(`timer ${k} must be text or null`);
+  } else {
+    if (!CASE_KINDS.includes(e.kind)) fail(`case kind must be ${CASE_KINDS.join('|')}`);
+    if (!textOrNull(e.eval)) fail('case eval must be a file path or null');
+  }
+}
 
 function realMissing(ctx, cap) {
   const miss = [];
@@ -616,6 +647,8 @@ export const commands = {
     if (!['add', 'set'].includes(sub) || !id) fail('usage: service add|set <id> --json \'<obj>\'');
     const o = jsonFlag(ctx, `service ${sub}`);
     for (const k of ['owner', 'payer']) if (o[k] !== undefined && o[k] !== null && !['client', 'me', 'org'].includes(o[k])) fail(`${k} must be client|me|org`);
+    // existing: true marks a system that was in use before this one (a CRM, accounting, a sheet); check rule 30 reads it
+    if (o.existing !== undefined && typeof o.existing !== 'boolean') fail('existing must be true or false');
     const m = ctx.map();
     const i = m.services.findIndex((x) => x.id === id);
     let entry;
@@ -633,7 +666,7 @@ export const commands = {
   },
 
   process(args, ctx) {
-    const [sub, a2, a3] = args;
+    const [sub, a2, a3, a4] = args;
     const m = ctx.map();
     if (sub === 'add') {
       if (!a2) fail('usage: process add <id> --name "<name>"');
@@ -644,32 +677,36 @@ export const commands = {
       return entry;
     }
     const lists = { stage: 'stages', step: 'steps', timer: 'timers', case: 'cases' };
-    if (!lists[sub] || a2 !== 'add' || !a3) fail('usage: process add <id> --name ... | process stage|step|timer|case add <process> --json \'<obj>\'');
+    const usage = 'usage: process add <id> --name ... | process stage|step|timer|case add <process> --json \'<obj>\' | process step|timer|case set <process> <id> --json \'<partial>\'';
+    const isSet = a2 === 'set';
+    if (!lists[sub] || !['add', 'set'].includes(a2) || !a3 || (isSet && (sub === 'stage' || !a4))) fail(usage);
     const proc = m.processes.find((p) => p.id === a3) || fail(`unknown process: ${a3}`);
-    const o = jsonFlag(ctx, `process ${sub} add`);
-    if (!o.id || typeof o.id !== 'string') fail(`${sub} needs "id"`);
-    if (proc[lists[sub]].some((x) => x.id === o.id)) fail(`duplicate ${sub} id: ${o.id}`);
+    for (const k of ['stages', 'actors', 'steps', 'timers', 'cases']) if (!Array.isArray(proc[k])) proc[k] = [];
+    const list = proc[lists[sub]];
+    const o = jsonFlag(ctx, `process ${sub} ${a2}`);
     let entry;
-    if (sub === 'stage') {
-      if (!o.name) fail('stage needs "name"');
-      entry = o;
-    } else if (sub === 'step') {
-      if (!o.text) fail('step needs "text"');
-      if (!STEP_KINDS.includes(o.kind)) fail(`step kind must be ${STEP_KINDS.join('|')}`);
-      if (!o.stage || !proc.stages.some((x) => x.id === o.stage)) fail(`step stage must be one of the process stages: ${proc.stages.map((x) => x.id).join(', ') || '(none yet)'}`);
-      if (!validActor(o.actor)) fail('step actor must be role:<id>, screen, server, automation, ai or external:<name>');
-      if (o.src !== undefined && o.src !== null && !SRCS.includes(o.src)) fail(`src must be ${SRCS.join('|')}`);
-      entry = { screen: null, capability: null, tables: [], permission: null, test: null, onFailure: null, next: [], src: null, source: '', ...o };
-      if (typeof entry.actor === 'string' && !proc.actors.includes(entry.actor)) proc.actors.push(entry.actor);
-    } else if (sub === 'timer') {
-      if (!o.text) fail('timer needs "text"');
-      entry = { duration: null, onExpire: null, test: null, ...o };
+    if (!isSet) {
+      if (!o.id || typeof o.id !== 'string') fail(`${sub} needs "id"`);
+      if (list.some((x) => x.id === o.id)) fail(`duplicate ${sub} id: ${o.id}`);
+      entry = { ...PROCESS_DEFAULTS[sub], ...o };
+      checkProcessItem(sub, entry, proc);
+      list.push(entry);
+      if (sub === 'step' && !proc.actors.includes(entry.actor)) proc.actors.push(entry.actor);
     } else {
-      if (!o.text) fail('case needs "text"');
-      if (!CASE_KINDS.includes(o.kind)) fail(`case kind must be ${CASE_KINDS.join('|')}`);
-      entry = { eval: null, ...o };
+      // set: merge the partial into the existing item, then validate the result exactly as add does
+      const i = list.findIndex((x) => x.id === a4);
+      if (i < 0) fail(`unknown ${sub} in ${a3}: ${a4}`);
+      if (o.id !== undefined && o.id !== a4) fail(`${sub} set cannot change the id; add a new ${sub} instead`);
+      const before = list[i];
+      entry = { ...before, ...o, id: a4 };
+      checkProcessItem(sub, entry, proc);
+      list[i] = entry;
+      if (sub === 'step' && entry.actor !== before.actor) {
+        if (!proc.actors.includes(entry.actor)) proc.actors.push(entry.actor);
+        if (!list.some((s) => s.actor === before.actor)) proc.actors = proc.actors.filter((a) => a !== before.actor);
+      }
     }
-    proc[lists[sub]].push(entry); ctx.saveMap();
+    ctx.saveMap();
     return entry;
   },
 

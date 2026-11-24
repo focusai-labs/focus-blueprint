@@ -57,7 +57,7 @@ disable-model-invocation: true
 
 ## מה חייב להיות נכון בסוף (ההוכחה)
 
-- הבדיקה `node scripts/blueprint-check.mjs` עוברת.
+- הבדיקה `node scripts/blueprint-check.mjs` עוברת, בלי אזהרות מכללים 3 ו-26. בסגירת השלב הן הופכות לשגיאות.
 - ה-advisors מסוג security לא מחזירים שגיאות, והפלט שמור בקובץ ההוכחה.
 - השאילתה כמשתמש שני מחזירה אפס שורות של המשתמש הראשון, והפלט מצוטט.
 - הפקודה `supabase migration list --remote` מראה כל קובץ מ-`supabase/migrations` כמי שכבר עלה.

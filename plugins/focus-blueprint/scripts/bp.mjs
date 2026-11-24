@@ -271,6 +271,9 @@ export const commands = {
     if (fs.existsSync(check)) fs.copyFileSync(check, path.join(dir, 'scripts', 'blueprint-check.mjs'));
     const model = path.join(PLUGIN, 'scripts', 'blueprint-model');
     if (fs.existsSync(model)) fs.cpSync(model, path.join(dir, 'scripts', 'blueprint-model'), { recursive: true });
+    // The dimensions travel with the project, so the commit gate and CI can check rule 27 without the plugin.
+    const dimsSrc = path.join(PLUGIN, 'data', 'dimensions.json');
+    if (fs.existsSync(dimsSrc)) { fs.mkdirSync(path.join(dir, '.blueprint'), { recursive: true }); fs.copyFileSync(dimsSrc, path.join(dir, '.blueprint', 'dimensions.json')); }
     const yml = path.join(tpl, 'github', 'blueprint-check.yml');
     if (fs.existsSync(yml)) fs.copyFileSync(yml, path.join(dir, '.github', 'workflows', 'blueprint-check.yml'));
     // AGENTS.md block
@@ -736,13 +739,15 @@ export const commands = {
       const refs = (ctx.flags.ref || '').split(',').map((x) => x.trim()).filter(Boolean);
       const m = ctx.map();
       const nodes = new Set(); const opens = new Set();
-      for (const r of refs) { let i; try { i = impact(m, r); } catch (e) { fail(e.message); } i.nodes.forEach((n) => nodes.add(n)); i.opens.forEach((t) => opens.add(t)); }
+      // Dimensions open on the kind and on the refs' own types. The impact walk (three links) only lists the
+      // nodes to update: on a connected map it reaches almost every type, and matching on it opened 27 of 31.
+      for (const r of refs) { let i; try { i = impact(m, r); } catch (e) { fail(e.message); } i.nodes.forEach((n) => nodes.add(n)); opens.add(String(r).split(':')[0]); }
       const own = KIND_TYPE[kind] === undefined ? kind : KIND_TYPE[kind];
       if (own) opens.add(own);
       const dimFile = dataFile('dimensions.json');
       let dims = []; let note;
       const all = fs.existsSync(dimFile) ? readJsonFile(dimFile, []) : null;
-      if (!Array.isArray(all)) note = 'הקובץ data/dimensions.json חסר, אז לא נפתח אף מימד.';
+      if (!Array.isArray(all)) note = 'הקובץ data/dimensions.json חסר, ולכן לא נפתח אף ממד.';
       else dims = all.filter((d) => arr(d.opensOn).some((t) => opens.has(t)) && (!ctx.state().track || !Array.isArray(d.tracks) || d.tracks.includes(ctx.state().track))).map((d) => ({ id: d.id, status: 'open', proof: null, reason: '', at: '' }));
       const list = ctx.json('changes.json', []);
       const ns = [...nodes];

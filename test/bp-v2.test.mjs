@@ -4,6 +4,7 @@ import crypto from 'node:crypto';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import { spawnSync } from 'node:child_process';
 import { tmpProject, bp, PLUGIN } from './helpers.mjs';
 
 const read = (dir, ...p) => fs.readFileSync(path.join(dir, ...p), 'utf8');
@@ -168,12 +169,16 @@ test('change open computes nodes and opens dimensions by node type', () => {
   bp(dir, ['map', 'add', 'capability', J({ id: 'up', name: 'ה', data: ['documents'], permissions: ['client:insert:documents:own'] })]);
   const r = bp(dir, ['change', 'open', 'עמודה חדשה', '--kind', 'field', '--ref', 'table:documents'], dimsData(DIMS));
   assert.equal(r.code, 0); assert.equal(r.json.index, 0);
-  assert.deepEqual(r.json.dimensions.map((d) => d.id), ['data', 'security']);
+  // dimensions open on the kind and the refs' own types; the walk still lists the nodes to update
+  assert.deepEqual(r.json.dimensions.map((d) => d.id), ['data']);
   assert.deepEqual(r.json.dimensions[0], { id: 'data', status: 'open', proof: null, reason: '', at: '' });
   assert.ok(r.json.nodes.includes('capability:up')); assert.equal(r.json.decision, 'now');
   assert.equal(r.json.impact.tables, 1);
   const saved = readJson(dir, '.blueprint', 'changes.json');
   assert.equal(saved.length, 1); assert.deepEqual(saved[0].nodes, r.json.nodes);
+  const p = bp(dir, ['change', 'open', 'הרשאה חדשה', '--kind', 'permission', '--ref', 'table:documents'], dimsData(DIMS));
+  assert.deepEqual(p.json.dimensions.map((d) => d.id), ['data', 'security']);
+  assert.ok(p.json.nodes.includes('capability:up'));
   // no ref: the kind itself opens its type; wording opens content
   assert.deepEqual(bp(dir, ['change', 'open', 'ניסוח', '--kind', 'wording'], dimsData(DIMS)).json.dimensions.map((d) => d.id), ['copy']);
   assert.deepEqual(bp(dir, ['change', 'open', 'מסלול', '--kind', 'track'], dimsData(DIMS)).json.dimensions, []);
@@ -184,11 +189,16 @@ test('change open computes nodes and opens dimensions by node type', () => {
 
 test('change open with no dimensions file opens none and says so in Hebrew', () => {
   const dir = setup();
-  const empty = fs.mkdtempSync(path.join(os.tmpdir(), 'nodims-'));
-  const r = bp(dir, ['change', 'open', 'שדה', '--kind', 'field'], { FOCUS_BLUEPRINT_DATA: empty });
-  assert.equal(r.code, 0); assert.deepEqual(r.json.dimensions, []); assert.match(r.json.note, /^הקובץ data\/dimensions.json חסר/);
-  // the plugin has no data/dimensions.json yet (another task adds it); if it exists the note disappears
-  if (!fs.existsSync(path.join(PLUGIN, 'data', 'dimensions.json'))) assert.ok(bp(dir, ['change', 'open', 'שדה', '--kind', 'field']).json.note);
+  // FOCUS_BLUEPRINT_DATA falls back to the plugin's own data/dimensions.json, so the missing file
+  // is tested on a copy of the plugin without it
+  const copy = fs.mkdtempSync(path.join(os.tmpdir(), 'nodims-'));
+  fs.cpSync(PLUGIN, copy, { recursive: true, filter: (src) => src !== path.join(PLUGIN, 'data', 'dimensions.json') });
+  const run = spawnSync(process.execPath, [path.join(copy, 'scripts', 'bp.mjs'), 'change', 'open', 'שדה', '--kind', 'field', '--project', dir], { encoding: 'utf8', env: { ...process.env, FOCUS_BLUEPRINT_HOME: path.join(dir, '.home') } });
+  const r = JSON.parse(run.stdout);
+  assert.equal(run.status, 0); assert.deepEqual(r.dimensions, []); assert.match(r.note, /^הקובץ data\/dimensions.json חסר/);
+  // with the plugin's own file the note disappears and the field change opens dimensions
+  const real = bp(dir, ['change', 'open', 'שדה', '--kind', 'field']).json;
+  assert.equal(real.note, undefined); assert.ok(real.dimensions.length > 0);
 });
 
 test('change dimension closes with proof or na with a reason, and log done refuses while open', () => {

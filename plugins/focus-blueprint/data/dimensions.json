@@ -1,0 +1,2392 @@
+[
+  {
+    "id": "quality-tests",
+    "name": "נכונות ובדיקות",
+    "intent": "השינוי עושה את מה שכתוב באפיון לכל תפקיד ולכל מקרה קצה, ובדיקה אוטומטית שנשמרת ב-repo מוכיחה את זה, כך ששינוי מאוחר יותר לא ישבור אותו בלי שמישהו ירגיש.",
+    "opensOn": [
+      "capability",
+      "screen",
+      "table",
+      "field",
+      "migration",
+      "permission",
+      "role",
+      "access",
+      "automation",
+      "webhook",
+      "process",
+      "step",
+      "timer",
+      "case",
+      "dependency"
+    ],
+    "tracks": [
+      "static",
+      "supabase-app",
+      "n8n-engine"
+    ],
+    "must": [
+      {
+        "text": "לכל יכולת כותבים קריטריוני קבלה לפני שבונים אותה, כולל מקרים שליליים: תפקיד שאין לו הרשאה, קלט ריק, אורך מרבי וטקסט שמערבב עברית ואנגלית.",
+        "basis": "inf",
+        "docs": "https://www.iso.org/standard/78176.html"
+      },
+      {
+        "text": "לכל יכולת יש בדיקה אוטומטית שראינו נכשלת ואחר כך עוברת, והיא נשמרת ב-repo דרך bp evidence red ו-bp evidence green.",
+        "basis": "inf"
+      },
+      {
+        "text": "בדיקת הטיפוסים, ה-lint וכל הבדיקות רצים ב-CI בכל push לענף הייצור.",
+        "basis": "std",
+        "docs": "https://nvlpubs.nist.gov/nistpubs/SpecialPublications/NIST.SP.800-218.pdf"
+      },
+      {
+        "text": "כל תיקון של באג מוסיף בדיקה שתתפוס אותו אם הוא יחזור.",
+        "basis": "inf"
+      }
+    ],
+    "conditional": [
+      {
+        "when": "הפרויקט על Supabase",
+        "do": "כותבים בדיקות pgTAP לכל מדיניות RLS ולכל פונקציה במסד, ומריצים אותן עם supabase test db.",
+        "basis": "vendor",
+        "docs": "https://supabase.com/docs/guides/local-development/testing/overview"
+      },
+      {
+        "when": "המערכת רצה על n8n",
+        "do": "לכל workflow שומרים שתי הרצות בדיקה, אחת על קלט מייצג ואחת עם קלט שגוי שמגיע למסלול השגיאה.",
+        "basis": "inf"
+      },
+      {
+        "when": "המערכת גובה תשלום",
+        "do": "בודקים רכישה מקצה לקצה מול מסוף הבדיקות של Cardcom, ואת הפרטים של המסוף מבררים מול Cardcom.",
+        "basis": "inf",
+        "docs": "https://secure.cardcom.solutions/Api/v11/Docs"
+      },
+      {
+        "when": "ה-repo פרטי",
+        "do": "ב-GitHub מגדירים שמיזוג נחסם כשהבדיקות לא עברו, וזה דורש Pro בחשבון אישי או Team בארגון. בתוכנית החינמית ה-hook המקומי של git מריץ את הבדיקה לפני כל commit, והפער נרשם עם bp ruling add.",
+        "basis": "vendor",
+        "docs": "https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches/about-protected-branches"
+      }
+    ],
+    "proof": {
+      "text": "קובצי ההוכחה של bp evidence, האדום והירוק, לכל יכולת שהשתנתה. מצרפים את הפלט של ה-CI על ה-commit של המיזוג, ובפרויקט על Supabase גם את הפלט של supabase test db, שבו כל הבדיקות עוברות.",
+      "evidence": "evidence-file",
+      "file": "docs/evidence/<change-index>/quality-tests.txt"
+    },
+    "paid": [
+      {
+        "vendor": "github",
+        "tier": "pro",
+        "capability": "חסימת מיזוג כשהבדיקות לא עברו, ב-repo פרטי של חשבון אישי",
+        "docs": "https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches/about-protected-branches"
+      },
+      {
+        "vendor": "github",
+        "tier": "team",
+        "capability": "חסימת מיזוג כשהבדיקות לא עברו, ב-repo פרטי של ארגון",
+        "docs": "https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches/about-protected-branches"
+      }
+    ],
+    "docs": [
+      "https://www.iso.org/standard/78176.html",
+      "https://nvlpubs.nist.gov/nistpubs/SpecialPublications/NIST.SP.800-218.pdf",
+      "https://supabase.com/docs/guides/local-development/testing/overview",
+      "https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches/about-protected-branches"
+    ]
+  },
+  {
+    "id": "data-model",
+    "name": "מבנה הנתונים",
+    "intent": "כל שינוי במבנה הנתונים עולה כמיגרציה כתובה שנבדקה, שומר על השורות הקיימות תקינות ולא שובר את הקוד שרץ בזמן השחרור ואחריו.",
+    "opensOn": [
+      "table",
+      "field",
+      "migration"
+    ],
+    "tracks": [
+      "static",
+      "supabase-app",
+      "n8n-engine"
+    ],
+    "evidence": "advisors",
+    "must": [
+      {
+        "text": "כל שינוי בסכמה של Supabase נכתב כקובץ מיגרציה חדש בתיקייה supabase/migrations, שנוצר עם supabase migration new. בודקים אותו קודם על סביבה שאינה הייצור, והוא מגיע לייצור רק דרך המיזוג.",
+        "basis": "vendor",
+        "docs": "https://supabase.com/docs/guides/deployment/database-migrations"
+      },
+      {
+        "text": "מיגרציה שכבר רצה לא עורכים, ומתקנים אותה במיגרציה חדשה.",
+        "basis": "inf",
+        "docs": "https://12factor.net/"
+      },
+      {
+        "text": "כשמחליפים מבנה, קודם מוסיפים את החדש, ריק או עם ערך ברירת מחדל, ממלאים אותו ומעבירים אליו את הקוד. את המבנה הישן מסירים רק בשחרור מאוחר יותר, ואף פעם לא באותו שחרור שבו הקוד מפסיק להשתמש בו.",
+        "basis": "inf",
+        "docs": "https://docs.aws.amazon.com/wellarchitected/latest/framework/welcome.html"
+      },
+      {
+        "text": "כל אילוץ חדש מסוג NOT NULL, unique או check מגיע עם ערך ברירת מחדל או עם מילוי של השורות הקיימות. בודקים אותו על נתונים שדומים לנתוני הייצור, ורושמים את מספר השורות לפני ואחרי.",
+        "basis": "inf"
+      },
+      {
+        "text": "כללים עסקיים שחייבים להתקיים תמיד נאכפים במסד עצמו, באילוצים כמו NOT NULL, מפתח זר, check ו-unique, כי בדיקה בטופס אפשר לעקוף.",
+        "basis": "inf",
+        "docs": "https://github.com/OWASP/ASVS/tree/v5.0.0/5.0/en"
+      },
+      {
+        "text": "אחרי כל שינוי בסכמה מייצרים מחדש את הטיפוסים עם supabase gen types.",
+        "basis": "vendor",
+        "docs": "https://supabase.com/docs/reference/cli/supabase-gen-types"
+      },
+      {
+        "text": "אחרי כל DDL מריצים את ה-advisors של Supabase, ואין בפלט שלהם ממצא ברמת ERROR.",
+        "basis": "vendor",
+        "docs": "https://supabase.com/docs/guides/database/database-advisors"
+      }
+    ],
+    "conditional": [
+      {
+        "when": "השינוי הרסני, כמו DROP, TRUNCATE, שינוי סוג או שינוי שם, בטבלה שיש בה נתונים",
+        "do": "מחפשים כל מקום שמשתמש בה, בקוד, ב-workflows של n8n ובדוחות, מוודאים שיש נקודת שחזור טרייה ומקבלים אישור מפורש מהבעלים. גם טבלה ריקה בודקים, כי זה שהיא ריקה לא אומר שאף אחד לא קורא ממנה.",
+        "basis": "inf"
+      },
+      {
+        "when": "הנתונים נשמרים בטבלאות של n8n",
+        "do": "שינוי שם של עמודה שובר ביטויים ב-workflows שמפנים אליה, ולכן קודם מחפשים את השם הישן בקובצי ה-JSON של ה-workflows שיוצאו ל-repo.",
+        "basis": "inf"
+      },
+      {
+        "when": "מייבאים נתונים קיימים מ-Excel או מ-CSV",
+        "do": "כותבים מסמך מיפוי, מפיקים דוח של השורות שנדחו עם הסיבה ושומרים סקריפט ייבוא שאפשר להריץ שוב.",
+        "basis": "inf"
+      }
+    ],
+    "proof": {
+      "text": "בפרויקט על Supabase, קובץ ההוכחה מתחיל בשורה # supabase advisors ואחריה התאריך, ומתחת לה הפלט של ה-advisors בלי ממצא ברמת ERROR. מוסיפים לו את הפלט של supabase db reset המקומי ושל supabase test db ואת מספר השורות לפני ואחרי. במסלולים האחרים מצרפים את מסמך המיפוי ואת ה-workflows שיוצאו.",
+      "evidence": "advisors",
+      "file": "docs/evidence/<change-index>/data-model.txt"
+    },
+    "paid": [
+      {
+        "vendor": "supabase",
+        "tier": "pro",
+        "capability": "ענף בדיקה לכל PR, שבו המיגרציה רצה לפני שהיא מגיעה לייצור",
+        "docs": "https://supabase.com/docs/guides/deployment/branching"
+      }
+    ],
+    "docs": [
+      "https://supabase.com/docs/guides/deployment/database-migrations",
+      "https://supabase.com/docs/guides/database/database-advisors",
+      "https://supabase.com/docs/guides/deployment/branching",
+      "https://supabase.com/docs/reference/cli/supabase-gen-types",
+      "https://supabase.com/docs/reference/cli/supabase-db-dump",
+      "https://12factor.net/"
+    ]
+  },
+  {
+    "id": "backup-restore",
+    "name": "גיבוי ושחזור",
+    "intent": "לכל מידע שאי אפשר ליצור מחדש יש גיבוי מחוץ למקום שבו הוא נשמר, ותרגיל שחזור עם זמן מדוד מוכיח שהוא חוזר שלם.",
+    "opensOn": [
+      "migration",
+      "plan",
+      "automation",
+      "release"
+    ],
+    "tracks": [
+      "static",
+      "supabase-app",
+      "n8n-engine"
+    ],
+    "must": [
+      {
+        "text": "יש רשימה של כל המקומות שבהם נשמר מידע שאי אפשר ליצור מחדש, כמו מסד הנתונים, הקבצים ב-Storage, הגדרות ההתחברות, ה-workflows והטבלאות של n8n, טפסים שנשלחו, רשומות ה-DNS ושמות משתני הסביבה. לכל אחד רשומים שיטת הגיבוי, כמה מידע מותר לאבד וכמה זמן לוקח לשחזר.",
+        "basis": "std",
+        "docs": "https://sre.google/sre-book/launch-checklist/"
+      },
+      {
+        "text": "לפני העלייה לאוויר, ואחר כך לפי לוח זמנים קבוע, עושים תרגיל שחזור לסביבה חדשה וריקה. משווים מספרי שורות ודגימה של רשומות, ורושמים כמה זמן זה לקח.",
+        "basis": "std",
+        "docs": "https://sre.google/sre-book/data-integrity/"
+      },
+      {
+        "text": "לפני כל מיגרציה מוודאים שיש נקודת שחזור, הגיבוי היומי האחרון או dump טרי, ורושמים את הזמן שלה.",
+        "basis": "inf"
+      },
+      {
+        "text": "לפחות עותק אחד נשמר מחוץ למערכת הגיבוי של הספק, בחשבון של הלקוח.",
+        "basis": "vendor",
+        "docs": "https://supabase.com/docs/guides/platform/backups"
+      }
+    ],
+    "conditional": [
+      {
+        "when": "אפליקציה בייצור עם מידע אישי על Supabase",
+        "do": "עובדים בתוכנית Pro, שבה יש גיבוי יומי אוטומטי. כשאי אפשר לאבד יותר מיום של נתונים, מוסיפים את התוספת PITR, שמשחזרת לנקודת זמן.",
+        "basis": "vendor",
+        "docs": "https://supabase.com/docs/guides/platform/backups"
+      },
+      {
+        "when": "פרויקט Supabase שנשאר בתוכנית החינמית",
+        "do": "בתוכנית החינמית אין גיבוי אוטומטי, ולכן מתזמנים dump קבוע. הפקודה supabase db dump שומרת כברירת מחדל רק את המבנה ולא כוללת את הסכמות auth ו-storage, ולכן מוסיפים dump של הנתונים עם --data-only, ולשחזור של משתמשים גם pg_dump ישיר של מחרוזת החיבור.",
+        "basis": "vendor",
+        "docs": "https://supabase.com/docs/reference/cli/supabase-db-dump"
+      },
+      {
+        "when": "משתמשים ב-Storage של Supabase",
+        "do": "מגבים את הקבצים בנפרד, כי הגיבוי של המסד לא כולל אותם.",
+        "basis": "vendor",
+        "docs": "https://supabase.com/docs/guides/platform/backups"
+      },
+      {
+        "when": "המערכת רצה על n8n",
+        "do": "בכל פרסום של workflow מייצאים את ה-JSON שלו לתיקייה n8n ב-repo, כי ההיסטוריה של n8n שומרת גרסאות לזמן קצר בלבד. הייצוא דרך ה-API דורש תוכנית Starter ומעלה.",
+        "basis": "vendor",
+        "docs": "https://docs.n8n.io/workflows/history/"
+      },
+      {
+        "when": "המערכת ברמת אבטחה בינונית או גבוהה, ולפי ברירת המחדל של הכלי זה המצב בכל מערכת עם מידע אישי או תשלומים",
+        "do": "כותבים נוהל גיבוי ושחזור לרשומות האבטחה. שחזור נעשה רק באישור מנהל המאגר, וכל שחזור נרשם ביומן אירועי האבטחה, לפי תקנות 17 ו-18 לתקנות אבטחת מידע.",
+        "basis": "law",
+        "docs": "https://he.wikisource.org/wiki/%D7%AA%D7%A7%D7%A0%D7%95%D7%AA_%D7%94%D7%92%D7%A0%D7%AA_%D7%94%D7%A4%D7%A8%D7%98%D7%99%D7%95%D7%AA_(%D7%90%D7%91%D7%98%D7%97%D7%AA_%D7%9E%D7%99%D7%93%D7%A2)"
+      }
+    ],
+    "proof": {
+      "text": "לפני מיגרציה רושמים את הזמן של נקודת השחזור ומאיפה היא. לפני העלייה לאוויר מצרפים את רשומת תרגיל השחזור, docs/restore-drill-<date>.md, עם הפקודות שרצו, זמן הגיבוי שממנו שוחזר, סביבת היעד, השוואת מספרי השורות והזמן שזה לקח. ב-n8n מצרפים את קובצי ה-workflows שבתיקייה n8n, עם זמן commit שמתאים לפרסום האחרון.",
+      "evidence": "file",
+      "file": "docs/evidence/<change-index>/backup-restore.txt"
+    },
+    "paid": [
+      {
+        "vendor": "supabase",
+        "tier": "pro",
+        "capability": "גיבוי יומי אוטומטי",
+        "docs": "https://supabase.com/docs/guides/platform/backups"
+      },
+      {
+        "vendor": "supabase",
+        "tier": "pitr",
+        "capability": "שחזור לנקודת זמן, כשאי אפשר לאבד יום של נתונים",
+        "docs": "https://supabase.com/docs/guides/platform/backups"
+      },
+      {
+        "vendor": "n8n",
+        "tier": "starter",
+        "capability": "ה-API הציבורי שדרכו מייצאים את ה-workflows",
+        "docs": "https://docs.n8n.io/api/"
+      }
+    ],
+    "docs": [
+      "https://supabase.com/docs/guides/platform/backups",
+      "https://supabase.com/docs/reference/cli/supabase-db-dump",
+      "https://supabase.com/pricing",
+      "https://docs.n8n.io/workflows/history/",
+      "https://docs.n8n.io/api/",
+      "https://he.wikisource.org/wiki/%D7%AA%D7%A7%D7%A0%D7%95%D7%AA_%D7%94%D7%92%D7%A0%D7%AA_%D7%94%D7%A4%D7%A8%D7%98%D7%99%D7%95%D7%AA_(%D7%90%D7%91%D7%98%D7%97%D7%AA_%D7%9E%D7%99%D7%93%D7%A2)",
+      "https://sre.google/sre-book/data-integrity/",
+      "https://sre.google/sre-book/launch-checklist/"
+    ]
+  },
+  {
+    "id": "data-lifecycle",
+    "name": "שמירה ומחיקה",
+    "intent": "לכל סוג מידע שנשמר יש תקופת שמירה, דרך לייצא אותו ודרך למחוק אותו גם כשאדם מבקש, והמערכת לא שומרת יותר מידע ממה שהמטרה שלה דורשת.",
+    "opensOn": [
+      "table",
+      "field"
+    ],
+    "tracks": [
+      "static",
+      "supabase-app",
+      "n8n-engine"
+    ],
+    "must": [
+      {
+        "text": "בקובץ spec/data-lifecycle.md רשומים לכל סוג מידע המטרה, תקופת השמירה, דרך המחיקה, דרך הייצוא והאחראי.",
+        "basis": "law",
+        "docs": "https://he.wikisource.org/wiki/%D7%97%D7%95%D7%A7_%D7%94%D7%92%D7%A0%D7%AA_%D7%94%D7%A4%D7%A8%D7%98%D7%99%D7%95%D7%AA"
+      },
+      {
+        "text": "יש דרך לבקש עיון, תיקון ומחיקה, במוצר או מול איש קשר בשם, ונוהל כתוב שמכסה גם העתקים אצל ספקים, נתוני הרצות ב-n8n ומה קורה בגיבויים.",
+        "basis": "law",
+        "docs": "https://he.wikisource.org/wiki/%D7%97%D7%95%D7%A7_%D7%94%D7%92%D7%A0%D7%AA_%D7%94%D7%A4%D7%A8%D7%98%D7%99%D7%95%D7%AA"
+      },
+      {
+        "text": "אפשר לייצא את המידע של אדם אחד בפורמט קריא, והתשובה לבקשת עיון ניתנת בעברית, בערבית או באנגלית.",
+        "basis": "law",
+        "docs": "https://he.wikisource.org/wiki/%D7%97%D7%95%D7%A7_%D7%94%D7%92%D7%A0%D7%AA_%D7%94%D7%A4%D7%A8%D7%98%D7%99%D7%95%D7%AA"
+      },
+      {
+        "text": "פעם בשנה בודקים אם נשמר מידע מעבר למה שמטרות המאגר דורשות, ורושמים את הבדיקה.",
+        "basis": "law",
+        "docs": "https://he.wikisource.org/wiki/%D7%AA%D7%A7%D7%A0%D7%95%D7%AA_%D7%94%D7%92%D7%A0%D7%AA_%D7%94%D7%A4%D7%A8%D7%98%D7%99%D7%95%D7%AA_(%D7%90%D7%91%D7%98%D7%97%D7%AA_%D7%9E%D7%99%D7%93%D7%A2)"
+      }
+    ],
+    "conditional": [
+      {
+        "when": "יש workflows של n8n שמעבדים מידע אישי",
+        "do": "שומרים את נתוני ההרצות רק כמה שצריך כדי לאתר תקלות, ולא שומרים הרצות מוצלחות כשאין בהן צורך.",
+        "basis": "vendor",
+        "docs": "https://docs.n8n.io/hosting/scaling/execution-data/"
+      },
+      {
+        "when": "משתמשים מעלים קבצים",
+        "do": "כשהרשומה שהקובץ שייך אליה נמחקת, גם הקובץ נמחק.",
+        "basis": "inf"
+      },
+      {
+        "when": "מידע נשלח למודל AI",
+        "do": "שולחים רק את השדות שהמודל צריך, ובודקים את הגדרות השמירה של הספק.",
+        "basis": "std",
+        "docs": "https://github.com/GenAI-Security-Project/GenAI-LLM-Top10"
+      }
+    ],
+    "proof": {
+      "text": "הקובץ spec/data-lifecycle.md ורשומה של תרגיל אחד של ייצוא ואחד של מחיקה, עם הפלט של השאילתות לפני ואחרי. ב-n8n מצרפים את הגדרות ה-workflow מהייצוא, שמראות מה נשמר מכל הרצה.",
+      "evidence": "file",
+      "file": "docs/evidence/<change-index>/data-lifecycle.txt"
+    },
+    "docs": [
+      "https://he.wikisource.org/wiki/%D7%97%D7%95%D7%A7_%D7%94%D7%92%D7%A0%D7%AA_%D7%94%D7%A4%D7%A8%D7%98%D7%99%D7%95%D7%AA",
+      "https://he.wikisource.org/wiki/%D7%AA%D7%A7%D7%A0%D7%95%D7%AA_%D7%94%D7%92%D7%A0%D7%AA_%D7%94%D7%A4%D7%A8%D7%98%D7%99%D7%95%D7%AA_(%D7%90%D7%91%D7%98%D7%97%D7%AA_%D7%9E%D7%99%D7%93%D7%A2)",
+      "https://docs.n8n.io/hosting/scaling/execution-data/",
+      "https://supabase.com/docs/guides/telemetry/logs",
+      "https://github.com/GenAI-Security-Project/GenAI-LLM-Top10"
+    ]
+  },
+  {
+    "id": "audit-trail",
+    "name": "יומן פעולות",
+    "intent": "פעולות שחשובות לאבטחה ולעסק נרשמות עם מי ביצע אותן, על איזו רשומה, מתי, מאיפה ואם הן הותרו, במקום שמשתמשים ומנהלים לא יכולים לשנות, נשמרות מספיק זמן ומישהו עובר עליהן.",
+    "opensOn": [
+      "permission",
+      "role",
+      "access",
+      "automation",
+      "ai"
+    ],
+    "tracks": [
+      "supabase-app",
+      "n8n-engine"
+    ],
+    "must": [
+      {
+        "text": "יש טבלת יומן שאפשר רק להוסיף לה שורות. לתפקידים של האפליקציה אין בה הרשאה לעדכן או למחוק.",
+        "basis": "inf",
+        "docs": "https://he.wikisource.org/wiki/%D7%AA%D7%A7%D7%A0%D7%95%D7%AA_%D7%94%D7%92%D7%A0%D7%AA_%D7%94%D7%A4%D7%A8%D7%98%D7%99%D7%95%D7%AA_(%D7%90%D7%91%D7%98%D7%97%D7%AA_%D7%9E%D7%99%D7%93%D7%A2)"
+      },
+      {
+        "text": "ביומן נרשמות פעולות של מנהלים, שינויים בתפקידים ובהרשאות, ייצוא, מחיקה ושינויים במצב של תשלום. לכל פעולה נרשמים מי ביצע אותה, על איזו רשומה, מה השתנה, מתי ומאיפה, ממסך, מ-API, מאוטומציה או מסוכן.",
+        "basis": "inf",
+        "docs": "https://top10.owasp.org/2025/0x00_2025-Introduction"
+      },
+      {
+        "text": "פעולה של אוטומציה או של סוכן נרשמת תחת הזהות של ה-workflow או של הסוכן עצמו, כדי שאפשר יהיה לדעת מי ביצע אותה.",
+        "basis": "std",
+        "docs": "https://genai.owasp.org/2025/12/09/owasp-top-10-for-agentic-applications-the-benchmark-for-agentic-security-in-the-age-of-autonomous-ai/"
+      }
+    ],
+    "conditional": [
+      {
+        "when": "המערכת ברמת אבטחה בינונית או גבוהה, ולפי ברירת המחדל של הכלי זה המצב בכל מערכת עם מידע אישי או תשלומים",
+        "do": "רושמים את כל השדות של תקנה 10, שומרים את היומן 24 חודשים לפחות, מתריעים כשמישהו מכבה או משנה אותו, קובעים נוהל בדיקה קבוע ומודיעים למורשים שהגישה שלהם נרשמת.",
+        "basis": "law",
+        "docs": "https://he.wikisource.org/wiki/%D7%AA%D7%A7%D7%A0%D7%95%D7%AA_%D7%94%D7%92%D7%A0%D7%AA_%D7%94%D7%A4%D7%A8%D7%98%D7%99%D7%95%D7%AA_(%D7%90%D7%91%D7%98%D7%97%D7%AA_%D7%9E%D7%99%D7%93%D7%A2)"
+      },
+      {
+        "when": "צריך לשמור את היומן יותר זמן ממה שהספק שומר",
+        "do": "שומרים אותו בטבלה משלכם או מעבירים אותו החוצה ב-log drain.",
+        "basis": "vendor",
+        "docs": "https://supabase.com/pricing"
+      }
+    ],
+    "proof": {
+      "text": "בדיקה שמבצעת פעולה של מנהל ומוודאת שנוספה ליומן שורה עם כל השדות, בדיקת pgTAP שמראה שתפקיד של האפליקציה לא יכול לעדכן או למחוק שורות ביומן ותקופת השמירה שכתובה ב-spec/data-lifecycle.md.",
+      "evidence": "command",
+      "file": "docs/evidence/<change-index>/audit-trail.txt"
+    },
+    "paid": [
+      {
+        "vendor": "supabase",
+        "tier": "team",
+        "capability": "יומן של פעולות בחשבון ובדשבורד ושמירה ארוכה יותר של יומני ההתחברות",
+        "docs": "https://supabase.com/pricing"
+      }
+    ],
+    "docs": [
+      "https://he.wikisource.org/wiki/%D7%AA%D7%A7%D7%A0%D7%95%D7%AA_%D7%94%D7%92%D7%A0%D7%AA_%D7%94%D7%A4%D7%A8%D7%98%D7%99%D7%95%D7%AA_(%D7%90%D7%91%D7%98%D7%97%D7%AA_%D7%9E%D7%99%D7%93%D7%A2)",
+      "https://top10.owasp.org/2025/0x00_2025-Introduction",
+      "https://asvs.owasp.org/",
+      "https://supabase.com/pricing",
+      "https://genai.owasp.org/2025/12/09/owasp-top-10-for-agentic-applications-the-benchmark-for-agentic-security-in-the-age-of-autonomous-ai/"
+    ]
+  },
+  {
+    "id": "access-control",
+    "name": "הרשאות וגישה",
+    "intent": "כל קריאה וכתיבה של נתונים, קבצים ונקודות קצה מותרת רק לתפקידים שצריכים אותה, ונאכפת במסד או בשרת, כי את מה שמוסתר במסך עדיין אפשר לבקש ישירות.",
+    "opensOn": [
+      "permission",
+      "role",
+      "access",
+      "table",
+      "field"
+    ],
+    "tracks": [
+      "static",
+      "supabase-app",
+      "n8n-engine"
+    ],
+    "evidence": "advisors",
+    "must": [
+      {
+        "text": "מטריצת ההרשאות, מי רשאי לעשות איזו פעולה בכל משאב, רשומה במפה ובמסמכים. המדיניות במסד מממשת בדיוק אותה.",
+        "basis": "law",
+        "docs": "https://he.wikisource.org/wiki/%D7%AA%D7%A7%D7%A0%D7%95%D7%AA_%D7%94%D7%92%D7%A0%D7%AA_%D7%94%D7%A4%D7%A8%D7%98%D7%99%D7%95%D7%AA_(%D7%90%D7%91%D7%98%D7%97%D7%AA_%D7%9E%D7%99%D7%93%D7%A2)"
+      },
+      {
+        "text": "בכל טבלה בסכמה חשופה של Supabase מופעל RLS עם מדיניות מפורשת, ואין ב-advisors ממצא ברמת ERROR.",
+        "basis": "vendor",
+        "docs": "https://supabase.com/docs/guides/database/postgres/row-level-security"
+      },
+      {
+        "text": "לכל מדיניות יש שתי בדיקות עם סשן אמיתי של כל תפקיד, אחת שהפעולה מותרת בה ואחת שהיא נחסמת.",
+        "basis": "vendor",
+        "docs": "https://supabase.com/docs/guides/local-development/testing/overview"
+      },
+      {
+        "text": "מפתח סודי או מפתח service_role אף פעם לא מגיע לקוד שרץ בדפדפן.",
+        "basis": "vendor",
+        "docs": "https://supabase.com/docs/guides/database/postgres/row-level-security"
+      },
+      {
+        "text": "כל נתיב בשרת, כל Edge Function וכל webhook של n8n מזהים את מי שקורא להם, או שהם ציבוריים בכוונה ומכוסים בממד הגנה מניצול לרעה.",
+        "basis": "inf",
+        "docs": "https://docs.n8n.io/integrations/builtin/core-nodes/n8n-nodes-base.webhook/"
+      },
+      {
+        "text": "לתיקיות ב-Storage יש מדיניות שעוקבת אחרי אותה מטריצה.",
+        "basis": "inf"
+      }
+    ],
+    "conditional": [
+      {
+        "when": "כמה ארגונים של לקוחות חולקים מערכת אחת",
+        "do": "בכל שורה יש מזהה של הארגון והמדיניות בנויה לפיו. בדיקה מראה שארגון אחד לא רואה נתונים של ארגון אחר.",
+        "basis": "std",
+        "docs": "https://docs.aws.amazon.com/wellarchitected/latest/saas-lens/general-design-principles.html"
+      },
+      {
+        "when": "יש מסכי ניהול",
+        "do": "השרת בודק את התפקיד בכל בקשה, כי קישור שהוסתר במסך עדיין אפשר לפתוח ישירות.",
+        "basis": "inf"
+      },
+      {
+        "when": "סוכן AI מפעיל כלים",
+        "do": "כל כלי מקבל רק את ההרשאות שהוא צריך, ופעולה שמשנה משהו דורשת אישור של אדם או גבול קשיח. האחזור מכבד את ההרשאות של המשתמש.",
+        "basis": "std",
+        "docs": "https://github.com/GenAI-Security-Project/GenAI-LLM-Top10"
+      },
+      {
+        "when": "תצוגות מקדימות מגיעות לנתונים אמיתיים",
+        "do": "מגינים עליהן, וההגנה הבסיסית של Vercel קיימת בכל התוכניות.",
+        "basis": "vendor",
+        "docs": "https://vercel.com/docs/deployment-protection"
+      }
+    ],
+    "proof": {
+      "text": "בפרויקט על Supabase, קובץ ההוכחה מתחיל בשורה # supabase advisors ואחריה התאריך, ומתחת לה הפלט של ה-advisors בלי ממצא ברמת ERROR. אחריו בא הפלט של supabase test db שמכסה את המטריצה. ב-n8n מצרפים את ה-JSON של ה-workflow, שמראה שהאימות ב-webhook לא מוגדר כ-None, או רישום של נקודת קצה שציבורית בכוונה. בכל מסלול מצרפים פלט של curl שמחזיר 401 או 403 כשאין פרטי הזדהות.",
+      "evidence": "advisors",
+      "file": "docs/evidence/<change-index>/access-control.txt"
+    },
+    "docs": [
+      "https://supabase.com/docs/guides/database/postgres/row-level-security",
+      "https://supabase.com/docs/guides/database/database-advisors",
+      "https://top10.owasp.org/2025/0x00_2025-Introduction",
+      "https://docs.aws.amazon.com/wellarchitected/latest/saas-lens/general-design-principles.html",
+      "https://he.wikisource.org/wiki/%D7%AA%D7%A7%D7%A0%D7%95%D7%AA_%D7%94%D7%92%D7%A0%D7%AA_%D7%94%D7%A4%D7%A8%D7%98%D7%99%D7%95%D7%AA_(%D7%90%D7%91%D7%98%D7%97%D7%AA_%D7%9E%D7%99%D7%93%D7%A2)",
+      "https://docs.n8n.io/integrations/builtin/core-nodes/n8n-nodes-base.webhook/",
+      "https://vercel.com/docs/deployment-protection",
+      "https://github.com/GenAI-Security-Project/GenAI-LLM-Top10"
+    ]
+  },
+  {
+    "id": "identity-auth",
+    "name": "משתמשים והתחברות",
+    "intent": "ברור איך אנשים פותחים חשבון, מוכיחים מי הם, נשארים מחוברים ומתנתקים, משחזרים גישה ומאבדים אותה, גם המשתמשים של המערכת וגם מי שמפעילים את החשבונות שלה אצל הספקים.",
+    "opensOn": [
+      "access",
+      "role",
+      "service"
+    ],
+    "tracks": [
+      "static",
+      "supabase-app",
+      "n8n-engine"
+    ],
+    "must": [
+      {
+        "text": "התהליכים של הרשמה, כניסה, יציאה, איפוס סיסמה, שינוי מייל, סיום סשן ומחיקת חשבון כתובים ונבדקים.",
+        "basis": "std",
+        "docs": "https://asvs.owasp.org/"
+      },
+      {
+        "text": "מיילים של התחברות בייצור יוצאים דרך שרת SMTP משלכם, כי השרת המובנה של Supabase שולח רק לכתובות של הצוות ובקצב נמוך מאוד.",
+        "basis": "vendor",
+        "docs": "https://supabase.com/docs/guides/auth/auth-smtp"
+      },
+      {
+        "text": "רק השרת מקצה תפקידים, ומשתמש אף פעם לא יכול לקבוע לעצמו תפקיד.",
+        "basis": "inf"
+      },
+      {
+        "text": "כל חשבון אצל ספק, כמו Supabase, Vercel, GitHub, n8n, רשם הדומיין, ספק המייל, Cardcom וספק ה-AI, שייך לאדם מסוים ומוגן באימות דו שלבי, בלי סיסמאות משותפות.",
+        "basis": "inf"
+      },
+      {
+        "text": "כשמישהו עוזב, מסירים את הגישה שלו בכל מקום ומחליפים את הסודות שהוא הכיר.",
+        "basis": "law",
+        "docs": "https://he.wikisource.org/wiki/%D7%AA%D7%A7%D7%A0%D7%95%D7%AA_%D7%94%D7%92%D7%A0%D7%AA_%D7%94%D7%A4%D7%A8%D7%98%D7%99%D7%95%D7%AA_(%D7%90%D7%91%D7%98%D7%97%D7%AA_%D7%9E%D7%99%D7%93%D7%A2)"
+      }
+    ],
+    "conditional": [
+      {
+        "when": "יש כניסה עם סיסמה",
+        "do": "מפעילים הגנה מסיסמאות שדלפו, שקיימת ב-Supabase מתוכנית Pro, או בדיקה שקולה. בנוסף קובעים כללים לאורך הסיסמה.",
+        "basis": "vendor",
+        "docs": "https://supabase.com/docs/guides/auth/password-security"
+      },
+      {
+        "when": "יש תפקיד של מנהל או תפקיד רגיש אחר",
+        "do": "מחייבים אימות דו שלבי עם אפליקציית TOTP ואוכפים אותו במדיניות לפי aal2.",
+        "basis": "vendor",
+        "docs": "https://supabase.com/docs/guides/auth/auth-mfa"
+      },
+      {
+        "when": "ההרשמה פתוחה לכולם",
+        "do": "מוסיפים CAPTCHA ומכוונים את מגבלות הקצב, כמו בממד הגנה מניצול לרעה.",
+        "basis": "vendor",
+        "docs": "https://supabase.com/docs/guides/auth/auth-captcha"
+      },
+      {
+        "when": "המערכת ברמת אבטחה בינונית או גבוהה, ולפי ברירת המחדל של הכלי זה המצב בכל מערכת עם מידע אישי או תשלומים",
+        "do": "אנשי הצוות מזדהים לפי תקנות 9(ב) ו-14(ג), עם נוהל סיסמאות, ניתוק אחרי זמן ללא פעילות וזיהוי באמצעי פיזי שנמצא רק בשליטתם, גם בגישה מרחוק. אם אפליקציית TOTP נחשבת אמצעי כזה, בודקים עם עורך דין.",
+        "basis": "law",
+        "docs": "https://he.wikisource.org/wiki/%D7%AA%D7%A7%D7%A0%D7%95%D7%AA_%D7%94%D7%92%D7%A0%D7%AA_%D7%94%D7%A4%D7%A8%D7%98%D7%99%D7%95%D7%AA_(%D7%90%D7%91%D7%98%D7%97%D7%AA_%D7%9E%D7%99%D7%93%D7%A2)"
+      },
+      {
+        "when": "מתחברים דרך ספק זהות חיצוני",
+        "do": "מבקשים ממנו רק את ההרשאות המינימליות, והאפליקציה אצל הספק עוברת אימות.",
+        "basis": "inf"
+      }
+    ],
+    "proof": {
+      "text": "פלט של בדיקות Playwright מקצה לקצה לכל תהליך, וייצוא או צילום של הגדרות ההתחברות ב-Supabase שמראה SMTP משלכם, הגנה מסיסמאות שדלפו ואימות דו שלבי. מצרפים גם את הקובץ docs/accounts.md, עם כל חשבון אצל ספק, הבעלים שלו ומצב האימות הדו שלבי.",
+      "evidence": "command",
+      "file": "docs/evidence/<change-index>/identity-auth.txt"
+    },
+    "paid": [
+      {
+        "vendor": "supabase",
+        "tier": "pro",
+        "capability": "הגנה מסיסמאות שדלפו",
+        "docs": "https://supabase.com/docs/guides/auth/password-security"
+      }
+    ],
+    "docs": [
+      "https://asvs.owasp.org/",
+      "https://supabase.com/docs/guides/auth/password-security",
+      "https://supabase.com/docs/guides/auth/auth-mfa",
+      "https://supabase.com/docs/guides/auth/auth-captcha",
+      "https://supabase.com/docs/guides/auth/auth-smtp",
+      "https://supabase.com/pricing",
+      "https://he.wikisource.org/wiki/%D7%AA%D7%A7%D7%A0%D7%95%D7%AA_%D7%94%D7%92%D7%A0%D7%AA_%D7%94%D7%A4%D7%A8%D7%98%D7%99%D7%95%D7%AA_(%D7%90%D7%91%D7%98%D7%97%D7%AA_%D7%9E%D7%99%D7%93%D7%A2)"
+    ]
+  },
+  {
+    "id": "secrets",
+    "name": "סודות ומפתחות",
+    "intent": "כל פרט הזדהות, כמו מפתח API, טוקן, סיסמה למסד, סוד לחתימה על webhooks ופרטי התחברות ב-n8n, נשמר רק במאגר הסודות הנכון לכל סביבה, ואפשר להחליף אותו.",
+    "opensOn": [
+      "secret",
+      "service"
+    ],
+    "tracks": [
+      "static",
+      "supabase-app",
+      "n8n-engine"
+    ],
+    "must": [
+      {
+        "text": "בקובץ docs/secrets.md רשומים לכל סוד השם שלו, איפה הוא נשמר, באילו סביבות, מי אחראי עליו ואיך מחליפים אותו. הערך עצמו אף פעם לא נכתב שם.",
+        "basis": "inf"
+      },
+      {
+        "text": "אין סוד בהיסטוריה של ה-repo, בקוד שרץ בדפדפן, ביומנים או בפרומפטים, ורק מפתחות שמיועדים לציבור מגיעים לדפדפן. סורק סודות רץ לפני push או ב-CI.",
+        "basis": "inf",
+        "docs": "https://docs.github.com/en/code-security/secret-scanning/introduction/about-push-protection"
+      },
+      {
+        "text": "לסודות של הייצור יש ערכים שונים מאלה של התצוגה המקדימה והפיתוח.",
+        "basis": "vendor",
+        "docs": "https://vercel.com/docs/environment-variables/sensitive-environment-variables"
+      },
+      {
+        "text": "ב-Vercel שומרים סודות כמשתנה מהסוג Secret, וב-n8n שומרים אותם ב-Credentials. בפרמטרים של workflow, ב-static data ובמשתנים של n8n לא שומרים סודות.",
+        "basis": "vendor",
+        "docs": "https://vercel.com/docs/environment-variables/sensitive-environment-variables"
+      },
+      {
+        "text": "יש נוהל להחלפת סודות שנבדק לפחות פעם אחת, ומשתמשים בו כשמישהו עוזב או כשיש חשש שסוד דלף.",
+        "basis": "law",
+        "docs": "https://he.wikisource.org/wiki/%D7%AA%D7%A7%D7%A0%D7%95%D7%AA_%D7%94%D7%92%D7%A0%D7%AA_%D7%94%D7%A4%D7%A8%D7%98%D7%99%D7%95%D7%AA_(%D7%90%D7%91%D7%98%D7%97%D7%AA_%D7%9E%D7%99%D7%93%D7%A2)"
+      }
+    ],
+    "conditional": [
+      {
+        "when": "ה-repo ציבורי",
+        "do": "מפעילים ב-GitHub סריקת סודות והגנה בזמן push, ושתיהן בחינם.",
+        "basis": "vendor",
+        "docs": "https://docs.github.com/en/code-security/secret-scanning/introduction/about-secret-scanning"
+      },
+      {
+        "when": "ה-repo פרטי ושייך לארגון",
+        "do": "מפעילים את GitHub Secret Protection, או מריצים סורק מקומי ושומרים את הפלט שלו כהוכחה.",
+        "basis": "vendor",
+        "docs": "https://docs.github.com/en/code-security/secret-scanning/introduction/about-secret-scanning"
+      },
+      {
+        "when": "ספק חותם על ה-webhooks שהוא שולח",
+        "do": "שומרים את סוד החתימה ובודקים מולו כל בקשה שמגיעה.",
+        "basis": "inf"
+      }
+    ],
+    "proof": {
+      "text": "פלט של הסורק בלי ממצאים, הפלט של vercel env list לכל סביבה שמראה את סוגי המשתנים, חיפוש של התחיליות של המפתחות בקוד הבנוי של הדפדפן שלא מוצא כלום והקובץ docs/secrets.md.",
+      "evidence": "command",
+      "file": "docs/evidence/<change-index>/secrets.txt"
+    },
+    "paid": [
+      {
+        "vendor": "github",
+        "tier": "secret-protection",
+        "capability": "סריקת סודות ב-repo פרטי של ארגון, בתוכנית Team או Enterprise Cloud",
+        "docs": "https://docs.github.com/en/code-security/secret-scanning/introduction/about-secret-scanning"
+      }
+    ],
+    "docs": [
+      "https://12factor.net/",
+      "https://vercel.com/docs/environment-variables/sensitive-environment-variables",
+      "https://vercel.com/docs/cli/env",
+      "https://docs.github.com/en/code-security/secret-scanning/introduction/about-push-protection",
+      "https://docs.github.com/en/code-security/secret-scanning/introduction/about-secret-scanning",
+      "https://docs.n8n.io/external-secrets/",
+      "https://docs.n8n.io/hosting/securing/security-audit/",
+      "https://www.microsoft.com/en-us/securityengineering/sdl/practices"
+    ]
+  },
+  {
+    "id": "abuse-protection",
+    "name": "הגנה מניצול לרעה",
+    "intent": "נקודות כניסה ציבוריות, כמו טפסים, הרשמה וכניסה, webhooks, צ'אט AI וקריאות בתשלום שמשתמש מפעיל, עומדות בבוטים, בניסיונות לנחש סיסמאות, בספאם ובהצפה של בקשות שמכלה את התקציב.",
+    "opensOn": [
+      "access",
+      "webhook",
+      "capability"
+    ],
+    "tracks": [
+      "static",
+      "supabase-app",
+      "n8n-engine"
+    ],
+    "must": [
+      {
+        "text": "לכל טופס ולכל נקודת קצה ציבוריים יש הגבלת קצב, בכלל של ה-WAF ב-Vercel או בקוד, ובדיקה שעוצרת בוטים, כמו Turnstile, hCaptcha או שדה נסתר שרק בוט ממלא, לפי גודל הסיכון.",
+        "basis": "vendor",
+        "docs": "https://vercel.com/docs/vercel-firewall/vercel-waf/rate-limiting"
+      },
+      {
+        "text": "בהרשמה ובאיפוס סיסמה שפתוחים לכולם יש CAPTCHA, ומישהו בדק את מגבלות הקצב של ההתחברות.",
+        "basis": "vendor",
+        "docs": "https://supabase.com/docs/guides/auth/rate-limits"
+      },
+      {
+        "text": "יש תקרה לכל משתמש ותקרה כללית לקריאות למודל ולקריאות בתשלום לשירותים אחרים שמשתמש יכול להפעיל.",
+        "basis": "std",
+        "docs": "https://github.com/GenAI-Security-Project/GenAI-LLM-Top10"
+      }
+    ],
+    "conditional": [
+      {
+        "when": "יש webhook ציבורי של n8n",
+        "do": "שמים אותו מאחורי נתיב שבודק זהות ומגביל קצב, או מחייבים header auth ובודקים את התוכן.",
+        "basis": "inf",
+        "docs": "https://docs.n8n.io/integrations/builtin/core-nodes/n8n-nodes-base.webhook/"
+      },
+      {
+        "when": "משתמש יכול להפעיל שליחה של מייל או SMS",
+        "do": "מגבילים את הקצב לכל נמען, כדי שאי אפשר יהיה לשלוח דרך המערכת ספאם.",
+        "basis": "inf",
+        "docs": "https://sre.google/sre-book/launch-checklist/"
+      }
+    ],
+    "proof": {
+      "text": "פלט של סקריפט ששולח פרץ של בקשות ומראה 429 או אתגר אחרי הגבול, הגדרות ה-CAPTCHA, כלל ה-WAF בייצוא או בצילום ובדיקה שמראה שקריאה מעל התקרה של ה-AI מחזירה הודעה על הגבול.",
+      "evidence": "command",
+      "file": "docs/evidence/<change-index>/abuse-protection.txt"
+    },
+    "paid": [
+      {
+        "vendor": "vercel",
+        "tier": "pro",
+        "capability": "יותר כללים של הגבלת קצב ב-WAF של Vercel",
+        "docs": "https://vercel.com/docs/vercel-firewall/vercel-waf/rate-limiting"
+      }
+    ],
+    "docs": [
+      "https://vercel.com/docs/vercel-firewall/vercel-waf/rate-limiting",
+      "https://vercel.com/docs/plans/hobby",
+      "https://supabase.com/docs/guides/auth/rate-limits",
+      "https://supabase.com/docs/guides/auth/auth-captcha",
+      "https://docs.n8n.io/integrations/builtin/core-nodes/n8n-nodes-base.webhook/",
+      "https://github.com/GenAI-Security-Project/GenAI-LLM-Top10",
+      "https://sre.google/sre-book/launch-checklist/"
+    ]
+  },
+  {
+    "id": "app-hardening",
+    "name": "הקשחת המערכת",
+    "intent": "המערכת מתייחסת לכל קלט כלא מהימן ומקודדת כל פלט, שולחת כותרות אבטחה והגדרות בטוחות, וכשמשהו נכשל היא לא חושפת פרטים פנימיים.",
+    "opensOn": [
+      "capability",
+      "webhook",
+      "release"
+    ],
+    "tracks": [
+      "static",
+      "supabase-app",
+      "n8n-engine"
+    ],
+    "must": [
+      {
+        "text": "כל קלט נבדק מול סכמה בצד השרת, כולל התוכן של webhooks.",
+        "basis": "std",
+        "docs": "https://github.com/OWASP/ASVS/tree/v5.0.0/5.0/en"
+      },
+      {
+        "text": "שאילתות נכתבות רק עם פרמטרים, גם ב-Nodes שמריצים SQL ב-n8n.",
+        "basis": "std",
+        "docs": "https://top10.owasp.org/2025/0x00_2025-Introduction"
+      },
+      {
+        "text": "כל פלט מקודד, ו-HTML גולמי שמגיע ממשתמש או ממודל לא מוצג בלי ניקוי.",
+        "basis": "std",
+        "docs": "https://github.com/OWASP/ASVS/tree/v5.0.0/5.0/en"
+      },
+      {
+        "text": "האתר עובד רק ב-HTTPS ושולח את כותרות האבטחה HSTS, Content-Security-Policy, X-Content-Type-Options, frame-ancestors ו-Referrer-Policy.",
+        "basis": "law",
+        "docs": "https://github.com/OWASP/ASVS/tree/v5.0.0/5.0/en"
+      },
+      {
+        "text": "המשתמש רואה הודעת שגיאה כללית והפרטים נכתבים ליומן. אף תשובה לא כוללת stack trace.",
+        "basis": "std",
+        "docs": "https://top10.owasp.org/2025/0x00_2025-Introduction"
+      },
+      {
+        "text": "הגדרות ה-CORS מתירות רק מקורות מוכרים.",
+        "basis": "inf"
+      }
+    ],
+    "conditional": [
+      {
+        "when": "משתמשים מעלים קבצים",
+        "do": "מגבילים סוג וגודל, בודקים את התוכן בצד השרת, שומרים בתיקיות פרטיות ונותנים גישה דרך קישורים חתומים.",
+        "basis": "std",
+        "docs": "https://github.com/OWASP/ASVS/tree/v5.0.0/5.0/en"
+      },
+      {
+        "when": "המערכת מורידה כתובת שמשתמש נתן",
+        "do": "מתירים רק יעדים מרשימה מוגדרת, כדי למנוע SSRF.",
+        "basis": "std",
+        "docs": "https://top10.owasp.org/2025/0x00_2025-Introduction"
+      },
+      {
+        "when": "יש סקריפטים של צד שלישי, כמו אנליטיקה או צ'אט, או טופס תשלום מוטמע",
+        "do": "מחזיקים רשימה של כל הסקריפטים ו-CSP שמתיר כל מקור בשמו.",
+        "basis": "std",
+        "docs": "https://blog.pcisecuritystandards.org/faq-clarifies-new-saq-a-eligibility-criteria-for-e-commerce-merchants"
+      }
+    ],
+    "proof": {
+      "text": "הפלט של curl -sI על הדומיין שמראה את הכותרות, בדיקות ששולחות קלט של הזרקה ושל XSS ומוודאות שהוא נדחה או מקודד. כש-n8n מותקן על שרת משלכם, מצרפים גם את הפלט של n8n audit בלי ממצאים בקטגוריות Database ו-Instance.",
+      "evidence": "command",
+      "file": "docs/evidence/<change-index>/app-hardening.txt"
+    },
+    "docs": [
+      "https://top10.owasp.org/2025/0x00_2025-Introduction",
+      "https://github.com/OWASP/ASVS/tree/v5.0.0/5.0/en",
+      "https://docs.n8n.io/hosting/securing/security-audit/",
+      "https://he.wikisource.org/wiki/%D7%AA%D7%A7%D7%A0%D7%95%D7%AA_%D7%94%D7%92%D7%A0%D7%AA_%D7%94%D7%A4%D7%A8%D7%98%D7%99%D7%95%D7%AA_(%D7%90%D7%91%D7%98%D7%97%D7%AA_%D7%9E%D7%99%D7%93%D7%A2)",
+      "https://blog.pcisecuritystandards.org/faq-clarifies-new-saq-a-eligibility-criteria-for-e-commerce-merchants"
+    ]
+  },
+  {
+    "id": "supply-chain",
+    "name": "ספריות ותלויות",
+    "intent": "כל חבילה, פעולה ב-CI, Node של n8n, סקריפט מוטמע ושרת כלים של AI שהפרויקט מריץ נבחרו בכוונה, נעולים על גרסה, נבדקים לפרצות ומתעדכנים לפי לוח זמנים.",
+    "opensOn": [
+      "dependency"
+    ],
+    "tracks": [
+      "static",
+      "supabase-app",
+      "n8n-engine"
+    ],
+    "must": [
+      {
+        "text": "קובץ ה-lock נשמר ב-repo, וה-CI מתקין בדיוק ממנו עם npm ci.",
+        "basis": "std",
+        "docs": "https://12factor.net/"
+      },
+      {
+        "text": "ההתראות של Dependabot ועדכוני האבטחה שלו מופעלים, ו-npm audit --audit-level=high רץ ב-CI.",
+        "basis": "vendor",
+        "docs": "https://docs.github.com/en/code-security/dependabot/dependabot-alerts/about-dependabot-alerts"
+      },
+      {
+        "text": "לפני שמוסיפים תלות חדשה בודקים שהיא מתוחזקת ונפוצה, שהרישיון שלה מתאים ושאין לה סקריפטי התקנה מפתיעים. ההחלטה נרשמת.",
+        "basis": "std",
+        "docs": "https://nvlpubs.nist.gov/nistpubs/SpecialPublications/NIST.SP.800-218.pdf"
+      },
+      {
+        "text": "יש חלון עדכונים חודשי, ומישהו עוקב אחרי סוף התמיכה בסביבת הריצה וב-framework, כמו גרסת Node, הגרסה הראשית של Next.js וגרסת n8n שמותקנת על שרת משלכם.",
+        "basis": "law",
+        "docs": "https://he.wikisource.org/wiki/%D7%AA%D7%A7%D7%A0%D7%95%D7%AA_%D7%94%D7%92%D7%A0%D7%AA_%D7%94%D7%A4%D7%A8%D7%98%D7%99%D7%95%D7%AA_(%D7%90%D7%91%D7%98%D7%97%D7%AA_%D7%9E%D7%99%D7%93%D7%A2)"
+      }
+    ],
+    "conditional": [
+      {
+        "when": "מוסיפים Node קהילתי ל-n8n",
+        "do": "לא מתקינים אותו בלי סקירה, ושרת n8n משלכם נשאר מעודכן, כי ה-audit של n8n מסמן שרת ישן.",
+        "basis": "vendor",
+        "docs": "https://docs.n8n.io/hosting/securing/security-audit/"
+      },
+      {
+        "when": "משתמשים ב-GitHub Actions של צד שלישי",
+        "do": "נועלים כל פעולה על SHA של commit.",
+        "basis": "inf"
+      },
+      {
+        "when": "המערכת משתמשת בשרתי MCP או בכלים לסוכן",
+        "do": "לוקחים אותם רק ממפרסמים מוכרים, נועלים על גרסה ונותנים להם טוקנים עם ההרשאות המינימליות.",
+        "basis": "std",
+        "docs": "https://genai.owasp.org/2025/12/09/owasp-top-10-for-agentic-applications-the-benchmark-for-agentic-security-in-the-age-of-autonomous-ai/"
+      }
+    ],
+    "proof": {
+      "text": "הפלט של npm audit --audit-level=high עם קוד יציאה 0, תשובה של ה-API של Dependabot בלי התראה פתוחה מעל הסף והשינוי בקובץ ה-lock.",
+      "evidence": "command",
+      "file": "docs/evidence/<change-index>/supply-chain.txt"
+    },
+    "docs": [
+      "https://top10.owasp.org/2025/0x00_2025-Introduction",
+      "https://nvlpubs.nist.gov/nistpubs/SpecialPublications/NIST.SP.800-218.pdf",
+      "https://www.microsoft.com/en-us/securityengineering/sdl/practices",
+      "https://docs.github.com/en/code-security/dependabot/dependabot-alerts/about-dependabot-alerts",
+      "https://docs.github.com/en/rest/dependabot/alerts",
+      "https://docs.npmjs.com/cli/v11/commands/npm-audit",
+      "https://docs.n8n.io/hosting/securing/security-audit/",
+      "https://he.wikisource.org/wiki/%D7%AA%D7%A7%D7%A0%D7%95%D7%AA_%D7%94%D7%92%D7%A0%D7%AA_%D7%94%D7%A4%D7%A8%D7%98%D7%99%D7%95%D7%AA_(%D7%90%D7%91%D7%98%D7%97%D7%AA_%D7%9E%D7%99%D7%93%D7%A2)"
+    ]
+  },
+  {
+    "id": "ux-design-system",
+    "name": "עיצוב וחוויית שימוש",
+    "intent": "כל מסך משתמש בערכים וברכיבים המשותפים של מערכת העיצוב, מכסה את כל המצבים שלו, עובד ברוחב של טלפון ובעברית מימין לשמאל ומדבר בשפה פשוטה.",
+    "opensOn": [
+      "screen",
+      "content"
+    ],
+    "tracks": [
+      "static",
+      "supabase-app",
+      "n8n-engine"
+    ],
+    "must": [
+      {
+        "text": "צבעים, ריווחים ורכיבים באים מ-design/tokens.css ומה-skill של מערכת העיצוב, בלי ערכים חד-פעמיים.",
+        "basis": "inf"
+      },
+      {
+        "text": "לכל מסך יש עיצוב למצב ריק, לטעינה, לשגיאה, להצלחה ולמצב שבו אין הרשאה.",
+        "basis": "inf",
+        "docs": "https://www.iso.org/standard/78176.html"
+      },
+      {
+        "text": "במסך ברוחב 390 פיקסלים אין גלילה הצידה, ובודקים את זה ב-WebKit וגם ב-Chromium.",
+        "basis": "inf"
+      },
+      {
+        "text": "מסכים בעברית מוגדרים עם dir=\"rtl\" ו-lang=\"he\", משתמשים במאפייני CSS לוגיים, מבודדים טקסט שמערבב עברית ואנגלית כדי שלא יתהפך ומציגים תאריכים ושעות לפי אזור הזמן Asia/Jerusalem.",
+        "basis": "inf"
+      }
+    ],
+    "conditional": [
+      {
+        "when": "יש יותר משפה אחת",
+        "do": "המחרוזות נמצאות בקובץ תרגום, ולכל עמוד יש lang משלו.",
+        "basis": "inf"
+      },
+      {
+        "when": "יש טפסים",
+        "do": "הודעות שגיאה בעברית פשוטה מופיעות ליד השדה שבו הייתה הטעות.",
+        "basis": "inf"
+      }
+    ],
+    "proof": {
+      "text": "צילומי מסך ברוחב 390 וברוחב 1280 ב-WebKit וב-Chromium לכל מסך שהשתנה, שנשמרים עם השינוי. כשזה רלוונטי מצרפים גם את הפלט של scripts/ux-check.browser.js.",
+      "evidence": "file",
+      "file": "docs/evidence/<change-index>/ux-design-system.txt"
+    },
+    "docs": [
+      "https://www.iso.org/standard/78176.html",
+      "https://www.gov.il/BlobFolder/legalinfo/israeli_accessibility_standards_pdf/he/sitedocs_si-5568-1-september-2023.pdf"
+    ]
+  },
+  {
+    "id": "accessibility",
+    "name": "נגישות דיגיטלית",
+    "intent": "אנשים עם מוגבלות יכולים להשתמש בשירות ברמה שהחוק בישראל דורש, והאתר מפרסם הצהרת נגישות עם התוכן שהתקנות מחייבות.",
+    "opensOn": [
+      "screen",
+      "content"
+    ],
+    "tracks": [
+      "static",
+      "supabase-app",
+      "n8n-engine"
+    ],
+    "must": [
+      {
+        "text": "מכוונים ל-WCAG 2.2 ברמה AA, שעומדת גם ברף של תקן ישראלי 5568, כי התקן מבוסס על WCAG 2.0 ברמה AA. את השינויים הישראליים שבנספח ד של התקן בודקים בנפרד.",
+        "basis": "law",
+        "docs": "https://www.gov.il/BlobFolder/legalinfo/israeli_accessibility_standards_pdf/he/sitedocs_si-5568-1-september-2023.pdf"
+      },
+      {
+        "text": "כל עמוד שהשתנה עובר סריקה אוטומטית בלי הפרות, מעבר עם מקלדת בלבד ובדיקה קצרה עם קורא מסך.",
+        "basis": "inf",
+        "docs": "https://github.com/dequelabs/axe-core-npm/blob/develop/packages/cli/README.md"
+      },
+      {
+        "text": "באתר יש הצהרת נגישות במקום בולט, עם ההתאמות שבוצעו, פרטי רכז הנגישות כשחייבים למנות כזה ודרך לדווח על בעיה או לבקש התאמה. יש אליה קישור מכל עמוד, לפי תקנה 35ה.",
+        "basis": "law",
+        "docs": "https://he.wikisource.org/wiki/%D7%AA%D7%A7%D7%A0%D7%95%D7%AA_%D7%A9%D7%95%D7%95%D7%99%D7%95%D7%9F_%D7%96%D7%9B%D7%95%D7%99%D7%95%D7%AA_%D7%9C%D7%90%D7%A0%D7%A9%D7%99%D7%9D_%D7%A2%D7%9D_%D7%9E%D7%95%D7%92%D7%91%D7%9C%D7%95%D7%AA_(%D7%94%D7%AA%D7%90%D7%9E%D7%95%D7%AA_%D7%A0%D7%92%D7%99%D7%A9%D7%95%D7%AA_%D7%9C%D7%A9%D7%99%D7%A8%D7%95%D7%AA)"
+      },
+      {
+        "text": "בטפסים לכל שדה יש תווית והודעות השגיאה קשורות לשדה. הפוקוס נראה וזז בסדר הגיוני.",
+        "basis": "std",
+        "docs": "https://www.w3.org/TR/WCAG22/"
+      }
+    ],
+    "conditional": [
+      {
+        "when": "מעלים מסמכי PDF או מסמכים אחרים",
+        "do": "המסמכים נגישים לפי חלק 2 של תקן ישראלי 5568.",
+        "basis": "law",
+        "docs": "https://www.gov.il/BlobFolder/legalinfo/israeli_accessibility_standards_pdf/he/sitedocs_si-5568-2-september-2023.pdf"
+      },
+      {
+        "when": "יש וידאו",
+        "do": "מוסיפים כתוביות כשתקנה 35ד חלה, ובכל מקרה אחר יש תמליל או חלופה בטקסט לכל סרטון שצריך כדי לקבל את השירות.",
+        "basis": "law",
+        "docs": "https://he.wikisource.org/wiki/%D7%AA%D7%A7%D7%A0%D7%95%D7%AA_%D7%A9%D7%95%D7%95%D7%99%D7%95%D7%9F_%D7%96%D7%9B%D7%95%D7%99%D7%95%D7%AA_%D7%9C%D7%90%D7%A0%D7%A9%D7%99%D7%9D_%D7%A2%D7%9D_%D7%9E%D7%95%D7%92%D7%91%D7%9C%D7%95%D7%AA_(%D7%94%D7%AA%D7%90%D7%9E%D7%95%D7%AA_%D7%A0%D7%92%D7%99%D7%A9%D7%95%D7%AA_%D7%9C%D7%A9%D7%99%D7%A8%D7%95%D7%AA)"
+      },
+      {
+        "when": "משתמשים מעלים תוכן",
+        "do": "המערכת מאפשרת להעלות אותו נגיש, למשל עם שדה לתיאור של תמונה.",
+        "basis": "law",
+        "docs": "https://he.wikisource.org/wiki/%D7%AA%D7%A7%D7%A0%D7%95%D7%AA_%D7%A9%D7%95%D7%95%D7%99%D7%95%D7%9F_%D7%96%D7%9B%D7%95%D7%99%D7%95%D7%AA_%D7%9C%D7%90%D7%A0%D7%A9%D7%99%D7%9D_%D7%A2%D7%9D_%D7%9E%D7%95%D7%92%D7%91%D7%9C%D7%95%D7%AA_(%D7%94%D7%AA%D7%90%D7%9E%D7%95%D7%AA_%D7%A0%D7%92%D7%99%D7%A9%D7%95%D7%AA_%D7%9C%D7%A9%D7%99%D7%A8%D7%95%D7%AA)"
+      },
+      {
+        "when": "רוצים להסתמך על פטור לפי תקנה 35ו",
+        "do": "התקנה פוטרת שירות שהכניסה אליו מוגבלת לנרשמים מראש ושרשומים אליו עד 500 משתתפים בו זמנית, אלא אם אדם עם מוגבלות ביקש התאמה. היא פוטרת גם עוסק פטור או מי שהמחזור השנתי הממוצע שלו עד 100,000 שקל, ומורשה לנגישות השירות יכול לפטור התאמה מסוימת שאי אפשר לבצע מסיבות טכנולוגיות, לשלוש שנים לכל היותר. רושמים את הבסיס לפטור ואת התאריך ומתקנים כשמבקשים, ובכל פרויקט של לקוח או של עסק הכלי ממליץ לעמוד ב-AA גם כשיש פטור.",
+        "basis": "law",
+        "docs": "https://he.wikisource.org/wiki/%D7%AA%D7%A7%D7%A0%D7%95%D7%AA_%D7%A9%D7%95%D7%95%D7%99%D7%95%D7%9F_%D7%96%D7%9B%D7%95%D7%99%D7%95%D7%AA_%D7%9C%D7%90%D7%A0%D7%A9%D7%99%D7%9D_%D7%A2%D7%9D_%D7%9E%D7%95%D7%92%D7%91%D7%9C%D7%95%D7%AA_(%D7%94%D7%AA%D7%90%D7%9E%D7%95%D7%AA_%D7%A0%D7%92%D7%99%D7%A9%D7%95%D7%AA_%D7%9C%D7%A9%D7%99%D7%A8%D7%95%D7%AA)"
+      }
+    ],
+    "proof": {
+      "text": "הפלט של npx @axe-core/cli <url> --exit עם קוד יציאה 0 לכל כתובת שהשתנתה, דוח הנגישות של Lighthouse, קובץ הבדיקה הידנית ועמוד ההצהרה שמחזיר 200 ומכיל את השדות של תקנה 35ה.",
+      "evidence": "command",
+      "file": "docs/evidence/<change-index>/accessibility.txt"
+    },
+    "docs": [
+      "https://he.wikisource.org/wiki/%D7%AA%D7%A7%D7%A0%D7%95%D7%AA_%D7%A9%D7%95%D7%95%D7%99%D7%95%D7%9F_%D7%96%D7%9B%D7%95%D7%99%D7%95%D7%AA_%D7%9C%D7%90%D7%A0%D7%A9%D7%99%D7%9D_%D7%A2%D7%9D_%D7%9E%D7%95%D7%92%D7%91%D7%9C%D7%95%D7%AA_(%D7%94%D7%AA%D7%90%D7%9E%D7%95%D7%AA_%D7%A0%D7%92%D7%99%D7%A9%D7%95%D7%AA_%D7%9C%D7%A9%D7%99%D7%A8%D7%95%D7%AA)",
+      "https://www.gov.il/BlobFolder/legalinfo/israeli_accessibility_standards_pdf/he/sitedocs_si-5568-1-september-2023.pdf",
+      "https://www.gov.il/BlobFolder/legalinfo/israeli_accessibility_standards_pdf/he/sitedocs_si-5568-2-september-2023.pdf",
+      "https://www.w3.org/TR/WCAG22/",
+      "https://he.wikisource.org/wiki/%D7%97%D7%95%D7%A7_%D7%A9%D7%95%D7%95%D7%99%D7%95%D7%9F_%D7%96%D7%9B%D7%95%D7%99%D7%95%D7%AA_%D7%9C%D7%90%D7%A0%D7%A9%D7%99%D7%9D_%D7%A2%D7%9D_%D7%9E%D7%95%D7%92%D7%91%D7%9C%D7%95%D7%AA",
+      "https://github.com/dequelabs/axe-core-npm/blob/develop/packages/cli/README.md"
+    ]
+  },
+  {
+    "id": "content",
+    "name": "ניהול תוכן",
+    "intent": "ברור מי רשאי לשנות איזה תוכן, איפה הוא נשמר, בקוד, במערכת לניהול תוכן או במסד, איך בודקים אותו לפני פרסום ואיך מחזירים אותו לאחור ושיש למערכת זכות לפרסם אותו.",
+    "opensOn": [
+      "content"
+    ],
+    "tracks": [
+      "static",
+      "supabase-app",
+      "n8n-engine"
+    ],
+    "must": [
+      {
+        "text": "בקובץ spec/content.md כתוב מה אפשר לערוך, איזה תפקיד עורך, איפה התוכן נשמר ואיך מפרסמים אותו.",
+        "basis": "inf"
+      },
+      {
+        "text": "עריכות שגרתיות שהלקוח מצפה לעשות לבד לא דורשות מפתח ולא פריסה.",
+        "basis": "inf"
+      },
+      {
+        "text": "יש תצוגה מקדימה לפני פרסום, היסטוריית גרסאות ודרך להחזיר עריכה אחת לאחור.",
+        "basis": "inf"
+      },
+      {
+        "text": "לכל תמונה, גופן, מוזיקה ווידאו שבשימוש רשום מאיפה הם באו ומה הזכויות לשימוש בהם.",
+        "basis": "inf"
+      }
+    ],
+    "conditional": [
+      {
+        "when": "משתמשים מפרסמים תוכן",
+        "do": "יש סינון, דרך לדווח על תוכן ושדות קלט נגישים.",
+        "basis": "law",
+        "docs": "https://he.wikisource.org/wiki/%D7%AA%D7%A7%D7%A0%D7%95%D7%AA_%D7%A9%D7%95%D7%95%D7%99%D7%95%D7%9F_%D7%96%D7%9B%D7%95%D7%99%D7%95%D7%AA_%D7%9C%D7%90%D7%A0%D7%A9%D7%99%D7%9D_%D7%A2%D7%9D_%D7%9E%D7%95%D7%92%D7%91%D7%9C%D7%95%D7%AA_(%D7%94%D7%AA%D7%90%D7%9E%D7%95%D7%AA_%D7%A0%D7%92%D7%99%D7%A9%D7%95%D7%AA_%D7%9C%D7%A9%D7%99%D7%A8%D7%95%D7%AA)"
+      },
+      {
+        "when": "התוכן נוצר על ידי AI",
+        "do": "אדם עובר עליו לפני שהוא מתפרסם.",
+        "basis": "std",
+        "docs": "https://github.com/GenAI-Security-Project/GenAI-LLM-Top10"
+      },
+      {
+        "when": "התוכן מזין מודל, כמו מאגר ידע",
+        "do": "יש לו בעלים ושלב בדיקה של מה שנכנס אליו.",
+        "basis": "std",
+        "docs": "https://github.com/GenAI-Security-Project/GenAI-LLM-Top10"
+      }
+    ],
+    "proof": {
+      "text": "הקובץ spec/content.md, רשומה של עריכה שתפקיד העורך עשה בתצוגה המקדימה ושל ההחזרה שלה לאחור וקובץ הרישיונות.",
+      "evidence": "file",
+      "file": "docs/evidence/<change-index>/content.txt"
+    },
+    "docs": [
+      "https://he.wikisource.org/wiki/%D7%AA%D7%A7%D7%A0%D7%95%D7%AA_%D7%A9%D7%95%D7%95%D7%99%D7%95%D7%9F_%D7%96%D7%9B%D7%95%D7%99%D7%95%D7%AA_%D7%9C%D7%90%D7%A0%D7%A9%D7%99%D7%9D_%D7%A2%D7%9D_%D7%9E%D7%95%D7%92%D7%91%D7%9C%D7%95%D7%AA_(%D7%94%D7%AA%D7%90%D7%9E%D7%95%D7%AA_%D7%A0%D7%92%D7%99%D7%A9%D7%95%D7%AA_%D7%9C%D7%A9%D7%99%D7%A8%D7%95%D7%AA)",
+      "https://github.com/GenAI-Security-Project/GenAI-LLM-Top10"
+    ]
+  },
+  {
+    "id": "seo-sharing",
+    "name": "מנועי חיפוש ושיתוף",
+    "intent": "עמודים ציבוריים נמצאים בחיפוש ומציגים תצוגה נכונה כשמשתפים אותם, ועמודים פרטיים, עמודי ניהול ותצוגות מקדימות לא מופיעים בתוצאות.",
+    "opensOn": [
+      "screen",
+      "domain"
+    ],
+    "tracks": [
+      "static",
+      "supabase-app",
+      "n8n-engine"
+    ],
+    "must": [
+      {
+        "text": "לכל עמוד ציבורי יש כותרת ותיאור משלו, תגי Open Graph עם תמונה וכתובת קנונית על דומיין הייצור.",
+        "basis": "std",
+        "docs": "https://ogp.me/"
+      },
+      {
+        "text": "באתר ציבורי יש sitemap.xml ו-robots.txt. עמודי האפליקציה, הניהול והחשבון שולחים noindex, כי עמוד שחסום ב-robots.txt עדיין יכול להופיע בתוצאות.",
+        "basis": "vendor",
+        "docs": "https://developers.google.com/search/docs/crawling-indexing/block-indexing"
+      }
+    ],
+    "conditional": [
+      {
+        "when": "יש אתר בדיקות על דומיין משלו",
+        "do": "מוסיפים לו כותרת noindex או מגינים עליו, כי Vercel לא מוסיפה אותה לתצוגה מקדימה שמחוברת לדומיין של ענף.",
+        "basis": "vendor",
+        "docs": "https://vercel.com/docs/deployments/environments"
+      },
+      {
+        "when": "יש כמה שפות",
+        "do": "מגדירים lang ו-hreflang.",
+        "basis": "inf"
+      }
+    ],
+    "proof": {
+      "text": "פלט של curl -sI שמראה x-robots-tag: noindex בכתובות הפרטיות ובתצוגות המקדימות ושאין אותו בעמודים הציבוריים, קטע ה-head עם תגי ה-OG וצילום של התצוגה כשמשתפים, למשל בוואטסאפ.",
+      "evidence": "command",
+      "file": "docs/evidence/<change-index>/seo-sharing.txt"
+    },
+    "docs": [
+      "https://developers.google.com/search/docs/crawling-indexing/block-indexing",
+      "https://ogp.me/",
+      "https://vercel.com/docs/deployments/environments"
+    ]
+  },
+  {
+    "id": "analytics",
+    "name": "מדידת שימוש",
+    "intent": "המערכת מודדת אם היא מגיעה למדד ההצלחה שבאפיון, לפי תוכנית אירועים מוגדרת, בלי לאסוף יותר מידע אישי ממה שהמדידה צריכה.",
+    "opensOn": [
+      "capability"
+    ],
+    "tracks": [
+      "static",
+      "supabase-app",
+      "n8n-engine"
+    ],
+    "must": [
+      {
+        "text": "מדד ההצלחה ותוכנית האירועים כתובים בתיקייה spec.",
+        "basis": "inf"
+      },
+      {
+        "text": "באירועים ובכתובות שנמדדות אין מידע אישי, כמו מייל, טלפון, שם או מזהה של רשומה שמזהה אדם.",
+        "basis": "vendor",
+        "docs": "https://vercel.com/docs/analytics/privacy-policy"
+      },
+      {
+        "text": "הודעת הפרטיות מציינת את כלי המדידה ומה הוא אוסף.",
+        "basis": "law",
+        "docs": "https://he.wikisource.org/wiki/%D7%97%D7%95%D7%A7_%D7%94%D7%92%D7%A0%D7%AA_%D7%94%D7%A4%D7%A8%D7%98%D7%99%D7%95%D7%AA"
+      }
+    ],
+    "conditional": [
+      {
+        "when": "יש tag manager או תגים של צד שלישי",
+        "do": "הם נכנסים לרשימת הסקריפטים של ממד הקשחת המערכת.",
+        "basis": "inf"
+      }
+    ],
+    "proof": {
+      "text": "קובץ תוכנית האירועים, קטע מהקלטת הרשת בקובץ HAR שמראה שהאירועים נשלחים בלי מידע אישי וצילום של מדד ההצלחה בדשבורד.",
+      "evidence": "file",
+      "file": "docs/evidence/<change-index>/analytics.txt"
+    },
+    "docs": [
+      "https://docs.aws.amazon.com/wellarchitected/latest/saas-lens/general-design-principles.html",
+      "https://he.wikisource.org/wiki/%D7%97%D7%95%D7%A7_%D7%94%D7%92%D7%A0%D7%AA_%D7%94%D7%A4%D7%A8%D7%98%D7%99%D7%95%D7%AA",
+      "https://vercel.com/docs/analytics/privacy-policy"
+    ]
+  },
+  {
+    "id": "integrations",
+    "name": "אוטומציות וחיבורים",
+    "intent": "לכל חיבור למערכת אחרת, כמו webhook נכנס, קריאה יוצאת ל-API, workflow ב-n8n או משימה מתוזמנת, יש חוזה כתוב, נקודת קצה מאובטחת, בדיקה של התוכן, אחראי והתנהגות ידועה כשהוא נכשל.",
+    "opensOn": [
+      "automation",
+      "webhook",
+      "process",
+      "step",
+      "timer",
+      "service"
+    ],
+    "tracks": [
+      "static",
+      "supabase-app",
+      "n8n-engine"
+    ],
+    "must": [
+      {
+        "text": "בקובץ spec/integrations.md רשומים לכל חיבור הכיוון שלו, מה מפעיל אותו, סכמת התוכן, האימות, האחראי, מה קורה כשהוא נכשל והמגבלות של הצד השני.",
+        "basis": "inf"
+      },
+      {
+        "text": "כל webhook נכנס מאמת את השולח ובודק את התוכן מול סכמה. האימות נעשה בחתימה של הספק, ב-header עם סוד משותף או ב-header auth או JWT של n8n.",
+        "basis": "vendor",
+        "docs": "https://docs.n8n.io/integrations/builtin/core-nodes/n8n-nodes-base.webhook/"
+      },
+      {
+        "text": "לכל workflow בייצור יש workflow של שגיאות שמתריע לאדם מסוים.",
+        "basis": "vendor",
+        "docs": "https://docs.n8n.io/flow-logic/error-handling/"
+      },
+      {
+        "text": "כל משימה מתוזמנת מגדירה את אזור הזמן שלה, Asia/Jerusalem. כתוב גם מה קורה לה במעבר לשעון קיץ ולשעון חורף.",
+        "basis": "inf"
+      },
+      {
+        "text": "מערכת בייצור קוראת רק לכתובת ה-production של כל webhook, כי כתובת הבדיקה של n8n עובדת רק כשמאזינים לה.",
+        "basis": "vendor",
+        "docs": "https://docs.n8n.io/integrations/builtin/core-nodes/n8n-nodes-base.webhook/"
+      }
+    ],
+    "conditional": [
+      {
+        "when": "הספק לא חותם על ה-webhooks שלו, כמו Cardcom לפי מפרט v11",
+        "do": "מתייחסים ל-webhook כהודעה בלבד, ומאשרים מול ה-API של הספק לפני שעושים משהו.",
+        "basis": "vendor",
+        "docs": "https://secure.cardcom.solutions/Api/v11/Docs"
+      },
+      {
+        "when": "יש הרבה קריאות לשירות חיצוני",
+        "do": "מכבדים את מגבלות הקצב שלו, עם תור או עם איחוד של בקשות.",
+        "basis": "std",
+        "docs": "https://sre.google/sre-book/launch-checklist/"
+      }
+    ],
+    "proof": {
+      "text": "הקובץ spec/integrations.md, ה-JSON של ה-workflow מה-API של n8n שמראה errorWorkflow מוגדר ואימות ב-webhook שאינו None, מזהה של הרצה עם כשל מכוון שהגיעה ל-workflow של השגיאות ופלט של curl שבו קריאה בלי אימות נדחית.",
+      "evidence": "file",
+      "file": "docs/evidence/<change-index>/integrations.txt"
+    },
+    "docs": [
+      "https://docs.n8n.io/flow-logic/error-handling/",
+      "https://docs.n8n.io/workflows/components/nodes/",
+      "https://docs.n8n.io/integrations/builtin/core-nodes/n8n-nodes-base.webhook/",
+      "https://sre.google/sre-book/launch-checklist/",
+      "https://12factor.net/",
+      "https://secure.cardcom.solutions/Api/v11/Docs"
+    ]
+  },
+  {
+    "id": "ai-components",
+    "name": "רכיבי AI",
+    "intent": "כל פרומפט, קריאה למודל וסוכן נשמרים עם גרסה, נבדקים מול סט בדיקות קבוע לפני שחרור, מוגבלים במה שהם יכולים לעשות ולהוציא ומוגנים מהזרקת פרומפט, והפלט שלהם נחשב לא מהימן.",
+    "opensOn": [
+      "ai"
+    ],
+    "tracks": [
+      "static",
+      "supabase-app",
+      "n8n-engine"
+    ],
+    "modifier": "ai",
+    "must": [
+      {
+        "text": "הפרומפטים נשמרים ב-repo עם גרסה, והמודל נעול על מזהה גרסה מפורש.",
+        "basis": "inf",
+        "docs": "https://platform.claude.com/docs/en/about-claude/model-deprecations"
+      },
+      {
+        "text": "יש סט בדיקות בתיקייה evals/<feature>/ עם קריטריונים למעבר, ובו קלטים רגילים, מקרי קצה וקלטים עוינים, כולל קלטים בעברית. הוא רץ לפני כל שינוי בפרומפט או במודל, והתוצאות נשמרות.",
+        "basis": "std",
+        "docs": "https://github.com/GenAI-Security-Project/GenAI-LLM-Top10"
+      },
+      {
+        "text": "הפלט של המודל נבדק מול סכמה ומקודד לפני שמציגים אותו, ואף פעם לא רץ כקוד או הופך ישירות לשאילתה.",
+        "basis": "std",
+        "docs": "https://github.com/GenAI-Security-Project/GenAI-LLM-Top10"
+      },
+      {
+        "text": "טקסט לא מהימן שמגיע למודל, כמו קלט של משתמש, מיילים, עמודי אינטרנט וקבצים, לא יכול לשנות את ההוראות או את הכלים, ובפרומפט של המערכת אין סודות.",
+        "basis": "std",
+        "docs": "https://github.com/GenAI-Security-Project/GenAI-LLM-Top10"
+      },
+      {
+        "text": "לכלים יש רק את ההרשאות המינימליות, ופעולה שמשנה משהו, כמו שליחה, תשלום, מחיקה או פרסום, דורשת אישור של אדם או גבול קשיח.",
+        "basis": "std",
+        "docs": "https://genai.owasp.org/2025/12/09/owasp-top-10-for-agentic-applications-the-benchmark-for-agentic-security-in-the-age-of-autonomous-ai/"
+      },
+      {
+        "text": "יש תקרה לכל משתמש ותקרה יומית לקריאות ולטוקנים.",
+        "basis": "std",
+        "docs": "https://github.com/GenAI-Security-Project/GenAI-LLM-Top10"
+      },
+      {
+        "text": "לפרומפט נכנס רק המידע האישי שהמשימה צריכה.",
+        "basis": "std",
+        "docs": "https://github.com/GenAI-Security-Project/GenAI-LLM-Top10"
+      }
+    ],
+    "conditional": [
+      {
+        "when": "המודל עונה מתוך מאגר מסמכים",
+        "do": "המסמכים מסוננים לפי ההרשאות של המשתמש, והתשובות מציינות מאיפה הן באו.",
+        "basis": "std",
+        "docs": "https://github.com/GenAI-Security-Project/GenAI-LLM-Top10"
+      },
+      {
+        "when": "לסוכן יש זיכרון",
+        "do": "אפשר לראות את הזיכרון ולאפס אותו, והכתיבה אליו מוגבלת.",
+        "basis": "std",
+        "docs": "https://genai.owasp.org/2025/12/09/owasp-top-10-for-agentic-applications-the-benchmark-for-agentic-security-in-the-age-of-autonomous-ai/"
+      },
+      {
+        "when": "הספק הודיע שהמודל יוצא משימוש",
+        "do": "עוברים למודל אחר ומריצים שוב את סט הבדיקות לפני תאריך ההוצאה משימוש.",
+        "basis": "vendor",
+        "docs": "https://platform.claude.com/docs/en/about-claude/model-deprecations"
+      },
+      {
+        "when": "צ'אטבוט מדבר עם לקוחות",
+        "do": "אומרים ללקוח שהוא מדבר עם מערכת אוטומטית, ונותנים לו דרך להגיע לאדם.",
+        "basis": "inf"
+      }
+    ],
+    "proof": {
+      "text": "הקובץ evals/<feature>/results-<date>.json עם שיעור מעבר מעל הסף לפרומפט ולמודל הנוכחיים, ה-diff של הפרומפט, הגדרה שמראה את מזהה המודל הנעול, בדיקה שמראה שפעולה בלי אישור נחסמת ובדיקה שמראה שהתקרה עוצרת קריאה.",
+      "evidence": "file",
+      "file": "docs/evidence/<change-index>/ai-components.txt"
+    },
+    "docs": [
+      "https://genai.owasp.org/resource/owasp-genai-llm-top-10-2026/",
+      "https://github.com/GenAI-Security-Project/GenAI-LLM-Top10",
+      "https://genai.owasp.org/2025/12/09/owasp-top-10-for-agentic-applications-the-benchmark-for-agentic-security-in-the-age-of-autonomous-ai/",
+      "https://csrc.nist.gov/projects/ssdf",
+      "https://platform.claude.com/docs/en/about-claude/model-deprecations",
+      "https://developers.openai.com/api/docs/deprecations"
+    ]
+  },
+  {
+    "id": "email-messaging",
+    "name": "מיילים והודעות",
+    "intent": "הודעות שהמערכת שולחת, כמו מיילים של התחברות, התראות, דיוור, SMS ו-WhatsApp, מגיעות לתיבה מדומיין מאומת ועומדות בכללים של ספקי הדואר ובחוק הספאם הישראלי.",
+    "opensOn": [
+      "email",
+      "automation"
+    ],
+    "tracks": [
+      "static",
+      "supabase-app",
+      "n8n-engine"
+    ],
+    "must": [
+      {
+        "text": "שולחים מהדומיין שלכם, עם SPF, DKIM ו-DMARC שמתואמים לדומיין השולח. מתחילים ב-p=none ומחמירים אחר כך.",
+        "basis": "vendor",
+        "docs": "https://support.google.com/a/answer/81126"
+      },
+      {
+        "text": "מיילים של התחברות ב-Supabase יוצאים דרך שרת SMTP משלכם.",
+        "basis": "vendor",
+        "docs": "https://supabase.com/docs/guides/auth/auth-smtp"
+      },
+      {
+        "text": "הודעות מערכת ודיוור יוצאים בנפרד, מתת-דומיין אחר או בזרם נפרד אצל הספק.",
+        "basis": "inf"
+      },
+      {
+        "text": "לכל נמען בדיוור נשמרת רשומה של ההסכמה שלו, מתי ואיך היא ניתנה ואיזה נוסח בדיוק הוצג לו.",
+        "basis": "law",
+        "docs": "https://he.wikisource.org/wiki/%D7%97%D7%95%D7%A7_%D7%94%D7%AA%D7%A7%D7%A9%D7%95%D7%A8%D7%AA_(%D7%91%D7%96%D7%A7_%D7%95%D7%A9%D7%99%D7%93%D7%95%D7%A8%D7%99%D7%9D)"
+      },
+      {
+        "text": "הודעת פרסום מתחילה במילה \"פרסומת\", ובמייל המילה מופיעה בשורת הנושא. בהודעה יש את שם המפרסם, הכתובת שלו ודרך פשוטה לבקש הסרה, ובקשת הסרה מכובדת בתוך יומיים.",
+        "basis": "law",
+        "docs": "https://he.wikisource.org/wiki/%D7%97%D7%95%D7%A7_%D7%94%D7%AA%D7%A7%D7%A9%D7%95%D7%A8%D7%AA_(%D7%91%D7%96%D7%A7_%D7%95%D7%A9%D7%99%D7%93%D7%95%D7%A8%D7%99%D7%9D)"
+      },
+      {
+        "text": "כתובת שחזרה או שסימנה הודעה כספאם לא מקבלת יותר הודעות.",
+        "basis": "inf"
+      }
+    ],
+    "conditional": [
+      {
+        "when": "שולחים בכמות גדולה ל-Gmail, ל-Yahoo או ל-Outlook, מעל הסף היומי שהם קובעים לשולחים גדולים",
+        "do": "עומדים בכל הכללים לשולחים גדולים, כולל הסרה בלחיצה אחת לפי RFC 8058.",
+        "basis": "vendor",
+        "docs": "https://www.rfc-editor.org/rfc/rfc8058"
+      },
+      {
+        "when": "שולחים פרסומת ב-SMS",
+        "do": "סעיף 30א חל במפורש על פרסומת ב-SMS, כולל ההסכמה וההסרה. לפי סעיף 30א(ה)(2) ההודעה כוללת את שם המפרסם ודרך לשלוח בקשת הסרה, ואם צריך בה גם את המילה \"פרסומת\", בודקים עם עורך דין.",
+        "basis": "law",
+        "docs": "https://he.wikisource.org/wiki/%D7%97%D7%95%D7%A7_%D7%94%D7%AA%D7%A7%D7%A9%D7%95%D7%A8%D7%AA_(%D7%91%D7%96%D7%A7_%D7%95%D7%A9%D7%99%D7%93%D7%95%D7%A8%D7%99%D7%9D)"
+      },
+      {
+        "when": "שולחים הודעות ב-WhatsApp",
+        "do": "השאלה אם סעיף 30א חל על הודעות WhatsApp פתוחה, ולכן בודקים עם עורך דין לפני ששולחים בו פרסום. את כללי ההסכמה והתבניות של Meta בודקים בתיעוד שלה.",
+        "basis": "law",
+        "docs": "https://he.wikisource.org/wiki/%D7%97%D7%95%D7%A7_%D7%94%D7%AA%D7%A7%D7%A9%D7%95%D7%A8%D7%AA_(%D7%91%D7%96%D7%A7_%D7%95%D7%A9%D7%99%D7%93%D7%95%D7%A8%D7%99%D7%9D)"
+      },
+      {
+        "when": "מפעילים שירות דיוור עבור אחרים",
+        "do": "חלים סעיפים 17ד עד 17ו לחוק הגנת הפרטיות, על רישום, תיעוד המקור ומחיקה לפי דרישה.",
+        "basis": "law",
+        "docs": "https://he.wikisource.org/wiki/%D7%97%D7%95%D7%A7_%D7%94%D7%92%D7%A0%D7%AA_%D7%94%D7%A4%D7%A8%D7%98%D7%99%D7%95%D7%AA"
+      }
+    ],
+    "proof": {
+      "text": "הפלט של dig TXT לדומיין, לרשומת ה-DKIM ול-_dmarc, הכותרות של הודעת בדיקה שהתקבלה ומראות spf=pass dkim=pass dmarc=pass, תבנית דיוור שמראה את המילה פרסומת ואת קישור ההסרה והמבנה של טבלת ההסכמות עם שורת בדיקה אחת.",
+      "evidence": "command",
+      "file": "docs/evidence/<change-index>/email-messaging.txt"
+    },
+    "docs": [
+      "https://support.google.com/a/answer/81126",
+      "https://senders.yahooinc.com/best-practices/",
+      "https://techcommunity.microsoft.com/blog/microsoft-defender-for-office-365-blog/strengthening-email-ecosystem-outlook%E2%80%99s-new-requirements-for-high%E2%80%90volume-senders/4399730",
+      "https://www.rfc-editor.org/rfc/rfc8058",
+      "https://supabase.com/docs/guides/auth/auth-smtp",
+      "https://he.wikisource.org/wiki/%D7%97%D7%95%D7%A7_%D7%94%D7%AA%D7%A7%D7%A9%D7%95%D7%A8%D7%AA_(%D7%91%D7%96%D7%A7_%D7%95%D7%A9%D7%99%D7%93%D7%95%D7%A8%D7%99%D7%9D)",
+      "https://he.wikisource.org/wiki/%D7%97%D7%95%D7%A7_%D7%94%D7%92%D7%A0%D7%AA_%D7%94%D7%A4%D7%A8%D7%98%D7%99%D7%95%D7%AA"
+    ]
+  },
+  {
+    "id": "payments",
+    "name": "תשלומים וסליקה",
+    "intent": "כסף עובר רק דרך עמוד התשלום המאובטח של הספק, כל הזמנה מסופקת פעם אחת בדיוק אחרי אישור בצד השרת, ביטולים והחזרים עומדים בחוק הגנת הצרכן ולכל חיוב יוצא מסמך המס הנכון.",
+    "opensOn": [
+      "plan"
+    ],
+    "tracks": [
+      "static",
+      "supabase-app",
+      "n8n-engine"
+    ],
+    "modifier": "payments",
+    "must": [
+      {
+        "text": "פרטי כרטיס לא עוברים בשרתים שלכם, ב-n8n או ביומנים. משתמשים בעמוד התשלום של Cardcom, ועדיף בהפניה אליו.",
+        "basis": "std",
+        "docs": "https://blog.pcisecuritystandards.org/important-updates-announced-for-merchants-validating-to-self-assessment-questionnaire-a"
+      },
+      {
+        "text": "מספקים הזמנה רק אחרי שהשרת בדק את התוצאה מול GetLpResult, לפי מזהה ההזמנה שלכם שעובר ב-ReturnValue. האספקה בנויה כך ש-webhook או הפניה שמגיעים שוב לא יוצרים אספקה נוספת.",
+        "basis": "vendor",
+        "docs": "https://secure.cardcom.solutions/Api/v11/Docs"
+      },
+      {
+        "text": "בטבלת ההזמנות יש מצבים מפורשים: נוצרה, שולמה, סופקה, הוחזרה ובוטלה. כל מעבר בין מצבים נרשם ביומן הפעולות.",
+        "basis": "inf"
+      },
+      {
+        "text": "בפיתוח עובדים מול מסוף בדיקות, ופרטי המסוף האמיתי נמצאים רק בסודות של הייצור.",
+        "basis": "inf"
+      },
+      {
+        "text": "במכירה לצרכנים מציגים את הגילוי שהחוק דורש, נותנים מסמך בכתב על העסקה, מפרסמים מדיניות ביטול לפי סעיפים 14ג ו-14ה לחוק הגנת הצרכן ושמים בעמוד הבית קישור בולט לביטול עסקה, לפי סעיף 14ט(ב).",
+        "basis": "law",
+        "docs": "https://he.wikisource.org/wiki/%D7%97%D7%95%D7%A7_%D7%94%D7%92%D7%A0%D7%AA_%D7%94%D7%A6%D7%A8%D7%9B%D7%9F"
+      },
+      {
+        "text": "לכל חיוב יוצא מסמך מס, דרך המסמכים של Cardcom או דרך הנהלת החשבונות. את כללי הנהלת החשבונות עצמם בודקים עם רואה החשבון.",
+        "basis": "inf"
+      }
+    ],
+    "conditional": [
+      {
+        "when": "עמוד התשלום מוטמע באתר במסגרת, במקום הפניה",
+        "do": "עומדים בתנאי של SAQ A על סקריפטים, עם רשימת סקריפטים ו-CSP בעמוד התשלום, או עם אישור בכתב מ-Cardcom.",
+        "basis": "std",
+        "docs": "https://blog.pcisecuritystandards.org/faq-clarifies-new-saq-a-eligibility-criteria-for-e-commerce-merchants"
+      },
+      {
+        "when": "יש מנוי או כרטיס שמור",
+        "do": "מציגים את הגילוי של עסקה מתמשכת, מסיימים אותה בתוך שלושה ימי עסקים מהודעת ביטול ושומרים רק את הטוקן של הספק.",
+        "basis": "law",
+        "docs": "https://he.wikisource.org/wiki/%D7%97%D7%95%D7%A7_%D7%94%D7%92%D7%A0%D7%AA_%D7%94%D7%A6%D7%A8%D7%9B%D7%9F"
+      },
+      {
+        "when": "מפיקים לעסק חשבונית מעל הסף של מספר ההקצאה",
+        "do": "מבקשים מספר הקצאה. הסף, 5,000 שקל לפני מע״מ מיוני 2026, לא אומת מול המקור הרשמי, ולכן בודקים אותו בעמוד של רשות המסים לפני שמסתמכים עליו.",
+        "basis": "law",
+        "docs": "https://www.gov.il/he/service/request-assignment-number-for-tax-invoice"
+      },
+      {
+        "when": "המכירה כוללת שיחה, גם אלקטרונית, עם צרכן שהוא אדם עם מוגבלות, בן 65 ומעלה או עולה חדש",
+        "do": "זכות הביטול שלו נמשכת ארבעה חודשים, לפי סעיף 14ג1.",
+        "basis": "law",
+        "docs": "https://he.wikisource.org/wiki/%D7%97%D7%95%D7%A7_%D7%94%D7%92%D7%A0%D7%AA_%D7%94%D7%A6%D7%A8%D7%9B%D7%9F"
+      },
+      {
+        "when": "מוכרים מוצר דיגיטלי או קורס",
+        "do": "השאלה אם החריג של \"מידע\" בחוק מבטל את זכות הביטול פתוחה, ולכן בודקים עם עורך דין לפני שכותבים את מדיניות הביטול.",
+        "basis": "law",
+        "docs": "https://he.wikisource.org/wiki/%D7%97%D7%95%D7%A7_%D7%94%D7%92%D7%A0%D7%AA_%D7%94%D7%A6%D7%A8%D7%9B%D7%9F"
+      },
+      {
+        "when": "לפני שמסתמכים על Cardcom בייצור",
+        "do": "שואלים את Cardcom ורושמים את התשובות על ארבע נקודות שלא אומתו: האישור שלהם לעמידה ב-PCI DSS, אם ה-webhooks חתומים או מגיעים מכתובות IP קבועות, הפרטים של מסוף הבדיקות ושאר הדרישות של SAQ A, אחת אחת.",
+        "basis": "vendor",
+        "docs": "https://secure.cardcom.solutions/Api/v11/Docs"
+      }
+    ],
+    "proof": {
+      "text": "פלט שמור של ריצה במסוף הבדיקות, עם תשלום, webhook, בדיקה מול GetLpResult ושורת אספקה אחת, ואחריה webhook שנשלח שוב ולא יצר שורה שנייה. מצרפים את השאלון העצמי של SAQ A ואת האישור של Cardcom, צילומים של הגילוי ושל קישור הביטול וקבלה לדוגמה.",
+      "evidence": "command",
+      "file": "docs/evidence/<change-index>/payments.txt"
+    },
+    "docs": [
+      "https://secure.cardcom.solutions/Api/v11/Docs",
+      "https://secure.cardcom.solutions/swagger/v11/swagger.json",
+      "https://blog.pcisecuritystandards.org/important-updates-announced-for-merchants-validating-to-self-assessment-questionnaire-a",
+      "https://blog.pcisecuritystandards.org/faq-clarifies-new-saq-a-eligibility-criteria-for-e-commerce-merchants",
+      "https://he.wikisource.org/wiki/%D7%97%D7%95%D7%A7_%D7%94%D7%92%D7%A0%D7%AA_%D7%94%D7%A6%D7%A8%D7%9B%D7%9F",
+      "https://he.wikisource.org/wiki/%D7%AA%D7%A7%D7%A0%D7%95%D7%AA_%D7%94%D7%92%D7%A0%D7%AA_%D7%94%D7%A6%D7%A8%D7%9B%D7%9F_(%D7%91%D7%99%D7%98%D7%95%D7%9C_%D7%A2%D7%A1%D7%A7%D7%94)",
+      "https://www.gov.il/he/service/request-assignment-number-for-tax-invoice",
+      "https://aws.amazon.com/builders-library/making-retries-safe-with-idempotent-APIs/"
+    ]
+  },
+  {
+    "id": "privacy",
+    "name": "הגנת הפרטיות",
+    "intent": "המערכת מעבדת מידע אישי רק למטרות שהוצהרו, מודיעה בזמן האיסוף את מה שהחוק דורש, מאבטחת אותו ברמה הנכונה, מעבירה אותו לספקים ולחו״ל רק לפי ההסכמים הנדרשים ומאפשרת לאנשים לממש את הזכויות שלהם.",
+    "opensOn": [
+      "table",
+      "field",
+      "screen",
+      "service"
+    ],
+    "tracks": [
+      "static",
+      "supabase-app",
+      "n8n-engine"
+    ],
+    "must": [
+      {
+        "text": "בקובץ spec/privacy.md רשומים לכל שדה אישי המטרה, המקור, אם מסירתו רשות, רמת הרגישות, איפה הוא נשמר, אצל איזה ספק ובאיזה אזור, מי ניגש אליו ותקופת השמירה.",
+        "basis": "law",
+        "docs": "https://he.wikisource.org/wiki/%D7%97%D7%95%D7%A7_%D7%94%D7%92%D7%A0%D7%AA_%D7%94%D7%A4%D7%A8%D7%98%D7%99%D7%95%D7%AA"
+      },
+      {
+        "text": "קובעים את רמת האבטחה של המאגר ורושמים את הנימוק, ומיישמים את התקנות של אותה רמה. ברירת המחדל של הכלי היא הבקרות של הרמה הבינונית לכל מערכת עם מידע אישי או תשלומים, ואם נראה שהרמה הבסיסית מספיקה, בודקים עם עורך דין.",
+        "basis": "law",
+        "docs": "https://he.wikisource.org/wiki/%D7%AA%D7%A7%D7%A0%D7%95%D7%AA_%D7%94%D7%92%D7%A0%D7%AA_%D7%94%D7%A4%D7%A8%D7%98%D7%99%D7%95%D7%AA_(%D7%90%D7%91%D7%98%D7%97%D7%AA_%D7%9E%D7%99%D7%93%D7%A2)"
+      },
+      {
+        "text": "כותבים את מסמך הגדרות המאגר של תקנה 2, ומהרמה הבסיסית ומעלה גם את נוהל האבטחה של תקנה 4.",
+        "basis": "law",
+        "docs": "https://he.wikisource.org/wiki/%D7%AA%D7%A7%D7%A0%D7%95%D7%AA_%D7%94%D7%92%D7%A0%D7%AA_%D7%94%D7%A4%D7%A8%D7%98%D7%99%D7%95%D7%AA_(%D7%90%D7%91%D7%98%D7%97%D7%AA_%D7%9E%D7%99%D7%93%D7%A2)"
+      },
+      {
+        "text": "בכל נקודת איסוף מופיעה ההודעה של סעיף 11. היא אומרת מה המטרה, אם חובה למסור את המידע ומה קורה כשלא מוסרים, מי אוסף אותו ואיך פונים אליו ולמי הוא יועבר ולמה. היא גם מציינת את הזכות לעיין במידע ולתקן אותו.",
+        "basis": "law",
+        "docs": "https://he.wikisource.org/wiki/%D7%97%D7%95%D7%A7_%D7%94%D7%92%D7%A0%D7%AA_%D7%94%D7%A4%D7%A8%D7%98%D7%99%D7%95%D7%AA"
+      },
+      {
+        "text": "יש רשימה של הספקים שמעבדים את המידע, ולכל ספק חוזה או DPA שמכסה את הנושאים של תקנה 15(א)(2).",
+        "basis": "law",
+        "docs": "https://he.wikisource.org/wiki/%D7%AA%D7%A7%D7%A0%D7%95%D7%AA_%D7%94%D7%92%D7%A0%D7%AA_%D7%94%D7%A4%D7%A8%D7%98%D7%99%D7%95%D7%AA_(%D7%90%D7%91%D7%98%D7%97%D7%AA_%D7%9E%D7%99%D7%93%D7%A2)"
+      },
+      {
+        "text": "רושמים החלטה לגבי רישום המאגר או הודעה לרשות לפי סעיף 8א, לגבי ממונה אבטחה לפי סעיף 17ב ולגבי ממונה על הגנת הפרטיות לפי סעיף 17ב1.",
+        "basis": "law",
+        "docs": "https://he.wikisource.org/wiki/%D7%97%D7%95%D7%A7_%D7%94%D7%92%D7%A0%D7%AA_%D7%94%D7%A4%D7%A8%D7%98%D7%99%D7%95%D7%AA"
+      },
+      {
+        "text": "יש נוהל לבקשות עיון ותיקון, כמו בממד שמירה ומחיקה.",
+        "basis": "law",
+        "docs": "https://he.wikisource.org/wiki/%D7%97%D7%95%D7%A7_%D7%94%D7%92%D7%A0%D7%AA_%D7%94%D7%A4%D7%A8%D7%98%D7%99%D7%95%D7%AA"
+      },
+      {
+        "text": "יש נוהל לאירוע אבטחה חמור, שכולל דיווח מיידי לרשות להגנת הפרטיות.",
+        "basis": "law",
+        "docs": "https://he.wikisource.org/wiki/%D7%AA%D7%A7%D7%A0%D7%95%D7%AA_%D7%94%D7%92%D7%A0%D7%AA_%D7%94%D7%A4%D7%A8%D7%98%D7%99%D7%95%D7%AA_(%D7%90%D7%91%D7%98%D7%97%D7%AA_%D7%9E%D7%99%D7%93%D7%A2)"
+      }
+    ],
+    "conditional": [
+      {
+        "when": "המידע נשמר אצל ספק בחו״ל, כמו Supabase או n8n בענן בפרנקפורט או ספק בארה״ב",
+        "do": "רושמים לכל ספק את הבסיס להעברה לפי תקנות ההעברה לחו״ל ואת ההתחייבות שלו בכתב. אם האזור של הספק וה-DPA הרגיל שלו מספיקים, בודקים עם עורך דין.",
+        "basis": "law",
+        "docs": "https://he.wikisource.org/wiki/%D7%AA%D7%A7%D7%A0%D7%95%D7%AA_%D7%94%D7%92%D7%A0%D7%AA_%D7%94%D7%A4%D7%A8%D7%98%D7%99%D7%95%D7%AA_(%D7%94%D7%A2%D7%91%D7%A8%D7%AA_%D7%9E%D7%99%D7%93%D7%A2_%D7%90%D7%9C_%D7%9E%D7%90%D7%92%D7%A8%D7%99_%D7%9E%D7%99%D7%93%D7%A2_%D7%A9%D7%9E%D7%97%D7%95%D7%A5_%D7%9C%D7%92%D7%91%D7%95%D7%9C%D7%95%D7%AA_%D7%94%D7%9E%D7%93%D7%99%D7%A0%D7%94)"
+      },
+      {
+        "when": "המערכת ברמת אבטחה בינונית או גבוהה, ולפי ברירת המחדל של הכלי זה המצב בכל מערכת עם מידע אישי או תשלומים",
+        "do": "מוסיפים רישום גישה לפי תקנה 10 וביקורת תקופתית לפי תקנה 16. אנשי הצוות עוברים הדרכה כל שנתיים לפי תקנה 7(ג) ומזדהים באמצעי פיזי לפי תקנות 9(ב) ו-14(ג), ורשומות האבטחה מגובות לפי תקנות 17 ו-18.",
+        "basis": "law",
+        "docs": "https://he.wikisource.org/wiki/%D7%AA%D7%A7%D7%A0%D7%95%D7%AA_%D7%94%D7%92%D7%A0%D7%AA_%D7%94%D7%A4%D7%A8%D7%98%D7%99%D7%95%D7%AA_(%D7%90%D7%91%D7%98%D7%97%D7%AA_%D7%9E%D7%99%D7%93%D7%A2)"
+      },
+      {
+        "when": "המערכת ברמת האבטחה הגבוהה",
+        "do": "עורכים סקר סיכונים ומבחן חדירה לפחות כל 18 חודשים, לפי תקנה 5.",
+        "basis": "law",
+        "docs": "https://he.wikisource.org/wiki/%D7%AA%D7%A7%D7%A0%D7%95%D7%AA_%D7%94%D7%92%D7%A0%D7%AA_%D7%94%D7%A4%D7%A8%D7%98%D7%99%D7%95%D7%AA_(%D7%90%D7%91%D7%98%D7%97%D7%AA_%D7%9E%D7%99%D7%93%D7%A2)"
+      },
+      {
+        "when": "יש מידע רגיש במיוחד, כמו מידע רפואי, מידע פיננסי או נתונים ביומטריים",
+        "do": "אוספים את המינימום, בודקים שוב אם צריך ממונה על הגנת הפרטיות ומעדיפים הגנה ברמת השדה.",
+        "basis": "law",
+        "docs": "https://he.wikisource.org/wiki/%D7%97%D7%95%D7%A7_%D7%94%D7%92%D7%A0%D7%AA_%D7%94%D7%A4%D7%A8%D7%98%D7%99%D7%95%D7%AA"
+      }
+    ],
+    "proof": {
+      "text": "הקובץ spec/privacy.md עם המלאי, ההחלטה על רמת האבטחה וההחלטות על הממונים, התיקייה docs/vendors עם ה-DPA של כל ספק, הודעת האיסוף כמו שהיא מופיעה במסך, רשומה של תרגיל אחד של בקשת עיון והצעד בנוהל האירועים שמדווח לרשות.",
+      "evidence": "file",
+      "file": "docs/evidence/<change-index>/privacy.txt"
+    },
+    "docs": [
+      "https://he.wikisource.org/wiki/%D7%97%D7%95%D7%A7_%D7%94%D7%92%D7%A0%D7%AA_%D7%94%D7%A4%D7%A8%D7%98%D7%99%D7%95%D7%AA",
+      "https://he.wikisource.org/wiki/%D7%AA%D7%A7%D7%A0%D7%95%D7%AA_%D7%94%D7%92%D7%A0%D7%AA_%D7%94%D7%A4%D7%A8%D7%98%D7%99%D7%95%D7%AA_(%D7%90%D7%91%D7%98%D7%97%D7%AA_%D7%9E%D7%99%D7%93%D7%A2)",
+      "https://www.gov.il/BlobFolder/legalinfo/data_security_regulation/en/5777%E2%80%932017.pdf",
+      "https://he.wikisource.org/wiki/%D7%AA%D7%A7%D7%A0%D7%95%D7%AA_%D7%94%D7%92%D7%A0%D7%AA_%D7%94%D7%A4%D7%A8%D7%98%D7%99%D7%95%D7%AA_(%D7%94%D7%A2%D7%91%D7%A8%D7%AA_%D7%9E%D7%99%D7%93%D7%A2_%D7%90%D7%9C_%D7%9E%D7%90%D7%92%D7%A8%D7%99_%D7%9E%D7%99%D7%93%D7%A2_%D7%A9%D7%9E%D7%97%D7%95%D7%A5_%D7%9C%D7%92%D7%91%D7%95%D7%9C%D7%95%D7%AA_%D7%94%D7%9E%D7%93%D7%99%D7%A0%D7%94)",
+      "https://supabase.com/docs/guides/platform/regions",
+      "https://n8n.io/pricing/"
+    ]
+  },
+  {
+    "id": "legal-documents",
+    "name": "מסמכים משפטיים",
+    "intent": "הטקסטים שמשתמשים קוראים ומסכימים להם, כמו תנאי שימוש, הודעת פרטיות, הצהרת נגישות, תנאי רכישה וביטול והסכמה לדיוור, קיימים, מתאימים למה שהמערכת באמת עושה ונושאים תאריך גרסה, וההסכמה להם נרשמת.",
+    "opensOn": [
+      "plan",
+      "release"
+    ],
+    "tracks": [
+      "static",
+      "supabase-app",
+      "n8n-engine"
+    ],
+    "must": [
+      {
+        "text": "יש הודעת פרטיות שמתאימה ל-spec/privacy.md, הצהרת נגישות ותנאי שימוש. לכל אחד מהם יש תאריך גרסה, ויש אליהם קישור מכל עמוד.",
+        "basis": "law",
+        "docs": "https://he.wikisource.org/wiki/%D7%97%D7%95%D7%A7_%D7%94%D7%92%D7%A0%D7%AA_%D7%94%D7%A4%D7%A8%D7%98%D7%99%D7%95%D7%AA"
+      },
+      {
+        "text": "הסכמה לדיוור נשמרת עם הגרסה המדויקת של הנוסח ועם הזמן.",
+        "basis": "law",
+        "docs": "https://he.wikisource.org/wiki/%D7%97%D7%95%D7%A7_%D7%94%D7%AA%D7%A7%D7%A9%D7%95%D7%A8%D7%AA_(%D7%91%D7%96%D7%A7_%D7%95%D7%A9%D7%99%D7%93%D7%95%D7%A8%D7%99%D7%9D)"
+      },
+      {
+        "text": "בכל שינוי שנוגע בממד הגנת הפרטיות או בממד תשלומים וסליקה עוברים שוב על הטקסטים.",
+        "basis": "inf"
+      }
+    ],
+    "conditional": [
+      {
+        "when": "מוכרים לצרכנים",
+        "do": "מפרסמים את הגילוי, את מדיניות הביטול ואת קישור הביטול.",
+        "basis": "law",
+        "docs": "https://he.wikisource.org/wiki/%D7%97%D7%95%D7%A7_%D7%94%D7%92%D7%A0%D7%AA_%D7%94%D7%A6%D7%A8%D7%9B%D7%9F"
+      },
+      {
+        "when": "יש מנויים",
+        "do": "התנאים כוללים את הגילוי של עסקה מתמשכת.",
+        "basis": "law",
+        "docs": "https://he.wikisource.org/wiki/%D7%97%D7%95%D7%A7_%D7%94%D7%92%D7%A0%D7%AA_%D7%94%D7%A6%D7%A8%D7%9B%D7%9F"
+      },
+      {
+        "when": "משתמשים בתוכן של צד שלישי לפי רישיון",
+        "do": "שומרים קובץ רישיונות.",
+        "basis": "inf"
+      }
+    ],
+    "proof": {
+      "text": "כל כתובת משפטית מחזירה 200 ומציגה תאריך גרסה. מצרפים רשימה שמשווה את הודעת הפרטיות ל-spec/privacy.md ושורות הסכמה שנוצרו בהרשמת בדיקה.",
+      "evidence": "command",
+      "file": "docs/evidence/<change-index>/legal-documents.txt"
+    },
+    "docs": [
+      "https://he.wikisource.org/wiki/%D7%97%D7%95%D7%A7_%D7%94%D7%92%D7%A0%D7%AA_%D7%94%D7%A4%D7%A8%D7%98%D7%99%D7%95%D7%AA",
+      "https://he.wikisource.org/wiki/%D7%AA%D7%A7%D7%A0%D7%95%D7%AA_%D7%A9%D7%95%D7%95%D7%99%D7%95%D7%9F_%D7%96%D7%9B%D7%95%D7%99%D7%95%D7%AA_%D7%9C%D7%90%D7%A0%D7%A9%D7%99%D7%9D_%D7%A2%D7%9D_%D7%9E%D7%95%D7%92%D7%91%D7%9C%D7%95%D7%AA_(%D7%94%D7%AA%D7%90%D7%9E%D7%95%D7%AA_%D7%A0%D7%92%D7%99%D7%A9%D7%95%D7%AA_%D7%9C%D7%A9%D7%99%D7%A8%D7%95%D7%AA)",
+      "https://he.wikisource.org/wiki/%D7%97%D7%95%D7%A7_%D7%94%D7%92%D7%A0%D7%AA_%D7%94%D7%A6%D7%A8%D7%9B%D7%9F",
+      "https://he.wikisource.org/wiki/%D7%97%D7%95%D7%A7_%D7%94%D7%AA%D7%A7%D7%A9%D7%95%D7%A8%D7%AA_(%D7%91%D7%96%D7%A7_%D7%95%D7%A9%D7%99%D7%93%D7%95%D7%A8%D7%99%D7%9D)"
+    ]
+  },
+  {
+    "id": "environments",
+    "name": "סביבות פיתוח וייצור",
+    "intent": "סביבות הפיתוח, התצוגה המקדימה והייצור נפרדות בנתונים, במפתחות, בכתובות וב-workflows ומוגדרות באותה דרך, ושינוי עובר מאחת לבאה בלי לגעת בטעות בנתוני הייצור.",
+    "opensOn": [
+      "secret",
+      "release"
+    ],
+    "tracks": [
+      "static",
+      "supabase-app",
+      "n8n-engine"
+    ],
+    "must": [
+      {
+        "text": "נתוני הייצור נמצאים בפרויקט Supabase משלהם, או בענף הייצור, בנפרד מהפיתוח ומהתצוגה המקדימה.",
+        "basis": "inf",
+        "docs": "https://supabase.com/docs/guides/deployment/branching"
+      },
+      {
+        "text": "בסביבות הפיתוח והתצוגה המקדימה אין מידע אישי אמיתי, אלא אם הוא עבר התממה.",
+        "basis": "inf"
+      },
+      {
+        "text": "בקובץ docs/environments.md רשום לכל משתנה סביבה מאיפה מגיע הערך שלו בכל סביבה, בלי הערכים עצמם.",
+        "basis": "inf"
+      },
+      {
+        "text": "תצוגות מקדימות שמגיעות לנתונים אמיתיים מוגנות.",
+        "basis": "vendor",
+        "docs": "https://vercel.com/docs/deployment-protection"
+      }
+    ],
+    "conditional": [
+      {
+        "when": "המערכת על n8n בענן, בתוכנית Starter או Pro שאין בהן סביבות Git",
+        "do": "מפרידים workflows של בדיקה בשם מוסכם, ו-webhooks של ייצור קיימים רק ב-workflows שפורסמו. הייצוא נשמר ב-repo.",
+        "basis": "vendor",
+        "docs": "https://docs.n8n.io/source-control-environments/"
+      },
+      {
+        "when": "הפרויקט על Supabase בתוכנית החינמית",
+        "do": "פרויקט חינמי שני משמש כסביבת פיתוח, והפער נרשם עם bp ruling add. בתוכנית החינמית מספר הפרויקטים הפעילים מוגבל, ופרויקט שלא היה בו שימוש נעצר.",
+        "basis": "vendor",
+        "docs": "https://supabase.com/pricing"
+      }
+    ],
+    "proof": {
+      "text": "הקובץ docs/environments.md, הפלט של vercel env list לתצוגה המקדימה ולייצור, המזהים של פרויקטי Supabase בכל סביבה ובדיקה שכתובת המסד בבנייה של התצוגה המקדימה אינה של הייצור.",
+      "evidence": "file",
+      "file": "docs/evidence/<change-index>/environments.txt"
+    },
+    "paid": [
+      {
+        "vendor": "supabase",
+        "tier": "pro",
+        "capability": "ענף מסד נתונים לכל PR, עם בדיקה של Supabase לפני המיזוג",
+        "docs": "https://supabase.com/docs/guides/deployment/branching"
+      }
+    ],
+    "docs": [
+      "https://12factor.net/",
+      "https://vercel.com/docs/environment-variables/sensitive-environment-variables",
+      "https://vercel.com/docs/cli/env",
+      "https://vercel.com/docs/deployments/environments",
+      "https://supabase.com/docs/guides/deployment/branching",
+      "https://supabase.com/pricing",
+      "https://docs.n8n.io/source-control-environments/",
+      "https://docs.github.com/en/actions/how-tos/deploy/configure-and-manage-deployments/manage-environments"
+    ]
+  },
+  {
+    "id": "release-rollback",
+    "name": "פריסה וחזרה לאחור",
+    "intent": "כל שינוי מגיע לייצור בדרך קבועה שעוברת שער בדיקות ונבדק אחרי השחרור, ויש לו תוכנית כתובה לחזור לאחור בקוד, בנתונים, ב-workflows ובהגדרות.",
+    "opensOn": [
+      "release",
+      "migration"
+    ],
+    "tracks": [
+      "static",
+      "supabase-app",
+      "n8n-engine"
+    ],
+    "must": [
+      {
+        "text": "לפני כל מיזוג לענף הייצור רץ שער ב-CI עם הבדיקות, בדיקת הטיפוסים, ה-lint ו-npm audit.",
+        "basis": "std",
+        "docs": "https://nvlpubs.nist.gov/nistpubs/SpecialPublications/NIST.SP.800-218.pdf"
+      },
+      {
+        "text": "לכל שחרור יש רשומה שמפרטת את הממדים שנפתחו ואת ההוכחות שלהם, כמו רשומת השינוי של הכלי.",
+        "basis": "inf"
+      },
+      {
+        "text": "יש תוכנית חזרה לאחור לכל שכבה. את האפליקציה מחזירים עם rollback או promote של Vercel, את המסד עם תיקון קדימה ונקודת השחזור, את ה-workflows עם שחזור גרסה ופרסום מחדש ואת ההגדרות לפי הערכים הקודמים שנרשמו.",
+        "basis": "vendor",
+        "docs": "https://vercel.com/docs/instant-rollback"
+      },
+      {
+        "text": "אחרי השחרור עושים בדיקת עשן בייצור, כמשתמש אמיתי בכל תפקיד.",
+        "basis": "inf"
+      },
+      {
+        "text": "המיגרציות מתואמות עם הקוד, ההרחבה לפני הפריסה והצמצום אחריה, כמו בממד מבנה הנתונים.",
+        "basis": "inf"
+      }
+    ],
+    "conditional": [
+      {
+        "when": "הפרויקט על Vercel Hobby",
+        "do": "אפשר לחזור רק לפריסה הקודמת, ולכן שומרים על שחרורים קטנים או עוברים ל-Pro.",
+        "basis": "vendor",
+        "docs": "https://vercel.com/docs/instant-rollback"
+      },
+      {
+        "when": "ה-repo פרטי ובתוכנית החינמית של GitHub",
+        "do": "אין אכיפה של הגנה על הענף, ולכן ה-hook המקומי של git מריץ את הבדיקה לפני כל commit והפער נרשם עם bp ruling add, או שעוברים ל-Pro או ל-Team.",
+        "basis": "vendor",
+        "docs": "https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches/about-protected-branches"
+      },
+      {
+        "when": "השינוי מסוכן",
+        "do": "משחררים אותו בהדרגה, או מאחורי feature flag.",
+        "basis": "std",
+        "docs": "https://sre.google/workbook/canarying-releases/"
+      },
+      {
+        "when": "קובעים מועד לשחרור",
+        "do": "נמנעים מימי שישי, מחגים ומערב של השקה.",
+        "basis": "std",
+        "docs": "https://sre.google/sre-book/launch-checklist/"
+      }
+    ],
+    "proof": {
+      "text": "הריצה הירוקה ב-CI על ה-commit של השחרור, הקובץ docs/releases/<date>.md עם פקודות החזרה לאחור, הפלט של בדיקת העשן והמזהים של הפריסות ב-Vercel לפני השחרור ואחריו.",
+      "evidence": "file",
+      "file": "docs/evidence/<change-index>/release-rollback.txt"
+    },
+    "paid": [
+      {
+        "vendor": "vercel",
+        "tier": "pro",
+        "capability": "חזרה לכל פריסה קודמת שהייתה בייצור",
+        "docs": "https://vercel.com/docs/instant-rollback"
+      },
+      {
+        "vendor": "github",
+        "tier": "pro",
+        "capability": "הגנה על הענף ב-repo פרטי של חשבון אישי",
+        "docs": "https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches/about-protected-branches"
+      },
+      {
+        "vendor": "github",
+        "tier": "team",
+        "capability": "הגנה על הענף ב-repo פרטי של ארגון",
+        "docs": "https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-rulesets/about-rulesets"
+      }
+    ],
+    "docs": [
+      "https://12factor.net/",
+      "https://sre.google/sre-book/evolving-sre-engagement-model/",
+      "https://sre.google/sre-book/launch-checklist/",
+      "https://sre.google/workbook/canarying-releases/",
+      "https://vercel.com/docs/instant-rollback",
+      "https://docs.n8n.io/workflows/history/",
+      "https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches/about-protected-branches",
+      "https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-rulesets/about-rulesets",
+      "https://docs.aws.amazon.com/wellarchitected/latest/framework/welcome.html"
+    ]
+  },
+  {
+    "id": "observability",
+    "name": "ניטור והתראות",
+    "intent": "הבעלים שומעים על תקלה לפני שהמשתמשים מדווחים עליה, דרך יומנים, מדדים, בדיקות זמינות ומעקב שגיאות, שנשמרים מספיק זמן ומתריעים לאדם מסוים.",
+    "opensOn": [
+      "release",
+      "timer"
+    ],
+    "tracks": [
+      "static",
+      "supabase-app",
+      "n8n-engine"
+    ],
+    "must": [
+      {
+        "text": "בדיקת זמינות רצה על כתובות הייצור ועל נקודות הקצה החשובות, ומתריעה לבעלים בשם.",
+        "basis": "inf"
+      },
+      {
+        "text": "יש מעקב שגיאות בדפדפן ובשרת, או התראות על שגיאות מתוך היומנים.",
+        "basis": "inf"
+      },
+      {
+        "text": "ב-n8n יש workflows של שגיאות שמתריעים, ולכל workflow מתוזמן יש בדיקה שמתריעה כשריצה לא קרתה.",
+        "basis": "vendor",
+        "docs": "https://docs.n8n.io/flow-logic/error-handling/"
+      },
+      {
+        "text": "כתוב לאן הולכת כל התראה, למי ובאיזה ערוץ. כבר נשלחה התראת בדיקה אחת.",
+        "basis": "std",
+        "docs": "https://sre.google/sre-book/monitoring-distributed-systems/"
+      },
+      {
+        "text": "היומנים נשמרים מספיק זמן כדי לחקור תקלה. כשהתוכנית שומרת פחות, מייצאים אותם או מעבירים אותם החוצה ב-log drain.",
+        "basis": "vendor",
+        "docs": "https://vercel.com/docs/logs/runtime"
+      }
+    ],
+    "conditional": [
+      {
+        "when": "המערכת גובה תשלום",
+        "do": "יש התראות על webhooks שנכשלו ועל הזמנות ששולמו ולא סופקו.",
+        "basis": "std",
+        "docs": "https://sre.google/sre-book/launch-checklist/"
+      },
+      {
+        "when": "המערכת ברמת אבטחה בינונית או גבוהה, ולפי ברירת המחדל של הכלי זה המצב בכל מערכת עם מידע אישי או תשלומים",
+        "do": "עוברים על יומני הגישה באופן קבוע, לפי תקנה 10(ג).",
+        "basis": "law",
+        "docs": "https://he.wikisource.org/wiki/%D7%AA%D7%A7%D7%A0%D7%95%D7%AA_%D7%94%D7%92%D7%A0%D7%AA_%D7%94%D7%A4%D7%A8%D7%98%D7%99%D7%95%D7%AA_(%D7%90%D7%91%D7%98%D7%97%D7%AA_%D7%9E%D7%99%D7%93%D7%A2)"
+      },
+      {
+        "when": "השירות בתשלום או קריטי",
+        "do": "קובעים יעד SLO לתהליך המרכזי שלו.",
+        "basis": "std",
+        "docs": "https://sre.google/workbook/implementing-slos/"
+      }
+    ],
+    "proof": {
+      "text": "רשומה של התראת הבדיקה, צילום או ההודעה שהתקבלה. מצרפים את ההגדרות של בדיקת הזמינות, שגיאת בדיקה שמופיעה בכלי מעקב השגיאות ומזהה ההרצה ב-n8n של כשל מכוון שהגיע ל-workflow של השגיאות.",
+      "evidence": "file",
+      "file": "docs/evidence/<change-index>/observability.txt"
+    },
+    "paid": [
+      {
+        "vendor": "vercel",
+        "tier": "pro",
+        "capability": "שמירה ארוכה יותר של יומני הריצה ו-log drains",
+        "docs": "https://vercel.com/docs/logs/runtime"
+      },
+      {
+        "vendor": "supabase",
+        "tier": "pro",
+        "capability": "שמירה ארוכה יותר של יומנים ו-log drains כתוספת",
+        "docs": "https://supabase.com/docs/guides/telemetry/logs"
+      },
+      {
+        "vendor": "n8n",
+        "tier": "pro",
+        "capability": "שמירה ארוכה יותר של הרצות וחיפוש בהן",
+        "docs": "https://n8n.io/pricing/"
+      }
+    ],
+    "docs": [
+      "https://sre.google/sre-book/monitoring-distributed-systems/",
+      "https://sre.google/workbook/implementing-slos/",
+      "https://sre.google/sre-book/launch-checklist/",
+      "https://vercel.com/docs/logs/runtime",
+      "https://vercel.com/docs/plans/hobby",
+      "https://supabase.com/docs/guides/telemetry/logs",
+      "https://supabase.com/pricing",
+      "https://n8n.io/pricing/",
+      "https://docs.n8n.io/flow-logic/error-handling/"
+    ]
+  },
+  {
+    "id": "performance",
+    "name": "ביצועים ועומס",
+    "intent": "עמודים ופעולות מהירים למשתמשים אמיתיים בטלפון, והמערכת עומדת בעומס השיא הצפוי עם מרווח, בתוך המגבלות של התוכנית שלה.",
+    "opensOn": [
+      "table",
+      "release"
+    ],
+    "tracks": [
+      "static",
+      "supabase-app",
+      "n8n-engine"
+    ],
+    "must": [
+      {
+        "text": "כל עמוד ציבורי שהשתנה נבדק ב-Lighthouse בהגדרות של טלפון ועומד בספים של Core Web Vitals, כמדידת מעבדה שמתקרבת למה שמשתמשים חווים.",
+        "basis": "std",
+        "docs": "https://web.dev/articles/vitals"
+      },
+      {
+        "text": "אין ב-advisors של Supabase אזהרת ביצועים על טבלה שהשינוי נגע בה.",
+        "basis": "vendor",
+        "docs": "https://supabase.com/docs/guides/database/database-advisors"
+      },
+      {
+        "text": "התמונות בגודל הנכון ובפורמט מודרני.",
+        "basis": "inf"
+      },
+      {
+        "text": "עומס השיא הצפוי כתוב באפיון.",
+        "basis": "std",
+        "docs": "https://sre.google/sre-book/evolving-sre-engagement-model/"
+      }
+    ],
+    "conditional": [
+      {
+        "when": "צפוי שיא, כמו קמפיין או פתיחה של קורס",
+        "do": "בודקים את המסלול הקריטי בעומס של בערך פי שניים מהשיא הצפוי, בתוך המגבלות של התוכנית.",
+        "basis": "std",
+        "docs": "https://sre.google/sre-book/launch-checklist/"
+      },
+      {
+        "when": "יש עבודה שנמשכת יותר מהמגבלה של הפלטפורמה",
+        "do": "מעבירים אותה למשימת רקע או ל-workflow.",
+        "basis": "vendor",
+        "docs": "https://vercel.com/docs/plans/hobby"
+      },
+      {
+        "when": "יש קריאות למודל בתוך הבקשה",
+        "do": "משתמשים ב-streaming ובזמן קצוב.",
+        "basis": "inf"
+      }
+    ],
+    "proof": {
+      "text": "דוח Lighthouse במצב טלפון לכל עמוד שהשתנה, הפלט של ה-advisors של Supabase בחלק של הביצועים וסיכום של בדיקת העומס כשהיא נדרשת.",
+      "evidence": "command",
+      "file": "docs/evidence/<change-index>/performance.txt"
+    },
+    "paid": [
+      {
+        "vendor": "vercel",
+        "tier": "pro",
+        "capability": "זמן ריצה ארוך יותר לפונקציות",
+        "docs": "https://vercel.com/docs/plans/hobby"
+      },
+      {
+        "vendor": "n8n",
+        "tier": "pro",
+        "capability": "יותר הרצות במקביל",
+        "docs": "https://n8n.io/pricing/"
+      }
+    ],
+    "docs": [
+      "https://web.dev/articles/vitals",
+      "https://supabase.com/docs/guides/database/database-advisors",
+      "https://vercel.com/docs/plans/hobby",
+      "https://n8n.io/pricing/",
+      "https://sre.google/sre-book/evolving-sre-engagement-model/",
+      "https://sre.google/sre-book/launch-checklist/"
+    ]
+  },
+  {
+    "id": "reliability",
+    "name": "עמידות בתקלות",
+    "intent": "כששירות שהמערכת תלויה בו איטי, נופל או שולח את אותו אירוע פעמיים, המערכת מפסיקה לחכות בזמן, מנסה שוב בצורה בטוחה, לא מכפילה פעולה, ממשיכה לעבוד חלקית וחוזרת לפעול כרגיל.",
+    "opensOn": [
+      "automation",
+      "webhook",
+      "timer",
+      "ai"
+    ],
+    "tracks": [
+      "static",
+      "supabase-app",
+      "n8n-engine"
+    ],
+    "must": [
+      {
+        "text": "לכל קריאה החוצה יש זמן קצוב, ב-Nodes של HTTP, ב-fetch ובקריאות למודל.",
+        "basis": "std",
+        "docs": "https://builder.aws.com/content/3EumjoZascWd1oZiEgL8ORlv3qE/timeouts-retries-and-backoff-with-jitter"
+      },
+      {
+        "text": "מנסים שוב רק עם המתנה שגדלה בין הניסיונות, ורק בפעולות שבטוח לחזור עליהן. כל פעולה שמשנה משהו מזוהה במפתח ייחודי, כמו מזהה האירוע או ההזמנה, שמוגן באילוץ unique.",
+        "basis": "std",
+        "docs": "https://aws.amazon.com/builders-library/making-retries-safe-with-idempotent-APIs/"
+      },
+      {
+        "text": "כל webhook נכנס מסונן מכפילויות לפי מזהה האירוע של הספק ומקבל תשובה מהר, והעבודה האיטית נעשית אחרי התשובה.",
+        "basis": "inf"
+      },
+      {
+        "text": "לכל חיבור כתוב מה קורה כשהוא נכשל. בתשלומים ובהתחברות חוסמים את הפעולה, ובתכונות לא קריטיות ממשיכים לעבוד בצורה מצומצמת.",
+        "basis": "std",
+        "docs": "https://sre.google/sre-book/launch-checklist/"
+      }
+    ],
+    "conditional": [
+      {
+        "when": "יש משימות מתוזמנות",
+        "do": "מונעים ריצות חופפות וקובעים מה קורה עם ריצה שהוחמצה.",
+        "basis": "inf"
+      },
+      {
+        "when": "יש קריאות למודל",
+        "do": "יש מודל חלופי, או הודעה מסודרת כשהמודל לא עונה.",
+        "basis": "inf"
+      },
+      {
+        "when": "השירות בתשלום או קריטי",
+        "do": "קובעים יעד זמינות, SLO.",
+        "basis": "std",
+        "docs": "https://sre.google/workbook/implementing-slos/"
+      }
+    ],
+    "proof": {
+      "text": "בדיקה ששולחת את אותו webhook פעמיים ומראה פעולה אחת לפי ספירת שורות, בדיקה עם timeout מדומה שמראה ניסיון חוזר ואחר כך את ה-workflow של השגיאות וההגדרות של ה-Nodes ב-n8n מהייצוא, שמראות ניסיונות חוזרים וזמנים קצובים.",
+      "evidence": "command",
+      "file": "docs/evidence/<change-index>/reliability.txt"
+    },
+    "docs": [
+      "https://builder.aws.com/content/3EumjoZascWd1oZiEgL8ORlv3qE/timeouts-retries-and-backoff-with-jitter",
+      "https://aws.amazon.com/builders-library/making-retries-safe-with-idempotent-APIs/",
+      "https://docs.n8n.io/workflows/components/nodes/",
+      "https://sre.google/sre-book/launch-checklist/",
+      "https://top10.owasp.org/2025/0x00_2025-Introduction",
+      "https://genai.owasp.org/2025/12/09/owasp-top-10-for-agentic-applications-the-benchmark-for-agentic-security-in-the-age-of-autonomous-ai/"
+    ]
+  },
+  {
+    "id": "cost-plan-limits",
+    "name": "עלויות ותוכניות",
+    "intent": "הפרויקט רץ על התוכניות שנותנות לו את מה שהוא צריך, לכל עלות שתלויה בשימוש יש תקציב עם התראה או תקרה, וכל פער של תוכנית חינמית רשום יחד עם הבקרה שמפצה עליו.",
+    "opensOn": [
+      "plan",
+      "service",
+      "automation",
+      "ai",
+      "release"
+    ],
+    "tracks": [
+      "static",
+      "supabase-app",
+      "n8n-engine"
+    ],
+    "must": [
+      {
+        "text": "את התוכניות בוחרים לפי מה שהפרויקט צריך. אוספים את היכולות שהממדים הפתוחים דורשים, ממפים אותן לתוכניות של הספקים ובודקים כל תוכנית בעמוד המחירים העדכני של הספק, ורושמים מתי בדקו.",
+        "basis": "inf"
+      },
+      {
+        "text": "פרויקט של לקוח או של עסק רץ על Vercel Pro, כי לפי תנאי השימוש של Vercel תוכנית Hobby מיועדת לשימוש אישי או לא מסחרי בלבד.",
+        "basis": "vendor",
+        "docs": "https://vercel.com/legal/terms"
+      },
+      {
+        "text": "בהצעת המחיר יש מודל עלויות, עם העלויות החודשיות הקבועות, השימוש בנפח הצפוי ותרחיש של פי שניים.",
+        "basis": "inf"
+      },
+      {
+        "text": "לכל ספק שמחייב לפי שימוש יש תקציב, תקרה או התראה, כמו Spend Management ב-Vercel, תקרת ההוצאה ב-Supabase, המגבלות אצל ספק המודל ומעקב אחרי מספר ההרצות ב-n8n.",
+        "basis": "vendor",
+        "docs": "https://vercel.com/docs/spend-management"
+      },
+      {
+        "text": "כל פער של תוכנית חינמית נרשם כהחלטה עם bp ruling add, יחד עם הבקרה שמפצה עליו, למשל dump מתוזמן ובקשה קבועה שמונעת עצירה ב-Supabase בתוכנית החינמית.",
+        "basis": "inf"
+      }
+    ],
+    "conditional": [
+      {
+        "when": "יש רכיבי AI",
+        "do": "יש תקרה לכל משתמש, תקרה יומית ותקציב אצל ספק המודל.",
+        "basis": "std",
+        "docs": "https://github.com/GenAI-Security-Project/GenAI-LLM-Top10"
+      },
+      {
+        "when": "הפרויקט על Supabase Pro ותקרת ההוצאה כבויה",
+        "do": "מוסיפים התראות שימוש משלכם, כי ב-Supabase אין התראות לפי סף.",
+        "basis": "vendor",
+        "docs": "https://supabase.com/docs/guides/platform/cost-control"
+      }
+    ],
+    "proof": {
+      "text": "הקובץ docs/vendors.md, ובו לכל ספק התוכנית, הסיבה, המחיר, תאריך הבדיקה וההגדרה של התקרה או התקציב. מצרפים את הפלט של vercel billing budgets וצילומים של שאר התקרות.",
+      "evidence": "file",
+      "file": "docs/evidence/<change-index>/cost-plan-limits.txt"
+    },
+    "paid": [
+      {
+        "vendor": "vercel",
+        "tier": "pro",
+        "capability": "שימוש מסחרי ו-Spend Management",
+        "docs": "https://vercel.com/legal/terms"
+      },
+      {
+        "vendor": "supabase",
+        "tier": "pro",
+        "capability": "תקרת הוצאה, גיבויים ופרויקט שלא נעצר",
+        "docs": "https://supabase.com/pricing"
+      },
+      {
+        "vendor": "n8n",
+        "tier": "starter",
+        "capability": "ה-API הציבורי ונפח הרצות שמתאים לייצור",
+        "docs": "https://n8n.io/pricing/"
+      }
+    ],
+    "docs": [
+      "https://vercel.com/legal/terms",
+      "https://vercel.com/docs/plans/hobby",
+      "https://vercel.com/docs/spend-management",
+      "https://supabase.com/pricing",
+      "https://supabase.com/docs/guides/platform/cost-control",
+      "https://n8n.io/pricing/",
+      "https://github.com/GenAI-Security-Project/GenAI-LLM-Top10"
+    ]
+  },
+  {
+    "id": "domain-dns-tls",
+    "name": "דומיין ותעודות אבטחה",
+    "intent": "דומיין הייצור שייך ללקוח ומתחדש לבד, רשומות ה-DNS מתועדות ומשתנות בזהירות, ותעודות ה-HTTPS מתחדשות בלי שאדם צריך לעשות משהו.",
+    "opensOn": [
+      "domain"
+    ],
+    "tracks": [
+      "static",
+      "supabase-app",
+      "n8n-engine"
+    ],
+    "must": [
+      {
+        "text": "הדומיין רשום בחשבון של הלקוח, עם חידוש אוטומטי ואמצעי תשלום בתוקף, ותאריך החידוש רשום.",
+        "basis": "inf"
+      },
+      {
+        "text": "מייצאים את רשומות ה-DNS לפני כל שינוי ואחריו, ומורידים את ה-TTL לפני מעבר.",
+        "basis": "inf"
+      },
+      {
+        "text": "האתר מחייב HTTPS, והתעודה מתחדשת אוטומטית דרך הפלטפורמה.",
+        "basis": "vendor",
+        "docs": "https://vercel.com/docs/domains/working-with-ssl"
+      },
+      {
+        "text": "אם יש רשומת CAA, היא מתירה את Let's Encrypt.",
+        "basis": "vendor",
+        "docs": "https://vercel.com/docs/domains/working-with-ssl"
+      },
+      {
+        "text": "מישהו עוקב אחרי התוקף של הדומיין ושל התעודה בכלי שאינו של מי שמנפיק אותם, כי Let's Encrypt כבר לא שולחת מיילים על תוקף שעומד להסתיים.",
+        "basis": "vendor",
+        "docs": "https://letsencrypt.org/2025/01/22/ending-expiration-emails/"
+      }
+    ],
+    "conditional": [
+      {
+        "when": "יש שרת משלכם, כמו n8n שמותקן אצלכם",
+        "do": "מגדירים חידוש ACME אוטומטי והתראה לפני שהתעודה פגה, כי משך החיים של תעודות הולך ומתקצר.",
+        "basis": "std",
+        "docs": "https://cabforum.org/2025/04/11/ballot-sc081v3-introduce-schedule-of-reducing-validity-and-data-reuse-periods/"
+      },
+      {
+        "when": "הדומיין שולח מיילים",
+        "do": "מגדירים רשומות SPF, DKIM ו-DMARC, כמו בממד מיילים והודעות.",
+        "basis": "vendor",
+        "docs": "https://support.google.com/a/answer/81126"
+      },
+      {
+        "when": "יש גם www וגם דומיין בלי www",
+        "do": "בוחרים כתובת קנונית אחת ומפנים אליה מהשנייה.",
+        "basis": "inf"
+      }
+    ],
+    "proof": {
+      "text": "הפלט של dig לרשומות A, CNAME, MX, TXT ו-CAA, הפלט של openssl x509 -enddate על התעודה, צילום אצל רשם הדומיין שמראה חידוש אוטומטי והמסך ב-Vercel שמראה שהגדרת הדומיין תקינה.",
+      "evidence": "command",
+      "file": "docs/evidence/<change-index>/domain-dns-tls.txt"
+    },
+    "docs": [
+      "https://vercel.com/docs/domains/working-with-ssl",
+      "https://letsencrypt.org/2025/01/22/ending-expiration-emails/",
+      "https://cabforum.org/2025/04/11/ballot-sc081v3-introduce-schedule-of-reducing-validity-and-data-reuse-periods/",
+      "https://sre.google/sre-book/launch-checklist/",
+      "https://support.google.com/a/answer/81126"
+    ]
+  },
+  {
+    "id": "vendor-lifecycle",
+    "name": "תלות בספקים",
+    "intent": "כל שירות חיצוני שהמערכת תלויה בו רשום עם הבעלים, התוכנית, האזור, התפקיד שלו במידע האישי ודרך היציאה ממנו, ומישהו עוקב אחרי הוצאה משימוש ושינויים במחיר ובמדיניות שעלולים לשבור אותו או לייקר אותו.",
+    "opensOn": [
+      "service"
+    ],
+    "tracks": [
+      "static",
+      "supabase-app",
+      "n8n-engine"
+    ],
+    "must": [
+      {
+        "text": "בקובץ docs/vendors.md רשומים לכל שירות המטרה, התוכנית, החשבון שהוא נמצא בו, האזור, התפקיד שלו במידע האישי, קישור ל-DPA, עמוד הסטטוס, מקור ההודעות על שינויים ודרך היציאה, כלומר איך מייצאים ממנו.",
+        "basis": "inf",
+        "docs": "https://he.wikisource.org/wiki/%D7%AA%D7%A7%D7%A0%D7%95%D7%AA_%D7%94%D7%92%D7%A0%D7%AA_%D7%94%D7%A4%D7%A8%D7%98%D7%99%D7%95%D7%AA_(%D7%90%D7%91%D7%98%D7%97%D7%AA_%D7%9E%D7%99%D7%93%D7%A2)"
+      },
+      {
+        "text": "מזהי המודלים, גרסאות ה-API וגרסת Node נעולים, ונרשמים להודעות של הספקים.",
+        "basis": "vendor",
+        "docs": "https://platform.claude.com/docs/en/about-claude/model-deprecations"
+      },
+      {
+        "text": "לפני שמתחילים לעבוד עם ספק בודקים את סיכוני האבטחה לפי תקנה 15(א)(1) ומוודאים שהיכולת הנדרשת קיימת בתוכנית שנבחרה.",
+        "basis": "law",
+        "docs": "https://he.wikisource.org/wiki/%D7%AA%D7%A7%D7%A0%D7%95%D7%AA_%D7%94%D7%92%D7%A0%D7%AA_%D7%94%D7%A4%D7%A8%D7%98%D7%99%D7%95%D7%AA_(%D7%90%D7%91%D7%98%D7%97%D7%AA_%D7%9E%D7%99%D7%93%D7%A2)"
+      },
+      {
+        "text": "פעם ברבעון עוברים על הוצאות משימוש ועל שינויים במחירים ובתוכניות.",
+        "basis": "inf"
+      }
+    ],
+    "conditional": [
+      {
+        "when": "יש מודל בייצור",
+        "do": "יש תוכנית מעבר, ומריצים שוב את סט הבדיקות לפני תאריך ההוצאה משימוש.",
+        "basis": "vendor",
+        "docs": "https://platform.claude.com/docs/en/about-claude/model-deprecations"
+      },
+      {
+        "when": "יכולת בתצוגה מקדימה או בבטא רצה בייצור",
+        "do": "מקבלים החלטה מפורשת על הסיכון, כי ההודעה על הוצאה משימוש של גרסאות כאלה יכולה להגיע מהר מאוד.",
+        "basis": "vendor",
+        "docs": "https://developers.openai.com/api/docs/deprecations"
+      }
+    ],
+    "proof": {
+      "text": "הקובץ docs/vendors.md מלא, עם תאריך הבדיקה האחרונה ותזכורות לבדיקות הבאות. כשיש AI מצרפים גם את התוצאות של סט הבדיקות על המודל שמחליף את הקודם.",
+      "evidence": "file",
+      "file": "docs/evidence/<change-index>/vendor-lifecycle.txt"
+    },
+    "docs": [
+      "https://platform.claude.com/docs/en/about-claude/model-deprecations",
+      "https://developers.openai.com/api/docs/deprecations",
+      "https://vercel.com/legal/terms",
+      "https://n8n.io/pricing/",
+      "https://he.wikisource.org/wiki/%D7%AA%D7%A7%D7%A0%D7%95%D7%AA_%D7%94%D7%92%D7%A0%D7%AA_%D7%94%D7%A4%D7%A8%D7%98%D7%99%D7%95%D7%AA_(%D7%90%D7%91%D7%98%D7%97%D7%AA_%D7%9E%D7%99%D7%93%D7%A2)",
+      "https://sre.google/sre-book/launch-checklist/",
+      "https://12factor.net/"
+    ]
+  },
+  {
+    "id": "ownership-operations",
+    "name": "בעלות ותפעול",
+    "intent": "לכל חשבון, רכיב ומאגר מידע יש בעלים בשם אצל הלקוח, ונוהל כתוב שנמסר לו מסביר מה עושים בתקלה ובאירוע אבטחה, כולל הדיווח שהחוק דורש.",
+    "opensOn": [
+      "service",
+      "release"
+    ],
+    "tracks": [
+      "static",
+      "supabase-app",
+      "n8n-engine"
+    ],
+    "must": [
+      {
+        "text": "החשבונות רשומים על שם הלקוח, כמו הארגון ב-Supabase, הצוות ב-Vercel, הארגון או ה-repo ב-GitHub, השרת של n8n, רשם הדומיין, ספק המייל, המסוף ב-Cardcom וספק המודל. מי שבנה את המערכת הוא חבר בהם שאפשר להסיר.",
+        "basis": "inf"
+      },
+      {
+        "text": "יש טבלת בעלים וערוץ תמיכה עם זמני תגובה כתובים.",
+        "basis": "inf"
+      },
+      {
+        "text": "יש נוהל לתקלות הנפוצות, כמו אתר שלא עולה, תשלומים שנכשלים, מיילים שלא מגיעים, workflows שנכשלים, מכסה שנגמרה, דומיין או תעודה שפגו ומודל שיצא משימוש.",
+        "basis": "std",
+        "docs": "https://sre.google/sre-book/launch-checklist/"
+      },
+      {
+        "text": "יש נוהל לאירוע אבטחה, שכולל דיווח מיידי לרשות להגנת הפרטיות על אירוע חמור והחלטה אם להודיע לאנשים שנפגעו.",
+        "basis": "law",
+        "docs": "https://he.wikisource.org/wiki/%D7%AA%D7%A7%D7%A0%D7%95%D7%AA_%D7%94%D7%92%D7%A0%D7%AA_%D7%94%D7%A4%D7%A8%D7%98%D7%99%D7%95%D7%AA_(%D7%90%D7%91%D7%98%D7%97%D7%AA_%D7%9E%D7%99%D7%93%D7%A2)"
+      },
+      {
+        "text": "חבילת המסירה כוללת את הארכיטקטורה, החשבונות, רשימת הסודות, נוהל התקלות, רשומת תרגיל השחזור, רשימת הספקים והסיכונים הפתוחים.",
+        "basis": "inf"
+      }
+    ],
+    "conditional": [
+      {
+        "when": "יש ממונה על הגנת הפרטיות",
+        "do": "פרטי הקשר שלו מפורסמים.",
+        "basis": "law",
+        "docs": "https://he.wikisource.org/wiki/%D7%97%D7%95%D7%A7_%D7%94%D7%92%D7%A0%D7%AA_%D7%94%D7%A4%D7%A8%D7%98%D7%99%D7%95%D7%AA"
+      },
+      {
+        "when": "מגיעות פניות על נגישות",
+        "do": "מישהו עוקב אחרי פרטי הקשר שבהצהרת הנגישות, והתיקון נעשה בתוך 60 יום.",
+        "basis": "law",
+        "docs": "https://he.wikisource.org/wiki/%D7%AA%D7%A7%D7%A0%D7%95%D7%AA_%D7%A9%D7%95%D7%95%D7%99%D7%95%D7%9F_%D7%96%D7%9B%D7%95%D7%99%D7%95%D7%AA_%D7%9C%D7%90%D7%A0%D7%A9%D7%99%D7%9D_%D7%A2%D7%9D_%D7%9E%D7%95%D7%92%D7%91%D7%9C%D7%95%D7%AA_(%D7%94%D7%AA%D7%90%D7%9E%D7%95%D7%AA_%D7%A0%D7%92%D7%99%D7%A9%D7%95%D7%AA_%D7%9C%D7%A9%D7%99%D7%A8%D7%95%D7%AA)"
+      },
+      {
+        "when": "ללקוח אין צוות טכני",
+        "do": "חותמים איתו על הסכם תחזוקה עם היקף ושעות.",
+        "basis": "inf"
+      }
+    ],
+    "proof": {
+      "text": "הקובץ docs/handover.md שהלקוח אישר, הקובץ docs/accounts.md שמראה את הבעלים של כל חשבון, קובץ נוהל התקלות ורשומה עם תאריך של תרגיל שולחני על אירוע.",
+      "evidence": "file",
+      "file": "docs/evidence/<change-index>/ownership-operations.txt"
+    },
+    "docs": [
+      "https://sre.google/sre-book/evolving-sre-engagement-model/",
+      "https://sre.google/sre-book/launch-checklist/",
+      "https://www.microsoft.com/en-us/securityengineering/sdl/practices",
+      "https://nvlpubs.nist.gov/nistpubs/SpecialPublications/NIST.SP.800-218.pdf",
+      "https://he.wikisource.org/wiki/%D7%AA%D7%A7%D7%A0%D7%95%D7%AA_%D7%94%D7%92%D7%A0%D7%AA_%D7%94%D7%A4%D7%A8%D7%98%D7%99%D7%95%D7%AA_(%D7%90%D7%91%D7%98%D7%97%D7%AA_%D7%9E%D7%99%D7%93%D7%A2)",
+      "https://he.wikisource.org/wiki/%D7%97%D7%95%D7%A7_%D7%94%D7%92%D7%A0%D7%AA_%D7%94%D7%A4%D7%A8%D7%98%D7%99%D7%95%D7%AA",
+      "https://he.wikisource.org/wiki/%D7%AA%D7%A7%D7%A0%D7%95%D7%AA_%D7%A9%D7%95%D7%95%D7%99%D7%95%D7%9F_%D7%96%D7%9B%D7%95%D7%99%D7%95%D7%AA_%D7%9C%D7%90%D7%A0%D7%A9%D7%99%D7%9D_%D7%A2%D7%9D_%D7%9E%D7%95%D7%92%D7%91%D7%9C%D7%95%D7%AA_(%D7%94%D7%AA%D7%90%D7%9E%D7%95%D7%AA_%D7%A0%D7%92%D7%99%D7%A9%D7%95%D7%AA_%D7%9C%D7%A9%D7%99%D7%A8%D7%95%D7%AA)"
+    ]
+  }
+]

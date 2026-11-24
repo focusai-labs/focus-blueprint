@@ -24,6 +24,7 @@ test('init creates state, map and folders, refuses a second init', () => {
   const state = readJson(dir, '.blueprint', 'state.json');
   assert.equal(state.schema, 2); assert.equal(state.stage, 1); assert.equal(state.project, 'בדיקה');
   for (const f of ['spec', 'mockup', 'db', 'evals', 'n8n', 'docs', '.github/workflows', 'scripts']) assert.ok(fs.existsSync(path.join(dir, f)), f);
+  assert.ok(fs.existsSync(path.join(dir, '.blueprint', 'dimensions.json')), 'dimensions travel with the project');
   assert.ok(read(dir, 'AGENTS.md').includes('Focus Blueprint'));
   assert.ok(read(dir, '.gitignore').includes('.blueprint/ui/'));
   assert.ok(read(dir, '.gitignore').includes('.env'));

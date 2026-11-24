@@ -210,8 +210,18 @@ T('rule 27: only closed advisors dimensions on the supabase-app track; no dimens
   assert.ok(!has(proj({ changes: change({ dimensions: [{ id: 'copy', status: 'closed', proof: 'evidence/adv.txt' }] }), files: bad, opts: { dimensions: DIMS } }).report, 27));
   assert.ok(!has(proj({ changes: change(), files: bad, state: { stage: 13, track: 'static' }, opts: { dimensions: DIMS } }).report, 27));
   assert.ok(!has(proj({ changes: change(), files: bad }).report, 27));
-  const { dir } = proj({ changes: change(), files: { ...bad, '.blueprint/dimensions.json': JSON.stringify(DIMS) } });
-  assert.ok(has(checkMap(dir), 27), 'reads .blueprint/dimensions.json');
+  // inside the plugin the checker reads data/dimensions.json first; the copy that bp init puts in a
+  // project has no plugin next to it, so that copy is the one that reads .blueprint/dimensions.json
+  const standalone = (files) => {
+    const { dir } = proj({ changes: change(), files });
+    fs.mkdirSync(path.join(dir, 'scripts'), { recursive: true });
+    fs.copyFileSync(CHECK, path.join(dir, 'scripts', 'blueprint-check.mjs'));
+    fs.cpSync(M, path.join(dir, 'scripts', 'blueprint-model'), { recursive: true });
+    const out = spawnSync(process.execPath, [path.join(dir, 'scripts', 'blueprint-check.mjs'), dir], { encoding: 'utf8' });
+    return JSON.parse(out.stdout).errors.some((e) => e.rule === '27');
+  };
+  assert.ok(standalone({ ...bad, '.blueprint/dimensions.json': JSON.stringify(DIMS) }), 'reads .blueprint/dimensions.json');
+  assert.ok(!standalone(bad), 'no dimensions file means skip');
 });
 
 // 28
@@ -244,21 +254,17 @@ T('--pre-commit finishes fast on a normal project', () => {
 T('bp change open: only dimensions whose tracks include the project track', () => {
   const dir = tmpProject();
   assert.equal(bp(dir, ['init', '--name', 'x']).code, 0);
-  const plugin = path.join(dir, '.blueprint');
-  fs.writeFileSync(path.join(plugin, 'dimensions.json'), '[]');
-  const dimFile = path.join(PLUGIN, 'data', 'dimensions.json');
-  const had = fs.existsSync(dimFile);
-  const prev = had ? fs.readFileSync(dimFile, 'utf8') : null;
-  fs.writeFileSync(dimFile, JSON.stringify([{ id: 'a', opensOn: ['table'], tracks: ['supabase-app'] }, { id: 'b', opensOn: ['table'], tracks: ['static'] }]));
-  try {
-    const open = () => bp(dir, ['change', 'open', 'x', '--kind', 'table']).json.dimensions.map((d) => d.id).sort();
-    const st = path.join(plugin, 'state.json');
-    const s = JSON.parse(fs.readFileSync(st, 'utf8'));
-    s.track = null; fs.writeFileSync(st, JSON.stringify(s));
-    assert.deepEqual(open(), ['a', 'b']);
-    s.track = 'static'; fs.writeFileSync(st, JSON.stringify(s));
-    assert.deepEqual(open(), ['b']);
-  } finally { if (had) fs.writeFileSync(dimFile, prev); else fs.rmSync(dimFile); }
+  // the test dimensions come in through FOCUS_BLUEPRINT_DATA, so the plugin's data/dimensions.json
+  // is never rewritten while other test files read it in parallel
+  const data = fs.mkdtempSync(path.join(os.tmpdir(), 'dims-'));
+  fs.writeFileSync(path.join(data, 'dimensions.json'), JSON.stringify([{ id: 'a', opensOn: ['table'], tracks: ['supabase-app'] }, { id: 'b', opensOn: ['table'], tracks: ['static'] }]));
+  const open = () => bp(dir, ['change', 'open', 'x', '--kind', 'table'], { FOCUS_BLUEPRINT_DATA: data }).json.dimensions.map((d) => d.id).sort();
+  const st = path.join(dir, '.blueprint', 'state.json');
+  const s = JSON.parse(fs.readFileSync(st, 'utf8'));
+  s.track = null; fs.writeFileSync(st, JSON.stringify(s));
+  assert.deepEqual(open(), ['a', 'b']);
+  s.track = 'static'; fs.writeFileSync(st, JSON.stringify(s));
+  assert.deepEqual(open(), ['b']);
 });
 
 // 29

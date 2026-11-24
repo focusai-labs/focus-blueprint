@@ -694,7 +694,7 @@ export const commands = {
       let dims = []; let note;
       const all = fs.existsSync(dimFile) ? readJsonFile(dimFile, []) : null;
       if (!Array.isArray(all)) note = 'הקובץ data/dimensions.json חסר, אז לא נפתח אף מימד.';
-      else dims = all.filter((d) => arr(d.opensOn).some((t) => opens.has(t))).map((d) => ({ id: d.id, status: 'open', proof: null, reason: '', at: '' }));
+      else dims = all.filter((d) => arr(d.opensOn).some((t) => opens.has(t)) && (!ctx.state().track || !Array.isArray(d.tracks) || d.tracks.includes(ctx.state().track))).map((d) => ({ id: d.id, status: 'open', proof: null, reason: '', at: '' }));
       const list = ctx.json('changes.json', []);
       const ns = [...nodes];
       const entry = {

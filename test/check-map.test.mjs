@@ -93,6 +93,8 @@ evals/upload-docs.md
 | עד 10MB | spec/prd.md |
 `;
 
+const GOOD_SQL = 'create table documents (id int, client_id uuid);\nalter table documents enable row level security;\ncreate policy own_docs on documents for select to authenticated using (client_id = auth.uid());\n';
+
 function w(dir, rel, content) {
   const f = path.join(dir, ...rel.split('/'));
   fs.mkdirSync(path.dirname(f), { recursive: true });
@@ -116,13 +118,15 @@ function good(mut) {
   const map = {
     schema: 1, capabilities: [cap],
     screens: [{ file: 'mockup/upload.html', name: 'x', persona: 'c', journeyStage: 'u', nav: 'linear' }],
-    tables: [{ name: 'documents', migration: 'db/migrations/0001_documents.sql' }],
+    tables: [{ name: 'documents', migration: 'supabase/migrations/20261121100000_documents.sql' }],
     automations: [{ id: 'n8n:monthly', where: 'n8n', copy: 'n8n/monthly.json' }], later: [],
+    roles: [{ id: 'client', name: 'לקוח', kind: 'user' }],
+    access: [{ object: 'documents', kind: 'table', exposed: true, serviceOnly: false, owner: 'client_id', sensitive: [], rules: [{ role: 'client', ops: ['select'], scope: 'own', rowRule: 'x', columns: null }] }],
   };
   const state = { schema: 2, stage: 13 };
   const files = {
     'mockup/upload.html': '<html></html>',
-    'db/migrations/0001_documents.sql': 'create table documents (id int);',
+    'supabase/migrations/20261121100000_documents.sql': GOOD_SQL,
     'n8n/monthly.json': '{"a":1}',
     'evals/upload-docs.md': EVAL, 'evals/briefs/upload-docs.md': BRIEF,
     'evals/evidence/upload-docs.red.txt': redTxt, 'evals/evidence/upload-docs.green.txt': greenTxt,
@@ -158,14 +162,14 @@ test('rule 2: unlisted mockup file', () => {
   assert.ok(has(r, 2, 'הקובץ mockup/extra.html נמצא בתיקיית mockup, אבל הוא לא רשום במפה כמסך.'));
 });
 test('rule 3: table without migration', () => {
-  assert.ok(has(run((c) => { c.files['db/migrations/0001_documents.sql'] = null; }), 3, 'היכולת upload-docs משתמשת בטבלה documents, ואין קובץ מיגרציה שיוצר אותה.'));
-  assert.ok(has(run((c) => { c.files['db/migrations/0001_documents.sql'] = 'select 1;'; }), 3));
+  assert.ok(has(run((c) => { c.files['supabase/migrations/20261121100000_documents.sql'] = null; }), 3, 'היכולת upload-docs משתמשת בטבלה documents, ואין קובץ מיגרציה שיוצר אותה.'));
+  assert.ok(has(run((c) => { c.files['supabase/migrations/20261121100000_documents.sql'] = 'select 1;'; }), 3));
   assert.ok(has(run((c) => { c.map.tables = []; }), 3));
 });
 test('rule 4: n8n copy missing and secrets', () => {
   assert.ok(has(run((c) => { c.files['n8n/monthly.json'] = null; }), 4, 'האוטומציה n8n:monthly רצה ב-n8n, ואין לה עותק בתיקייה n8n.'));
   const r = run((c) => { c.files['n8n/monthly.json'] = '{"apiKey": "abcdefghijklmnop1234"}'; });
-  assert.ok(has(r, 4, 'בעותק של האוטומציה n8n:monthly יש משהו שנראה כמו מפתח או סוד. מוציאים אותו לפני commit.'));
+  assert.ok(has(r, 4, 'בעותק של האוטומציה n8n:monthly יש משהו שנראה כמו מפתח או סוד. מעבירים אותו ל-Credentials ב-n8n ומוחקים אותו מהעותק לפני ה-commit.'));
 });
 test('rule 5: real without test file', () => {
   assert.ok(has(run((c) => { c.files['evals/upload-docs.md'] = null; }), 5, 'היכולת upload-docs מסומנת כאמיתית, ואין לה קובץ בדיקה.'));
@@ -274,7 +278,7 @@ test('CLI: JSON output and exit codes', () => {
 
 test('check-map.mjs has no imports from the plugin', () => {
   const src = fs.readFileSync(CHECK, 'utf8');
-  for (const m of src.matchAll(/(?:from|import\()\s*['"]([^'"]+)['"]/g)) assert.ok(m[1].startsWith('node:'), m[1]);
+  for (const m of src.matchAll(/(?:from|import\()\s*['"]([^'"]+)['"]/g)) assert.ok(m[1].startsWith('node:') || m[1].startsWith('./blueprint-model/'), m[1]);
 });
 
 test('bp init copies the checker and it runs standalone', () => {
@@ -288,7 +292,7 @@ test('bp init copies the checker and it runs standalone', () => {
 });
 
 test('rule 3: exact create table match', () => {
-  const sql = (s) => (c) => { c.files['db/migrations/0001_documents.sql'] = s; };
+  const sql = (s) => (c) => { c.files['supabase/migrations/20261121100000_documents.sql'] = s; };
   assert.ok(!has(run(sql('create table if not exists public."documents" (id int);')), 3));
   assert.ok(!has(run(sql('CREATE TABLE "public"."documents"\n(id int);')), 3));
   assert.ok(has(run(sql('-- create table documents (\nselect 1;')), 3));

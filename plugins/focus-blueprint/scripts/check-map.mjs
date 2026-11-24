@@ -4,7 +4,13 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
+import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
+import { migrateMap, canonicalHash, filesHash } from './blueprint-model/map-model.mjs';
+import { renderBlock, extractBlocks, stampOf, GEN_KINDS } from './blueprint-model/render-blocks.mjs';
+import { lintMigration, migrationFiles } from './blueprint-model/lint-sql.mjs';
+import { scanText, isClientPath, isPublicEnvName, isSecretishName } from './blueprint-model/secrets.mjs';
+import { parseVoices, assumptionsOf } from './blueprint-model/voices.mjs';
 
 const FM = ['fm:empty', 'fm:wrong-input', 'fm:no-permission', 'fm:network', 'fm:double-submit'];
 const BRIEF = ['brief:files', 'brief:consumes', 'brief:produces', 'brief:test', 'brief:values'];
@@ -108,7 +114,7 @@ const rules = [
       if (a.where !== 'n8n') continue;
       const txt = ctx.read(a.copy);
       if (txt === null) { err('4', a.id, `האוטומציה ${a.id} רצה ב-n8n, ואין לה עותק בתיקייה n8n.`); continue; }
-      if (SECRET.test(txt)) err('4', a.id, `בעותק של האוטומציה ${a.id} יש משהו שנראה כמו מפתח או סוד. מוציאים אותו לפני commit.`);
+      if (SECRET.test(txt) || scanText(txt).length) err('4', a.id, `בעותק של האוטומציה ${a.id} יש משהו שנראה כמו מפתח או סוד. מעבירים אותו ל-Credentials ב-n8n ומוחקים אותו מהעותק לפני ה-commit.`);
     }
   } },
   { id: '5', run({ map, ctx, err }) {
@@ -238,7 +244,240 @@ const rules = [
   } },
 ];
 
-export function checkMap(projectDir) {
+// ---- walking the project (no network, skips heavy folders) ----
+const SKIP_DIRS = new Set(['node_modules', '.git', '.next', '.nuxt', '.svelte-kit', '.vercel', '.turbo', 'dist', 'build', 'coverage', '.blueprint', '.home', 'out']);
+const MAX_FILE = 512 * 1024;
+const MAX_GIT_FILE = 1024 * 1024;
+function walkFiles(ctx, rel, accept, out = [], budget = { n: 5000 }) {
+  const d = rel ? ctx.p(rel) : ctx.dir;
+  let entries;
+  try { entries = fs.readdirSync(d, { withFileTypes: true }); } catch { return out; }
+  for (const e of entries) {
+    if (budget.n-- <= 0) return out;
+    const r = rel ? `${rel}/${e.name}` : e.name;
+    if (e.isDirectory()) { if (!SKIP_DIRS.has(e.name)) walkFiles(ctx, r, accept, out, budget); }
+    else if (e.isFile() && accept(r, e.name)) out.push(r);
+  }
+  return out;
+}
+const readSmall = (ctx, rel) => { try { const st = fs.statSync(ctx.p(rel)); if (st.size > MAX_FILE) return null; return fs.readFileSync(ctx.p(rel), 'utf8'); } catch { return null; } };
+const CODE_RE = /\.(?:[cm]?[jt]sx?|vue|svelte|astro|html?)$/i;
+const TEST_RE = /(?:\.test\.|\.spec\.|(?:^|\/)__tests__\/)/;
+const specDocs = (ctx) => walkFiles(ctx, 'spec', (r, n) => /\.md$/i.test(n));
+const isoDay = (x) => String(x || '').slice(0, 10);
+/** The Hebrew name of a dimension from data/dimensions.json, or its id when the data has no name. */
+const dimLabel = (dimensions, id) => { const d = Array.isArray(dimensions) ? dimensions.find((x) => x && x.id === id) : null; return d && d.name ? d.name : id; };
+
+const caps = (map) => new Set(map.capabilities.map((c) => c.id));
+const screenFiles = (map) => new Set(map.screens.map((s) => String(s.file).replace(/\\/g, '/')));
+const tableNames = (map) => new Set(map.tables.map((t) => t.name));
+
+const newRules = [
+  { id: '15', run({ map, ctx, err }) {
+    for (const f of specDocs(ctx)) {
+      const text = ctx.read(f);
+      for (const b of extractBlocks(text)) {
+        if (!GEN_KINDS.includes(b.kind)) continue;
+        if (b.content !== renderBlock(map, b.kind)) err('15', f, `בקובץ ${f} החלק ${b.kind} לא תואם למפה. את החלק הזה הכלי כותב מהמפה, ולכן מתקנים את המפה ומריצים bp render.`);
+      }
+    }
+  } },
+  { id: '16', run({ map, ctx, err }) {
+    for (const c of map.capabilities) {
+      if (!isReal(c) || isAdopted(c) || !(c.files || []).length) continue;
+      if (c.reviewedFilesHash !== filesHash(ctx.dir, c.files)) err('16', c.id, `הקבצים של היכולת ${c.id} השתנו מאז הסקירה האחרונה. עושים סקירה חדשה ורושמים אותה עם bp review record.`);
+    }
+  } },
+  { id: '17', run({ map, ctx, warn }) {
+    const now = canonicalHash(map);
+    for (const f of specDocs(ctx)) {
+      const st = stampOf(ctx.read(f) || '');
+      if (st && st !== now) warn('17', f, `המסמך ${f} נוצר לפני השינוי האחרון במפה. מריצים bp render כדי לעדכן אותו.`);
+    }
+  } },
+  { id: '18', run({ map, ctx, err }) {
+    const sc = screenFiles(map); const cp = caps(map); const tb = tableNames(map);
+    const file = (rule, where, label, rel) => { if (rel && !ctx.exists(rel)) err('18', where, `${label} מפנה לקובץ ${rel}, שלא קיים.`); };
+    for (const p of map.processes) {
+      for (const s of p.steps || []) {
+        const w = `${p.id}.${s.id}`;
+        if (s.screen && !sc.has(String(s.screen).replace(/\\/g, '/'))) err('18', w, `הצעד ${w} מפנה למסך ${s.screen}, שלא קיים במפה.`);
+        if (s.capability && !cp.has(s.capability)) err('18', w, `הצעד ${w} מפנה ליכולת ${s.capability}, שלא קיימת במפה.`);
+        for (const t of s.tables || []) if (!tb.has(t)) err('18', w, `הצעד ${w} מפנה לטבלה ${t}, שלא קיימת במפה.`);
+        file('18', w, `הצעד ${w}`, s.test);
+      }
+      for (const t of p.timers || []) file('18', `${p.id}.${t.id}`, `הטיימר ${p.id}.${t.id}`, t.test);
+      for (const c of p.cases || []) file('18', `${p.id}.${c.id}`, `המקרה ${p.id}.${c.id}`, c.eval);
+    }
+  } },
+  { id: '19', run({ map, err }) {
+    const ids = new Set(map.roles.map((r) => r.id));
+    for (const p of map.processes) for (const s of p.steps || []) {
+      if (typeof s.actor === 'string' && s.actor.startsWith('role:') && !ids.has(s.actor.slice(5))) err('19', `${p.id}.${s.id}`, `בצעד ${p.id}.${s.id} מופיע התפקיד ${s.actor.slice(5)}, שלא מוגדר ברשימת התפקידים.`);
+    }
+    for (const a of map.access) for (const r of a.rules || []) {
+      if (r.role && !ids.has(r.role)) err('19', a.object, `בהרשאות של ${a.object} מופיע התפקיד ${r.role}, שלא מוגדר ברשימת התפקידים.`);
+    }
+  } },
+  { id: '20', run({ map, stage, err }) {
+    if (stage < 5) return;
+    for (const p of map.processes) for (const s of p.steps || []) {
+      const auto = ['system', 'ai'].includes(s.kind) || ['automation', 'ai'].includes(s.actor);
+      if (auto && !(s.onFailure && String(s.onFailure).trim())) err('20', `${p.id}.${s.id}`, `בצעד האוטומטי ${p.id}.${s.id} לא כתוב מה קורה כשהוא נכשל. כותבים ב-onFailure מי מקבל התראה ומה המערכת עושה אז.`);
+    }
+  } },
+  { id: '21', run({ map, stage, err, warn }) {
+    const out = stage >= 12 ? err : warn;
+    for (const p of map.processes) {
+      const cs = p.cases || [];
+      if (!cs.some((c) => c.kind === 'happy') || !cs.some((c) => c.kind === 'problem' || c.kind === 'rejection')) out('21', p.id, `בתהליך ${p.id} חסרים מקרים. צריך לפחות מקרה תקין אחד ולפחות מקרה אחד של תקלה או דחייה.`);
+      for (const c of cs) if (!c.eval) out('21', `${p.id}.${c.id}`, `למקרה ${p.id}.${c.id} אין עדיין בדיקה.`);
+    }
+  } },
+  { id: '22', run({ changes, dimensions, err }) {
+    changes.forEach((c, i) => {
+      const open = (c.dimensions || []).filter((d) => d.status === 'open').map((d) => dimLabel(dimensions, d.id));
+      if (c.decision === 'now' && c.done && open.length) err('22', `change:${i}`, `השינוי "${c.text}" סומן כגמור, אבל עוד פתוחים בו הממדים ${open.join(', ')}.`);
+    });
+  } },
+  { id: '23', run({ ctx, stage, err }) {
+    if (stage < 4) return;
+    const prd = ctx.read('spec/prd.md') || '';
+    const listed = assumptionsOf(prd);
+    for (const f of specDocs(ctx)) {
+      const text = ctx.read(f);
+      for (const v of parseVoices(text)) {
+        if (!v.src) { err('23', `${f}:${v.line}`, `בקובץ ${f} בשורה ${v.line} חסר סימון מקור. מסמנים מי אמר את זה, או שזו הנחה.`); continue; }
+        if (v.src === 'assumed' && !listed.some((a) => a === v.text.replace(/\s*$/, '') || (a.length > 8 && v.text.includes(a)) || (v.text.length > 8 && a.includes(v.text)))) {
+          err('23', `${f}:${v.line}`, `בקובץ ${f} השורה ${v.line} מסומנת כהנחה, אבל היא לא מופיעה ברשימת ההנחות ב-PRD.`);
+        }
+      }
+    }
+  } },
+  { id: '24', run({ map, ctx, state, opts, err, warn }) {
+    const found = migrationFiles(ctx.dir);
+    const files = found.all;
+    if (!files.length) return;
+    if (found.legacy.length) warn('24b', 'db/migrations', 'המיגרציות נמצאות בתיקייה db/migrations. כדאי להעביר אותן ל-supabase/migrations, כי משם ה-CLI של Supabase והחיבור ל-GitHub קוראים אותן. לפני ההעברה בודקים את ההיסטוריה עם supabase migration list --remote.');
+    let sql = '';
+    for (const f of files) sql += `${ctx.read(f)}\n`;
+    let line = 1; const spans = files.map((f) => { const t = ctx.read(f); const s = { f, from: line }; line += t.split('\n').length; return s; });
+    const gitList = (args) => { const r = spawnSync('git', args, { cwd: ctx.dir, encoding: 'utf8' }); return r.error || r.status !== 0 ? null : r.stdout.split('\n').map((x) => x.trim()).filter(Boolean); };
+    const staged = gitList(['diff', '--cached', '--name-only', '--diff-filter=A']);
+    const untracked = opts.preCommit ? [] : gitList(['ls-files', '--others', '--exclude-standard']);
+    const liveSet = staged === null || untracked === null || state?.live !== true ? new Set() : new Set([...staged, ...untracked]);
+    for (const sp of spans) {
+      if (!liveSet.has(sp.f)) continue;
+      for (const x of lintMigration(ctx.read(sp.f), map.access, map.roles, { live: true })) if (x.rule === 'non-additive') err('24', `${sp.f}:${x.line}`, x.message);
+    }
+    for (const x of lintMigration(sql, map.access, map.roles)) {
+      const sp = [...spans].reverse().find((s) => s.from <= x.line) || spans[0];
+      (x.level === 'warn' ? warn : err)('24', `${sp.f}:${x.line - sp.from + 1}`, x.message);
+    }
+  } },
+  { id: '25', run({ ctx, err }) {
+    const seen = new Set();
+    for (const f of walkFiles(ctx, '', (r, n) => CODE_RE.test(n))) {
+      const text = readSmall(ctx, f);
+      if (text === null || !isClientPath(f, text)) continue;
+      for (const h of scanText(text)) { const k = `${f}:${h.line}`; if (!seen.has(k)) { seen.add(k); err('25', k, `בקובץ ${f} בשורה ${h.line} יש ${h.name}. הקובץ הזה נשלח לדפדפן, ולכן כל מי שפותח את האתר יכול לראות את הסוד. מעבירים אותו לשרת ולמשתנה סביבה.`); } }
+    }
+    for (const f of walkFiles(ctx, '', (r, n) => /^\.env(?:\.|$)/.test(n))) {
+      const text = readSmall(ctx, f); if (text === null) continue;
+      text.split('\n').forEach((l, i) => {
+        const m = /^\s*(?:export\s+)?([A-Za-z0-9_]+)\s*=\s*(.*)$/.exec(l);
+        if (!m || !isPublicEnvName(m[1])) return;
+        const val = m[2].trim().replace(/^["']|["']$/g, '');
+        if (val && (scanText(val).length || isSecretishName(m[1]))) err('25', `${f}:${i + 1}`, `בקובץ ${f} בשורה ${i + 1} המשתנה ${m[1]} מחזיק סוד, ומשתנה עם הקידומת הזאת נשלח לדפדפן. נותנים לו שם בלי הקידומת וקוראים אותו רק בשרת.`);
+      });
+    }
+    for (const f of walkFiles(ctx, '', (r, n) => CODE_RE.test(n))) {
+      const text = readSmall(ctx, f); if (text === null || !isClientPath(f, text)) continue;
+      const re = /(?:process\.env|import\.meta\.env)\.([A-Za-z0-9_]+)|(?:process\.env|import\.meta\.env)\[\s*['"]([A-Za-z0-9_]+)['"]\s*\]/g; let m;
+      while ((m = re.exec(text))) { const n = m[1] || m[2]; if (isPublicEnvName(n) && isSecretishName(n)) err('25', f, `בקובץ ${f} הקוד קורא למשתנה ${n}. לפי השם הוא סוד, ובגלל הקידומת שלו הוא נשלח לדפדפן.`); }
+    }
+  } },
+  { id: '26', run({ map, stage, err }) {
+    if (stage < 10) return;
+    const tb = tableNames(map);
+    const rows = new Set(map.access.filter((a) => !a.kind || a.kind === 'table').map((a) => a.object));
+    for (const t of tb) if (!rows.has(t)) err('26', t, `לטבלה ${t} אין עדיין שורות במטריצת ההרשאות.`);
+    for (const o of rows) if (!tb.has(o)) err('26', o, `במטריצת ההרשאות יש שורות לטבלה ${o}, שלא רשומה ברשימת הטבלאות.`);
+  } },
+  { id: '27', run({ ctx, state, changes, err, dimensions }) {
+    if (!state || state.track !== 'supabase-app' || !Array.isArray(dimensions)) return;
+    const adv = new Set(dimensions.filter((d) => d && d.evidence === 'advisors').map((d) => d.id));
+    changes.forEach((c, i) => {
+      for (const d of c.dimensions || []) {
+        if (!adv.has(d.id) || d.status !== 'closed') continue;
+        const w = `change:${i}:${d.id}`;
+        const text = d.proof ? ctx.read(d.proof) : null;
+        const m = text && /^# supabase advisors (\d{4}-\d{2}-\d{2}(?:T[0-9:.+Z-]+)?)\s*$/m.exec(text.split('\n')[0]);
+        if (!m) { err('27', w, `בממד ${dimLabel(dimensions, d.id)} של השינוי "${c.text}" חסרה הוכחה מה-advisors של Supabase. שומרים את הפלט שלהם בקובץ שמתחיל בשורה "# supabase advisors" ואחריה התאריך.`); continue; }
+        const stamp = m[1].length > 10 ? Date.parse(m[1]) < Date.parse(c.at) : m[1] < isoDay(c.at);
+        if (stamp) err('27', w, `ההוכחה מה-advisors בממד ${dimLabel(dimensions, d.id)} ישנה יותר מהשינוי "${c.text}". מריצים אותם שוב ושומרים פלט חדש.`);
+      }
+    });
+  } },
+  { id: '28', run({ map, ctx, warn }) {
+    const declared = new Set(map.services.flatMap((s) => [...(s.secrets || []), ...(s.publicVars || [])]));
+    const builtin = /^(?:NODE_ENV|MODE|DEV|PROD|SSR|BASE_URL|CI|PORT|HOST|HOSTNAME|TZ|NEXT_RUNTIME|NEXT_PHASE|VERCEL(?:_.*)?|npm_.*)$/;
+    const first = new Map();
+    for (const f of walkFiles(ctx, '', (r, n) => /\.(?:[cm]?[jt]sx?|vue|svelte|astro)$/i.test(n) && !TEST_RE.test(r) && !/^scripts\/blueprint-/.test(r))) {
+      const text = readSmall(ctx, f); if (text === null) continue;
+      const re = /(?:process\.env|import\.meta\.env)\.([A-Za-z0-9_]+)|(?:process\.env|import\.meta\.env)\[\s*['"]([A-Za-z0-9_]+)['"]\s*\]/g; let m;
+      while ((m = re.exec(text))) { const n = m[1] || m[2]; if (!builtin.test(n) && !declared.has(n) && !first.has(n)) first.set(n, f); }
+    }
+    for (const [n, f] of first) warn('28', n, `הקוד בקובץ ${f} קורא למשתנה ${n}, ואף שירות במפה לא רושם אותו.`);
+  } },
+  { id: '29', run({ ctx, opts, errors, err }) {
+    const git = (args, enc = 'utf8') => { const r = spawnSync('git', args, { cwd: ctx.dir, encoding: enc, maxBuffer: 64 * 1024 * 1024 }); return r.error || r.status !== 0 ? null : r.stdout; };
+    const isText = (buf) => buf.length <= MAX_GIT_FILE && !buf.subarray(0, 8000).includes(0);
+    const items = [];
+    if (opts.preCommit) {
+      const names = git(['diff', '--cached', '--name-only', '--diff-filter=ACMR', '-z']);
+      if (names === null) return;
+      for (const f of names.split('\0').filter(Boolean)) {
+        const buf = git(['show', `:${f}`], 'buffer');
+        if (buf && isText(buf)) items.push([f, buf.toString('utf8')]);
+      }
+    } else {
+      const names = git(['ls-files', '-z', '-c', '-o', '--exclude-standard']);
+      if (names === null) return;
+      for (const f of [...new Set(names.split('\0').filter(Boolean))]) {
+        let buf; try { const st = fs.statSync(ctx.p(f)); if (!st.isFile() || st.size > MAX_GIT_FILE) continue; buf = fs.readFileSync(ctx.p(f)); } catch { continue; }
+        if (isText(buf)) items.push([f, buf.toString('utf8')]);
+      }
+    }
+    for (const [f, text] of items) {
+      for (const h of scanText(text)) {
+        const k = `${f}:${h.line}`;
+        if (errors.some((e) => e.rule === '25' && e.item === k)) continue;
+        err('29', k, `בקובץ ${f} בשורה ${h.line} יש ${h.name}. סוד שנכנס ל-Git נשאר בהיסטוריה גם אחרי שמוחקים אותו. מעבירים אותו למשתנה סביבה בקובץ שלא נכנס ל-Git.`);
+      }
+    }
+  } },
+];
+rules.push(...newRules);
+
+function loadDimensions(dir, opts) {
+  if (opts && Array.isArray(opts.dimensions)) return opts.dimensions;
+  const tryFile = (f) => { try { const v = JSON.parse(fs.readFileSync(f, 'utf8')); return Array.isArray(v) ? v : null; } catch { return null; } };
+  const here = path.dirname(fileURLToPath(import.meta.url));
+  const plugin = path.resolve(here, '..');
+  if (fs.existsSync(path.join(plugin, '.claude-plugin', 'plugin.json'))) { const v = tryFile(path.join(plugin, 'data', 'dimensions.json')); if (v) return v; }
+  return tryFile(path.join(dir, '.blueprint', 'dimensions.json'));
+}
+
+const SUMMARY_HE = (errors) => {
+  const top = errors.slice(0, 3).map((e) => e.message).join('\n');
+  const count = errors.length === 1 ? 'יש בעיה אחת' : `יש ${errors.length} בעיות`;
+  const more = errors.length - 3;
+  const rest = more > 0 ? `\nלרשימה המלאה, עם ${more === 1 ? 'עוד בעיה אחת' : `עוד ${more} בעיות`}, מריצים node scripts/blueprint-check.mjs.` : '';
+  return `ה-commit נעצר, כי ${count} שצריך לתקן.\n${top}${rest}`;
+};
+
+export function checkMap(projectDir, opts = {}) {
   const dir = path.resolve(projectDir || '.');
   const ctx = makeCtx(dir);
   const errors = []; const warnings = [];
@@ -251,10 +490,14 @@ export function checkMap(projectDir) {
   }
   map.capabilities = map.capabilities || []; map.screens = map.screens || [];
   map.tables = map.tables || []; map.automations = map.automations || [];
+  map = migrateMap(map);
+  let changes = [];
+  try { const c = JSON.parse(fs.readFileSync(ctx.p('.blueprint/changes.json'), 'utf8')); if (Array.isArray(c)) changes = c; } catch { /* optional */ }
+  const dimensions = loadDimensions(dir, opts);
   const stage = Number(state && state.stage) || 0;
   const err = (rule, item, message) => errors.push({ rule, item, message });
   const warn = (rule, item, message) => warnings.push({ rule, item, message });
-  for (const r of rules) r.run({ map, ctx, stage, err, warn });
+  for (const r of rules) r.run({ map, ctx, stage, state, changes, dimensions, opts, errors, err, warn });
   return { ok: errors.length === 0, errors, warnings };
 }
 
@@ -263,7 +506,11 @@ if (isMain) {
   const a = process.argv.slice(2);
   const i = a.indexOf('--project');
   const dir = i >= 0 ? a[i + 1] : a.find((x) => !x.startsWith('--')) || process.cwd();
-  const report = checkMap(dir);
+  const report = checkMap(dir, { preCommit: a.includes('--pre-commit') });
+  if (a.includes('--pre-commit')) {
+    if (!report.ok) process.stderr.write(`${SUMMARY_HE(report.errors)}\n`);
+    process.exit(report.ok ? 0 : 1);
+  }
   process.stdout.write(JSON.stringify(report, null, 2) + '\n');
   process.exit(report.ok ? 0 : 1);
 }

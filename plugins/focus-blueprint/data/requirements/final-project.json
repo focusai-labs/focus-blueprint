@@ -1,23 +1,40 @@
 {
   "mode": "final-project",
   "parts": [
-    { "id": "p01", "name": "האפיון", "stage": 4, "proof": "spec/ holds the reviewed spec and the decision log; the owner decisions are listed", "folder": "spec/" },
-    { "id": "p02", "name": "הנתונים", "stage": 10, "proof": "db/data.md exists, every table has RLS on, and the permission table covers every role", "folder": "db/" },
-    { "id": "p03", "name": "השירות", "stage": 12, "proof": "signup, login and the three roles work live; a webhook call without the secret is refused", "folder": "app/" },
-    { "id": "p04", "name": "דף המכירה", "stage": 12, "proof": "the flow reaches the order summary and the order row is saved as pending payment", "folder": "app/" },
-    { "id": "p05", "name": "פאנל הניהול", "stage": 12, "proof": "an owner edits content and publishes an article without code; the business dashboard loads", "folder": "app/" },
-    { "id": "p06", "name": "דשבורד המפתח", "stage": 12, "proof": "visits, sales, faults and the change log show for developers only; an owner session gets refused", "folder": "app/" },
-    { "id": "p07", "name": "הסוכן עם שני המצבים", "stage": 12, "proof": "the owner mode opens only for the owner account id; a customer account stays in customer mode", "folder": "n8n/" },
-    { "id": "p08", "name": "האישור האנושי", "stage": 12, "proof": "an outgoing email, offer or publish waits for approval and does not go out without it", "folder": "n8n/" },
-    { "id": "p09", "name": "האוטומציה", "stage": 12, "proof": "one flow runs by schedule or event with no click; the executions list shows the run", "folder": "n8n/" },
-    { "id": "p10", "name": "מערכת ההתראות", "stage": 13, "proof": "docs/alerts.md maps the critical points and a forced fault sends an email", "folder": "docs/" },
-    { "id": "p11", "name": "ה-API", "stage": 12, "proof": "docs/api.md lists three capabilities with keys; a call without a key returns 401", "folder": "docs/" },
-    { "id": "p12", "name": "מוכן לסוכני AI", "stage": 13, "proof": "five readiness checks pass, including robots.txt, the sitemap and Markdown content", "folder": "app/" },
-    { "id": "p13", "name": "ה-skills", "stage": 13, "proof": "a design system skill and a go-live skill are packed as a plugin with a version number", "folder": ".claude/" },
-    { "id": "p14", "name": "ה-hook של CI/CD", "stage": 13, "proof": "a push to production without passing tests and approval is blocked; a feature needs a branch and a pull request", "folder": ".claude/" },
-    { "id": "p15", "name": "הבדיקות", "stage": 12, "proof": "evals/ holds at least 20 checks in the six types and the report shows two runs", "folder": "evals/" },
-    { "id": "p16", "name": "המסירה", "stage": 15, "proof": "docs/ holds the owner guide, the next developer document and the acceptance test result", "folder": "docs/" },
-    { "id": "p17", "name": "הסרטון והמצגת", "stage": 15, "proof": "a video of five to seven minutes and a deck are in docs/, and the video shows the main flow live", "folder": "docs/" }
+    { "id": "p01", "name": "משפט הבעיה ופרסונות", "stage": 3, "proof": "spec/idea.md holds the problem summary the student confirmed, and spec/users.md has at least two personas per role and two scenarios per persona", "folder": "spec/" },
+    { "id": "p02", "name": "מסע המשתמש ומפת התהליך", "stage": 5, "proof": "spec/journeys.md has a journey per persona and scenario; every main process in the map has stages and steps, and every automated or AI step has onFailure", "folder": "spec/" },
+    { "id": "p03", "name": "מטריצת הרשאות ומטריצת אוטונומיה", "stage": 4, "proof": "spec/prd.md renders both matrices from the map with no empty permission cell, and every automation has its trigger, level, approver and failure behaviour", "folder": "spec/" },
+    { "id": "p04", "name": "מסמך PRD עם שלושה קולות", "stage": 4, "proof": "every line in a voices section of spec/prd.md carries its source marker (check-map rule 23), every capability has its how-we-know sentence, the what-counts-as-failure section is filled, and spec/prd-review.md holds the six checks with a decision for every finding", "folder": "spec/" },
+    { "id": "p05", "name": "אפיון הסוכן והאוטומציות", "stage": 4, "proof": "spec/ holds the document from the spec tool at focusai.co.il/spec-aidev, with the agent's tools, knowledge base, autonomy level, the always, ask-first and never lists, and the agent's test questions", "folder": "spec/" },
+    { "id": "p06", "name": "ה-mockup ובדיקת שמישות עם אדם אמיתי", "stage": 8, "proof": "every map screen has its mockup file, state.where.mockupUrl opens, spec/ux-review.md has no failing must principle, and spec/usability-test.md holds the plan, the notes of a session with a real person and the findings table", "folder": "mockup/" },
+    { "id": "p07", "name": "מפת העקיבות ויומן ההכרעות", "stage": 12, "proof": "check-map passes on the final commit, every capability is real with its screens, data, permissions and test, and every ruling in .blueprint/rulings.json has its reason and price and was reported", "folder": ".blueprint/" },
+    { "id": "p08", "name": "המסמך שלפני הבנייה", "stage": 8, "proof": "the pre-build document for the context is in docs/, its price and time come from the capabilities in scope, and the approver's approval is quoted in the stage 8 close", "folder": "docs/" },
+    { "id": "p09", "name": "מסירה עם בדיקה", "stage": 15, "proof": "docs/handover-test.md holds three tasks a real person performed alone from the guide and their outcomes, every stuck point was fixed and checked again, and the handover documents and the accounts list hold no password, key or token", "folder": "docs/" },
+    { "id": "p10", "name": "אפליקציה עם משתמשים ותפקידים", "stage": 11, "proof": "state.track is supabase-app (Next.js, Supabase and Vercel); sign up and log in work live with at least three roles, customer, business owner and developer; a second user sees no row of the first", "folder": "app/" },
+    { "id": "p11", "name": "הסוכן עם שני המצבים", "stage": 12, "proof": "in customer mode the agent answers from the business knowledge and names the source document; the owner mode opens only after code checks the sender's account id stored in the database, or the logged-in role in an in-app agent; another account stays in customer mode even with the switch word", "folder": "n8n/" },
+    { "id": "p12", "name": "דף המכירה והדרך לרכישה", "stage": 12, "proof": "the flow reaches the order summary with the business details, price and cancellation terms shown before the payment button; the order row is saved as pending payment, the payment button is marked as mock, and spec/payments.md lists what the payment connection needs", "folder": "app/" },
+    { "id": "p13", "name": "פאנל הניהול של בעלי העסק", "stage": 12, "proof": "an owner changes at least three content areas that live in the database and the change shows live without a deploy; the actions waiting for approval are in the panel", "folder": "app/" },
+    { "id": "p14", "name": "דשבורד המפתח", "stage": 12, "proof": "visits, the funnel to the order summary, alerts and the change log show for developers only, and an owner session is refused", "folder": "app/" },
+    { "id": "p15", "name": "האישור האנושי", "stage": 12, "proof": "every action that leaves the system waits as pending; a rejected action sends nothing and stays rejected; an action approved twice runs once; who approved it and when is recorded", "folder": "n8n/" },
+    { "id": "p16", "name": "האוטומציה", "stage": 12, "proof": "at least one process runs by schedule or event with no click, and its run is visible in the executions list or a log", "folder": "n8n/" },
+    { "id": "p17", "name": "ההתראות", "stage": 13, "proof": "docs/critical-points.md maps the critical points; every alert point and every onFailure step was broken on purpose and its alert arrived, quoted in docs/launch-checklist.md; the alerts also show in the developer dashboard", "folder": "docs/" },
+    { "id": "p18", "name": "ממשק ה-API", "stage": 12, "proof": "three capabilities are open through an API with keys the project issues; docs/api.md documents each one; a call without a key returns 401 and a write with a read-only key returns 403; a new Claude Code session with only the docs and a key pulls from all three", "folder": "docs/" },
+    { "id": "p19", "name": "השערים", "stage": 11, "proof": "the blueprint-main ruleset requires a pull request and the check named check, or on a free private repo a ruling records the gap and core.hooksPath is .githooks; docs/evidence/gates.txt shows no failed gate; every pull request to main merged with a green check", "folder": "docs/" },
+    { "id": "p20", "name": "הבדיקות", "stage": 13, "proof": "every process case has its acceptance test in evals/cases; every capability has red and green evidence covering the five failure states and a second user; at least three attacks each with what stopped it, and at least two questions the agent cannot answer; evals/report.md shows two full runs and what was fixed between them", "folder": "evals/" },
+    { "id": "p21", "name": "החשבונות והתוכניות", "stage": 13, "proof": "free plans are used only while no real data is in the system, every free plan gap has a ruling with its risk, and the model provider has a spending cap", "folder": ".blueprint/" },
+    { "id": "p22", "name": "ההגשה", "stage": 15, "proof": "one email to the course staff with a 5 to 7 minute video, links to the system and the sales page, test accounts with mock data for the three interfaces, a link to the agent, the deck as a PDF and an invitation to the private repo that holds every method output", "folder": "docs/" }
   ],
-  "checkpoints": []
+  "bonus": [
+    { "id": "b01", "name": "סליקה בסביבת בדיקה", "stage": 14, "proof": "the purchase flow is connected to Cardcom in a test environment, and an order becomes paid only after the server checks the deal result with Cardcom", "folder": "app/" },
+    { "id": "b02", "name": "מוכנות לסוכני AI", "stage": 13, "proof": "the five agent-readiness checks pass on the live address, including robots.txt, the sitemap and Markdown content", "folder": "app/" },
+    { "id": "b03", "name": "ה-skills של הפרויקט", "stage": 13, "proof": "project skills beyond the design system skill, such as a go-live skill or a test-report skill, are packed as a plugin with a version number and were tested in a new session", "folder": ".claude/" },
+    { "id": "b04", "name": "הסוכן גם בוואטסאפ", "stage": 13, "proof": "the same agent answers on WhatsApp through the official API with a business account", "folder": "n8n/" },
+    { "id": "b05", "name": "חיבור למערכת שהעסק כבר עובד איתה", "stage": 12, "proof": "the system connects to a calendar, CRM or accounting system the business already uses, following the vendor's official docs, and a failure in the connection reaches the alerts", "folder": "n8n/" }
+  ],
+  "checkpoints": [
+    { "id": "m1", "name": "אפיון מאושר", "stages": [1, 2, 3, 4, 5, 6, 7, 8], "proof": "stages 1 to 8 are closed and the pre-build document is approved" },
+    { "id": "m2", "name": "שלד באוויר", "stages": [9, 10, 11], "proof": "the live address opens with login and navigation on mock data, and docs/evidence/gates.txt shows no failed gate" },
+    { "id": "m3", "name": "הקפאת יכולות", "stages": [12], "proof": "every capability is real and passed its tests; from here no new capability enters" },
+    { "id": "m4", "name": "הגשה", "stages": [13, 14, 15], "proof": "the launch checklist, the second test run, the handover test, the video and the deck are done, and the submission email is sent" }
+  ]
 }

@@ -206,6 +206,6 @@
     document.title = t('directions.title');
     try { await directionsPage(); } catch (e) { const m = $('#fatal'); if (m) { m.hidden = false; m.textContent = t('common.loadFailed'); } console.error(e); }
   }
-  if (window.BP && typeof window.BP.register === 'function') window.BP.register('directions', directionsPage);
+  if (window.BP && typeof window.BP.register === 'function') window.BP.register('directions', async () => { await loadStrings(); await directionsPage(); });
   else standalone();
 })();

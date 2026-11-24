@@ -784,12 +784,12 @@
       const isOpen = q.type === 'open';
       const head = isOpen ? h('label', { for: `f-${q.id}`, class: 'qtext', style: 'font-size:20px' }, q.text) : h('p', { class: 'qtext', style: 'font-weight:600;font-size:20px;line-height:1.4' }, q.text);
       const sc = screenOf(q);
-      root.append(
+      root.append(...[
         h('p', { class: 'muted small' }, q.block || ''),
         head,
         sc ? h('button', { type: 'button', class: 'quiet qs-show', 'aria-haspopup': 'dialog', onclick: (e) => openScreenSheet(sc, e.currentTarget) }, icon('ext'), t('questionnaire.screenShow')) : null,
         q.why ? h('p', { class: 'muted small' }, `${t('questionnaire.whyLabel')}: ${q.why}`) : null,
-        prefillBox, ed.el, status, actions);
+        prefillBox, ed.el, status, actions].filter(Boolean));
       drawPrefill(); markNote(); drawActions();
     }
 

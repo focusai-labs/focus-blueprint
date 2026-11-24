@@ -65,7 +65,7 @@ test('a project that copies the template and runs bp render passes rule 15, and 
   const report = checkMap(dir);
   assert.ok(!report.errors.some((e) => e.rule === '15'), 'generated blocks match the map');
   const doc = fs.readFileSync(path.join(dir, 'spec', 'prd.md'), 'utf8');
-  assert.ok(doc.includes('| client | לקוח | משתמש |') && doc.includes('שולחים תזכורת'));
+  assert.ok(doc.includes('| `client` | לקוח | משתמש |') && doc.includes('שולחים תזכורת'));
   for (const v of parseVoices(doc)) assert.ok(v.text.includes('<<fill>>'), `only template placeholders lack a voice, got: ${v.text}`);
   assert.equal(report.errors.filter((e) => e.rule === '30').length, 2, 'an existing system asks for both C4 sections while they hold fill markers');
 });

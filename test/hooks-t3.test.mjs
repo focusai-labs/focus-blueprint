@@ -256,17 +256,20 @@ test('session-start: unscoped Supabase MCP servers and plugins are reported; sco
   const dir = proj();
   const home = fs.mkdtempSync(path.join(os.tmpdir(), 'bp-home-'));
   const env = { HOME: home, USERPROFILE: home };
-  const NOTE = 'יש כאן חיבור ל-Supabase שרואה את כל הפרויקטים בחשבון. בפרויקט הזה עובדים רק עם חיבור שמוגבל לפרויקט אחד, ולכן כדאי לכבות את החיבור הזה כאן דרך /mcp.';
+  const NOTE = 'יש כאן חיבור ל-Supabase שמחובר לפרויקט אחר או שיכול לכתוב. בפרויקט הזה עובדים רק עם חיבור לקריאה בלבד לפרויקט של הפרויקט, ולכן כדאי לכבות את החיבור הזה כאן דרך /mcp.';
   const run = () => hook('session-start', { cwd: dir, source: 'startup' }, env);
   assert.ok(!(run().json.systemMessage || '').includes(NOTE));
   fs.writeFileSync(path.join(home, '.claude.json'), '{broken');
   assert.ok(!(run().json.systemMessage || '').includes(NOTE));
   fs.writeFileSync(path.join(home, '.claude.json'), JSON.stringify({ mcpServers: { supabase: { type: 'http', url: 'https://mcp.supabase.com/mcp' } } }));
   let r = run();
-  assert.ok(r.json.systemMessage.includes(NOTE)); assert.match(r.json.hookSpecificOutput.additionalContext, /no project_ref/);
+  assert.ok(r.json.systemMessage.includes(NOTE)); assert.match(r.json.hookSpecificOutput.additionalContext, /another project/);
   fs.writeFileSync(path.join(home, '.claude.json'), JSON.stringify({ mcpServers: { supabase: { url: 'https://mcp.supabase.com/mcp?project_ref=abc&read_only=true' } } }));
+  assert.ok(run().json.systemMessage.includes(NOTE), 'no own ref yet: every non-docs server is flagged');
+  const setRef = (ref) => { fs.mkdirSync(path.join(dir, '.blueprint'), { recursive: true }); fs.writeFileSync(path.join(dir, '.blueprint', 'map.json'), JSON.stringify({ services: [{ id: 'supabase', ref }] })); };
+  setRef('abc');
   assert.ok(!(run().json.systemMessage || '').includes(NOTE));
-  fs.writeFileSync(path.join(home, '.claude.json'), JSON.stringify({ projects: { [dir]: { mcpServers: { s: { url: 'https://mcp.supabase.com/mcp?features=docs' } } } } }));
+  fs.writeFileSync(path.join(home, '.claude.json'), JSON.stringify({ projects: { [dir]: { mcpServers: { s: { url: 'https://mcp.supabase.com/mcp?features=database' } } } } }));
   assert.ok(run().json.systemMessage.includes(NOTE));
   fs.writeFileSync(path.join(home, '.claude.json'), '{}');
   write(dir, '.mcp.json', JSON.stringify({ mcpServers: { s: { url: 'https://mcp.supabase.com/mcp' } } }));
@@ -276,6 +279,32 @@ test('session-start: unscoped Supabase MCP servers and plugins are reported; sco
   const plug = (key) => fs.writeFileSync(path.join(home, '.claude', 'plugins', 'installed_plugins.json'), JSON.stringify({ version: 2, plugins: { [key]: [{}] } }));
   plug('supabase@supabase-community'); assert.ok(run().json.systemMessage.includes(NOTE));
   plug('supabase@supabase-agent-skills'); assert.ok(!(run().json.systemMessage || '').includes(NOTE));
+});
+
+test('session-start: a Supabase server tied to another project, or able to write, is flagged (hosted and stdio); docs-only and own read-only are not', () => {
+  const dir = proj();
+  const home = fs.mkdtempSync(path.join(os.tmpdir(), 'bp-home-'));
+  const env = { HOME: home, USERPROFILE: home };
+  const NOTE = 'יש כאן חיבור ל-Supabase שמחובר לפרויקט אחר או שיכול לכתוב. בפרויקט הזה עובדים רק עם חיבור לקריאה בלבד לפרויקט של הפרויקט, ולכן כדאי לכבות את החיבור הזה כאן דרך /mcp.';
+  fs.mkdirSync(path.join(dir, '.blueprint'), { recursive: true });
+  fs.writeFileSync(path.join(dir, '.blueprint', 'map.json'), JSON.stringify({ services: [{ id: 'supabase', ref: 'own' }] }));
+  const flagged = (servers) => {
+    fs.writeFileSync(path.join(home, '.claude.json'), JSON.stringify({ mcpServers: servers }));
+    const r = hook('session-start', { cwd: dir, source: 'startup' }, env);
+    assert.ok(!JSON.stringify(r.json).includes('SECRET'), 'never prints a token');
+    return (r.json.systemMessage || '').includes(NOTE);
+  };
+  const stdio = (...a) => ({ command: 'npx', args: ['-y', '@supabase/mcp-server-supabase@latest', ...a], env: { SUPABASE_ACCESS_TOKEN: 'SECRET' } });
+  assert.equal(flagged({ a: stdio('--project-ref=other', '--read-only') }), true, 'other ref');
+  assert.equal(flagged({ a: stdio('--project-ref=own') }), true, 'writable');
+  assert.equal(flagged({ a: stdio('--read-only') }), true, 'no ref');
+  assert.equal(flagged({ a: stdio('--project-ref=own', '--read-only') }), false);
+  assert.equal(flagged({ a: stdio('--project-ref', 'own', '--read-only') }), false);
+  assert.equal(flagged({ a: { url: 'https://mcp.supabase.com/mcp?project_ref=own' } }), true, 'hosted writable');
+  assert.equal(flagged({ a: { url: 'https://mcp.supabase.com/mcp?project_ref=other&read_only=true' } }), true, 'hosted other');
+  assert.equal(flagged({ a: { url: 'https://mcp.supabase.com/mcp?project_ref=own&read_only=true' } }), false);
+  assert.equal(flagged({ a: { url: 'https://mcp.supabase.com/mcp?features=docs' } }), false);
+  assert.equal(flagged({ a: stdio('--features=docs') }), false);
 });
 
 // ---------- bp review not_run ----------

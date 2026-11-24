@@ -327,6 +327,8 @@
   const STATUS_TONE = { done: 'ok', done_with_concerns: 'warn', blocked: 'bad', needs_context: 'bad', in_progress: '', not_started: '' };
   const statusWord = (s) => t(`board.statuses.${s}`) === `board.statuses.${s}` ? s : t(`board.statuses.${s}`);
 
+  const decisionWord = (d) => t(`board.decisions_words.${d}`) === `board.decisions_words.${d}` ? d : t(`board.decisions_words.${d}`);
+
   async function board() {
     const root = $('#board');
     let timer = null;
@@ -371,10 +373,10 @@
         kv(t('board.rulings'), String((s.rulings || []).length)),
         kv(t('board.pending'), `${(st.pending || []).length}${(st.pending || []).length ? ` (${st.pending.join(', ')})` : ''}`)));
       grid.append(card(t('board.map'),
-        kv(t('board.capabilities', { real, total: map.capabilities.length }), `${map.capabilities.length - real} ${t('board.mock')}`),
+        h('p', { class: 'small' }, t('board.capabilities', { real, total: map.capabilities.length, mock: map.capabilities.length - real })),
         kv(t('board.screens'), String(map.screens.length)), kv(t('board.tables'), String(map.tables.length)), kv(t('board.automations'), String(map.automations.length))));
       grid.append(card(t('board.later'), list((map.later || []).map((l) => l.text))));
-      grid.append(card(t('board.changes'), list((s.changes || []).slice(-8).reverse().map((c) => `${c.text} (${c.decision})`), t('board.noChanges'))));
+      grid.append(card(t('board.changes'), list((s.changes || []).slice(-8).reverse().map((c) => `${c.text} (${decisionWord(c.decision)})`), t('board.noChanges'))));
       grid.append(card(t('board.evals'), list((s.evals || []).map((e) => e.file))));
       const g = s.git || {};
       grid.append(card(t('board.git'), g.available ? [kv(t('board.branch'), h('bdi', { dir: 'ltr' }, g.branch || '-')), h('p', { class: 'small' }, g.changed ? t('board.changedFiles', { n: g.changed }) : t('board.clean'))] : h('p', { class: 'muted small' }, t('board.noGit'))));

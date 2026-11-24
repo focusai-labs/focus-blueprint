@@ -18,6 +18,8 @@ const CAP = 3;
 const BOOL_FLAGS = new Set(['unreported', 'baseline', 'client']);
 
 const ROLE_KINDS = ['anon', 'user', 'staff', 'admin', 'service'];
+/** The branch a stage works on: stage-02, two digits, like the skill folders. */
+export const stageBranch = (n) => `stage-${String(n).padStart(2, '0')}`;
 const ACCESS_KINDS = ['table', 'view', 'function', 'bucket', 'realtime'];
 const STEP_KINDS = ['system', 'human', 'ai', 'external', 'rejection'];
 const CASE_KINDS = ['happy', 'problem', 'rejection'];
@@ -313,7 +315,7 @@ export const commands = {
     const s = ctx.state();
     if (sub === 'start') {
       const prev = { ...(s.stages[n] || {}) }; delete prev.close; delete prev.doneAt;
-      s.stages[n] = { ...prev, status: 'in_progress', startedAt: nowIso(), branch: `stage-${n}` };
+      s.stages[n] = { ...prev, status: 'in_progress', startedAt: nowIso(), branch: stageBranch(n) };
       s.stage = n; s.status = 'in_progress';
       return ctx.saveState();
     }
@@ -330,7 +332,7 @@ export const commands = {
       if (open.length) fail(`stage ${n} has unreported rulings, show them to the student then run "ruling report --stage ${n}": ${open.map((r) => `${r.id} ${r.decision}`).join(' | ')}`);
       const p = proof ? (proof.length > 600 ? proof.slice(0, 600) + '...' : proof) : '';
       const at = nowIso();
-      const st = (s.stages[n] ||= { startedAt: at, branch: `stage-${n}` });
+      const st = (s.stages[n] ||= { startedAt: at, branch: stageBranch(n) });
       st.close = { status, note: note || '', proof: p, at };
       if (status === 'done' || status === 'done_with_concerns') {
         st.status = 'done'; st.doneAt = at;
@@ -628,10 +630,12 @@ export const commands = {
 
   access(args, ctx) {
     const [sub, object] = args;
-    if (sub !== 'set' || !object) fail('usage: access set <object> --json \'<obj>\'');
+    if (sub !== 'set' || !object) fail('usage: access set <object> --json \'<obj>\' [--label "<שם בעברית>"]');
     const o = jsonFlag(ctx, 'access set');
     const entry = { object, kind: 'table', exposed: true, serviceOnly: false, owner: null, sensitive: [], rules: [], ...o };
     entry.object = object;
+    if (ctx.flags.label !== undefined) entry.label = ctx.flags.label;
+    if (entry.label !== undefined && (typeof entry.label !== 'string' || !entry.label.trim())) fail('label must be a non-empty string');
     if (!ACCESS_KINDS.includes(entry.kind)) fail(`kind must be ${ACCESS_KINDS.join('|')}`);
     if (!Array.isArray(entry.rules) || !Array.isArray(entry.sensitive)) fail('rules and sensitive must be arrays');
     for (const r of entry.rules) {

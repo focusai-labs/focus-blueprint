@@ -49,7 +49,7 @@ for (const g of findAllGit('commit')) {
   if (landsOnProtected(git, g) && git(['rev-parse', '--verify', '-q', 'HEAD']).status === 0) {
     block(
       `Blocked by Focus Blueprint: this project does not take commits directly on "${branchLabel(git, g)}". ` +
-        `Create a branch for the current work (for example: git switch -c stage-${project.state.stage || 'N'}), ` +
+        `Create a branch for the current work (for example: git switch -c stage-${project.state.stage ? String(project.state.stage).padStart(2, '0') : 'NN'}), ` +
         'commit there, and merge it through a pull request.'
     );
   }

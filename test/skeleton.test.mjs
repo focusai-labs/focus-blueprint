@@ -69,7 +69,7 @@ test('session start: stage line once the terms are accepted', () => {
 
 test('session start: found from a subfolder, and quiet to the user after a compaction', () => {
   const dir = project();
-  const res = run(hook('session-start.mjs'), { cwd: path.join(dir, 'mockup'), source: 'compact' });
+  const res = run(hook('session-start.mjs'), { cwd: path.join(dir, 'mockup'), source: 'compact' }, { env: { HOME: tmp('bp-home-quiet-'), USERPROFILE: tmp('bp-home-quiet-') } });
   assert.equal(res.json.systemMessage, undefined);
   assert.match(res.json.hookSpecificOutput.additionalContext, /Current stage: 3/);
 });

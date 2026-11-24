@@ -112,13 +112,13 @@ test('renderBlock: every kind is a Hebrew table, and empty maps give a Hebrew li
 });
 
 test('renderBlock content: names, escaping, durations, order', () => {
-  assert.ok(renderBlock(map(), 'roles').includes('| client | לקוח | משתמש |'));
+  assert.ok(renderBlock(map(), 'roles').includes('| `client` | לקוח | משתמש |'));
   const p = renderBlock(map(), 'permissions');
   assert.ok(p.includes('קריאה, הוספה') && p.includes('רק שלו'));
   assert.ok(p.includes('רק את המסמכים שלו \\| ו'));
   assert.ok(renderBlock(map(), 'timers').includes('90 ימים'));
   const pr = renderBlock(map(), 'processes').split('\n');
-  assert.ok(pr[2].includes('| s1 |') && pr[3].includes('| s2 |'));   // stage order, not array order
+  assert.ok(pr[2].includes('| `s1` |') && pr[3].includes('| `s2` |'));   // stage order, not array order
   assert.ok(renderBlock(map(), 'autonomy').includes('אוטומטי (ירוק)'));
   assert.ok(renderBlock(map(), 'autonomy').includes('בינה מלאכותית (סגול)'));
   assert.ok(renderBlock(map(), 'cases').includes('| איסוף | תקלה | קובץ ריק | evals/x.md |'));

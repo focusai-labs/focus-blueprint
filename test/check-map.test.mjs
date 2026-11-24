@@ -250,6 +250,17 @@ test('rule 12: builder check from stage 6', () => {
   assert.ok(has(run((c) => { c.files['spec/builder-check.md'] = '<!-- bc:answered -->\n<!-- bc:ruled -->'; }), 12));
   assert.ok(!has(run((c) => { c.state.stage = 5; c.files['spec/builder-check.md'] = null; }), 12));
 });
+test('rule 13: headings inside the summary do not end it, a heading of its own level does', () => {
+  const long = 'w'.repeat(300);
+  const idea = (summary) => `## המילים\n<!-- idea:words -->\n${long}\n## הסיכום\n<!-- idea:summary -->\n${summary}`;
+  // the student line sits after a sub-heading: it still counts, so no "missing src:student" error
+  const ok = run((c) => { c.files['spec/idea.md'] = idea('### הבעיה\nא <!-- src:claude -->\n### בשביל מי\nב <!-- src:student -->\n'); });
+  assert.ok(!has(ok, 13), JSON.stringify(ok.errors.filter((e) => e.rule === '13')));
+  // an unmarked line after a sub-heading is still caught
+  assert.ok(has(run((c) => { c.files['spec/idea.md'] = idea('### הבעיה\nא <!-- src:claude -->\n### בשביל מי\nבלי סימון\n'); }), 13, 'שורה שלא מסומן'));
+  // a same-level heading ends the section: the unmarked line after it is not part of the summary
+  assert.ok(!has(run((c) => { c.files['spec/idea.md'] = idea('א <!-- src:claude -->\nב <!-- src:student -->\n## אחר\nטקסט חופשי\n'); }), 13));
+});
 test('rule 13: idea provenance from stage 3', () => {
   assert.ok(has(run((c) => { c.files['spec/idea.md'] = '<!-- idea:summary -->\nx <!-- src:claude -->'; }), 13, 'בקובץ spec/idea.md חסר החלק <!-- idea:words -->.'));
   assert.ok(has(run((c) => { c.files['spec/idea.md'] = '<!-- idea:words -->\nw\n<!-- idea:summary -->\nשורה בלי סימון\nעוד <!-- src:claude -->'; }), 13, 'בסיכום הרעיון יש שורה שלא מסומן עליה אם הסטודנט אמר אותה או ש-Claude השלים אותה.'));

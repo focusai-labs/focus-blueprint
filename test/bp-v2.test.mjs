@@ -128,7 +128,7 @@ test('render replaces gen blocks, stamps the document, is idempotent, and migrat
   const r = bp(dir, ['render']);
   assert.equal(r.code, 0); assert.deepEqual(r.json.blocks, ['roles']); assert.equal(r.json.changed, true);
   const doc = read(dir, 'spec', 'prd.md');
-  assert.ok(doc.includes('| client | לקוח | משתמש |')); assert.ok(!doc.includes('ידני'));
+  assert.ok(doc.includes('| `client` | לקוח | משתמש |')); assert.ok(!doc.includes('ידני'));
   const mapFile = path.join(dir, '.blueprint', 'map.json');
   const hash = doc.split('\n')[0].match(/blueprint-map: ([0-9a-f]{64})/)[1];
   assert.equal(hash, r.json.stamp.match(/([0-9a-f]{64})/)[1]);

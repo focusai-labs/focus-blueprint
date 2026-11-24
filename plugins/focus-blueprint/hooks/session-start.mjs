@@ -4,7 +4,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { readInput, findProject, stages, stageInfo, termsAccepted, haltedItems, haltedLine, unreportedRulings, gitInfo, emit, probeMark, readJson, runGit } from './lib.mjs';
+import { readInput, findProject, stages, stageInfo, termsAccepted, haltedItems, haltedLine, unreportedRulings, gitInfo, emit, probeMark, readJson, runGit, mapSupabaseRef, supabaseServerFacts, supabaseServerUnsafe } from './lib.mjs';
 
 const input = await readInput();
 const project = findProject(input);
@@ -42,15 +42,15 @@ const hookLine = git && hooksPath !== '.githooks'
   ? `Git hook: core.hooksPath is not .githooks in this clone, so the commit gate does not run. Run: node "${path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', 'scripts', 'bp.mjs')}" githook install --project "${dir}"`
   : '';
 
-/** Supabase MCP connections that see every project of the account. Silent on any read error. */
+/** Supabase MCP connections that are not read-only on this project's own ref. Silent on any read error. */
 function unscopedSupabase() {
   const found = [];
+  const ownRef = mapSupabaseRef(project);
   const home = os.homedir();
   const scan = (servers, where) => {
     if (!servers || typeof servers !== 'object') return;
     for (const [name, def] of Object.entries(servers)) {
-      const url = def && typeof def.url === 'string' ? def.url : '';
-      if (/mcp\.supabase\.com/i.test(url) && !/[?&]project_ref=/i.test(url)) found.push(`${name} (${where})`);
+      if (supabaseServerUnsafe(supabaseServerFacts(def), ownRef)) found.push(`${name} (${where})`);
     }
   };
   try {
@@ -76,7 +76,7 @@ function unscopedSupabase() {
 }
 const unscoped = unscopedSupabase();
 const unscopedLine = unscoped.length
-  ? `Supabase MCP: ${unscoped.join(', ')} has no project_ref, so it sees every project of the account. This project works only with a connection scoped to one project (project_ref and read_only in the URL). Tell the student to disable the unscoped connection here through /mcp, and never call its tools.`
+  ? `Supabase MCP: ${unscoped.join(', ')} is a Supabase connection that is tied to another project, has no project_ref, or can write. This project works only with a read-only connection scoped to its own project (project_ref and read_only=true, or --project-ref and --read-only). Tell the student to disable the unscoped connection here through /mcp, and never call its tools.`
   : '';
 
 const context = [
@@ -114,7 +114,7 @@ if (input.source !== 'compact') {
 }
 
 if (unscoped.length) {
-  const note = 'יש כאן חיבור ל-Supabase שרואה את כל הפרויקטים בחשבון. בפרויקט הזה עובדים רק עם חיבור שמוגבל לפרויקט אחד, ולכן כדאי לכבות את החיבור הזה כאן דרך /mcp.';
+  const note = 'יש כאן חיבור ל-Supabase שמחובר לפרויקט אחר או שיכול לכתוב. בפרויקט הזה עובדים רק עם חיבור לקריאה בלבד לפרויקט של הפרויקט, ולכן כדאי לכבות את החיבור הזה כאן דרך /mcp.';
   output.systemMessage = output.systemMessage ? `${output.systemMessage}\n${note}` : note;
 }
 

@@ -5,6 +5,14 @@
   "needs": ["github", "playwright", "supabase", "vercel"],
   "steps": [
     {
+      "id": "sb-mockup",
+      "stage": 7,
+      "intent": "ה-mockup הוא HTML פשוט עם קובץ אחד של נתוני דמה, mockup/mock-data.js. הוא עולה ל-Vercel כפרויקט שמחובר ל-repo, וכל דחיפה חדשה מעדכנת את הקישור",
+      "docs": ["https://vercel.com/docs/git"],
+      "safety": "במסכים אין קריאה אמיתית ל-Supabase ואין בהם מפתח. לא מחברים ל-Vercel repo שיש בו קבצים עם סודות, ולפני החיבור בודקים שקובץ ה-env לא נמצא ב-Git",
+      "proof": "curl -s -o /dev/null -w '%{http_code}' $(node -e \"console.log(require('./.blueprint/state.json').where.mockupUrl)\") prints 200, and grep -ri 'supabase' mockup/ returns nothing"
+    },
+    {
       "id": "sb-create-project",
       "stage": 10,
       "intent": "פרויקט Supabase נפתח בחשבון של מי שיהיה הבעלים, באזור הקרוב למשתמשים ובתוכנית שנבחרה לפי מה שהפרויקט צריך, כמו שרשום במפה בשדות plan ו-planReason של השירות supabase",
@@ -34,7 +42,7 @@
       "stage": 10,
       "intent": "חיבור ה-MCP של הפרויקט מוגבל לפרויקט אחד ולקריאה בלבד, ופתוח רק לקבוצות הכלים database, debugging, development ו-docs",
       "docs": ["https://supabase.com/docs/guides/getting-started/mcp", "https://code.claude.com/docs/en/mcp"],
-      "safety": "לפני שממשיכים מריצים claude mcp list. כשמחובר שרת של Supabase שבכתובת שלו אין project_ref, חוץ משרת התיעוד שהסקילים מוסיפים עם features=docs, עוצרים ומבקשים מהסטודנט לכבות אותו לפרויקט הזה דרך /mcp",
+      "safety": "לפני שממשיכים מריצים claude mcp list. כשמחובר שרת של Supabase בלי project_ref, עם ref של פרויקט אחר או בלי read_only, חוץ משרת התיעוד שהסקילים מוסיפים עם features=docs, עוצרים ומבקשים מהסטודנט לכבות אותו לפרויקט הזה דרך /mcp",
       "proof": ".mcp.json holds one supabase server with project_ref=<ref>, read_only=true and features=database,debugging,development,docs, and claude mcp list shows every other Supabase server as docs-only or disabled for this project"
     },
     {

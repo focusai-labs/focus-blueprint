@@ -11,12 +11,19 @@
 ## פרטי המסירה
 
 אבן הדרך: {{milestone_number}}, {{milestone_name}}
+
 מתייחס לבקשה שאושרה: {{approval_ref}}
+
 גרסת המסמך: {{version}}
+
 תאריך המסירה: {{date}}
+
 מה נמסר: {{build_version}}
+
 איפה רואים: {{where_to_see}}
+
 מסר: {{provider_name}}
+
 למי: {{sponsor}}, {{process_owner}}, {{it_contact}}
 
 ## חלק ראשון: דוח המסירה

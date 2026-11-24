@@ -9,6 +9,16 @@
   ],
   "steps": [
     {
+      "id": "ne-mockup",
+      "stage": 7,
+      "intent": "ה-mockup הוא HTML פשוט עם קובץ אחד של נתוני דמה, mockup/mock-data.js, בלי קריאה אמיתית ל-webhook של n8n",
+      "docs": [
+        "https://docs.n8n.io/integrations/builtin/core-nodes/n8n-nodes-base.webhook"
+      ],
+      "safety": "במסכים אין כתובת webhook אמיתית ואין מפתח. מה שמעלים לשיתוף מכיל רק קבצי HTML, CSS ונתוני דמה",
+      "proof": "every file listed in map.screens exists under mockup/, and grep -ri 'webhook' mockup/ returns nothing"
+    },
+    {
       "id": "ne-data",
       "stage": 10,
       "intent": "הנתונים נשמרים במקום אחד שנבחר מראש, בטבלאות הנתונים של n8n או ב-Supabase, והבחירה נרשמת",

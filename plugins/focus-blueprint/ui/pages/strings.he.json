@@ -93,7 +93,7 @@
     "decisions": "החלטות",
     "pending": "שאלות שמחכות לתשובה",
     "map": "המפה",
-    "capabilities": "יכולות: {real} אמיתיות מתוך {total}",
+    "capabilities": "יכולות: {real} אמיתיות מתוך {total}, ו-{mock} עם נתוני דמה",
     "screens": "מסכים",
     "tables": "טבלאות",
     "automations": "אוטומציות",
@@ -107,10 +107,16 @@
     "limits": "מגבלות שכדאי לזכור",
     "close": "איך השלב נסגר",
     "statuses": {
-      "done": "גמור",
-      "done_with_concerns": "גמור עם ספקות",
+      "not_started": "עוד לא התחיל",
+      "in_progress": "בעבודה",
+      "done": "הושלם",
+      "done_with_concerns": "הושלם עם הערות",
       "blocked": "תקוע",
-      "needs_context": "חסר מידע"
+      "needs_context": "מחכה למידע"
+    },
+    "decisions_words": {
+      "now": "עכשיו",
+      "later": "אחר כך"
     },
     "rulings": "יומן ההכרעות",
     "rulingsCols": {

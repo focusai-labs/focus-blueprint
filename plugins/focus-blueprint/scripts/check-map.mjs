@@ -30,14 +30,19 @@ function makeCtx(dir) {
   return { dir, p, exists, read, sha };
 }
 
-// Lines after a marker, up to the next marker comment or markdown heading.
+// Lines after a marker, up to the next marker comment or a markdown heading of the same or a higher level than the
+// section's own heading (the nearest one above the marker). With no heading above, only a level 1 or 2 heading ends it.
+// Deeper headings stay inside, so a section can have parts with headings of their own.
 function sectionLines(text, marker) {
   const ls = lines(text);
   const i = ls.findIndex((l) => l.includes(mk(marker)));
   if (i < 0) return null;
+  const level = (l) => { const m = /^(#{1,6})(?:\s|$)/.exec(l); return m ? m[1].length : 0; };
+  let own = 2;
+  for (let j = i - 1; j >= 0; j--) if (level(ls[j])) { own = level(ls[j]); break; }
   const out = [];
   for (let j = i + 1; j < ls.length; j++) {
-    if (/^\s*<!--\s*[a-z-]+:/.test(ls[j]) || /^#/.test(ls[j])) break;
+    if (/^\s*<!--\s*[a-z-]+:/.test(ls[j]) || (level(ls[j]) && level(ls[j]) <= own)) break;
     out.push(ls[j]);
   }
   return out;
@@ -258,7 +263,7 @@ const rules = [
     }
     if (missing) return;
     const words = sectionLines(text, 'idea:words').join('\n').trim();
-    const summary = sectionLines(text, 'idea:summary').filter((l) => l.trim());
+    const summary = sectionLines(text, 'idea:summary').filter((l) => l.trim() && !/^#{1,6}(\s|$)/.test(l));
     const kind = (l) => (/<!--\s*src:student\s*-->\s*$/.test(l) ? 'student' : /<!--\s*src:claude\s*-->\s*$/.test(l) ? 'claude' : null);
     if (summary.some((l) => !kind(l))) err('13', 'spec/idea.md', 'בסיכום הרעיון יש שורה שלא מסומן עליה אם הסטודנט אמר אותה או ש-Claude השלים אותה.');
     const kinds = new Set(summary.map(kind));

@@ -41,25 +41,33 @@ function actorName(map, a) {
   return { screen: 'מסך', server: 'שרת', automation: 'אוטומציה', ai: 'בינה מלאכותית' }[a] || a;
 }
 
+const code = (id) => `\`${String(id).replace(/`/g, "'")}\``;
+/** An access object or a table for the client: the Hebrew label, then the id in code; the id alone in code when there is no label. */
+function objectName(map, a) {
+  const t = arr(map.tables).find((x) => x && x.name === a.object);
+  const label = (typeof a.label === 'string' && a.label.trim()) || (t && typeof t.label === 'string' && t.label.trim()) || '';
+  return label ? `${label} ${code(a.object)}` : code(a.object);
+}
+
 const none = (what) => `אין עדיין ${what}.`;
 const procRows = (map, fn) => arr(map.processes).flatMap((p) => fn(p));
 
 const RENDER = {
   roles(map) {
-    const rows = arr(map.roles).map((r) => [r.id, r.name, ROLE_KIND[r.kind] || r.kind]);
+    const rows = arr(map.roles).map((r) => [code(r.id), r.name, ROLE_KIND[r.kind] || r.kind]);
     return rows.length ? table(['מזהה', 'תפקיד', 'סוג'], rows) : none('תפקידים');
   },
   permissions(map) {
     const rows = arr(map.access).flatMap((a) => {
-      const exp = a.serviceOnly ? 'שירות בלבד' : a.exposed ? 'חשוף' : 'פנימי';
-      const base = [a.object, ACCESS_KIND[a.kind] || a.kind, exp];
+      const exp = a.serviceOnly ? 'שירות בלבד' : a.exposed ? 'פתוח ל-API' : 'סגור ל-API';
+      const base = [objectName(map, a), ACCESS_KIND[a.kind] || a.kind, exp];
       if (!arr(a.rules).length) return [[...base, '-', '-', '-', '-']];
       return a.rules.map((r) => [...base, roleName(map, r.role), arr(r.ops).map((o) => OP[o] || o), SCOPE[r.scope] || r.scope, r.rowRule]);
     });
     return rows.length ? table(['אובייקט', 'סוג', 'חשיפה', 'תפקיד', 'פעולות', 'היקף', 'כלל'], rows) : none('הרשאות');
   },
   autonomy(map) {
-    const rows = procRows(map, (p) => arr(p.steps).map((s) => [p.name || p.id, s.id, actorName(map, s.actor), STEP_KIND[s.kind] || s.kind, s.text, s.kind === 'human' ? '-' : s.onFailure]));
+    const rows = procRows(map, (p) => arr(p.steps).map((s) => [p.name || p.id, code(s.id), actorName(map, s.actor), STEP_KIND[s.kind] || s.kind, s.text, s.kind === 'human' ? '-' : s.onFailure]));
     return rows.length ? table(['תהליך', 'צעד', 'מי', 'רמה', 'מה קורה', 'אם נכשל'], rows) : none('צעדים');
   },
   screens(map) {
@@ -75,7 +83,7 @@ const RENDER = {
       const order = arr(p.stages).map((x) => x.id);
       const stageName = (id) => (arr(p.stages).find((x) => x.id === id) || {}).name || id;
       return [...arr(p.steps)].sort((a, b) => order.indexOf(a.stage) - order.indexOf(b.stage))
-        .map((s) => [p.name || p.id, stageName(s.stage), s.id, actorName(map, s.actor), s.text, s.onFailure, SRC[s.src] || s.src]);
+        .map((s) => [p.name || p.id, stageName(s.stage), code(s.id), actorName(map, s.actor), s.text, s.onFailure, SRC[s.src] || s.src]);
     });
     return rows.length ? table(['תהליך', 'שלב', 'צעד', 'מי', 'מה קורה', 'אם נכשל', 'מקור'], rows) : none('תהליכים');
   },

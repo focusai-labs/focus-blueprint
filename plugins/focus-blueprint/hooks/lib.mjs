@@ -240,6 +240,56 @@ export function supabaseTarget(project) {
   };
 }
 
+/** The Supabase ref in the map's supabase service, or null while the project has none. Never throws. */
+export function mapSupabaseRef(project) {
+  const map = readJson(path.join(project.dir, '.blueprint', 'map.json')) || {};
+  const svc = (Array.isArray(map.services) ? map.services : []).find((x) => x && x.id === 'supabase') || {};
+  return typeof svc.ref === 'string' && svc.ref.trim() ? svc.ref.trim() : null;
+}
+
+/**
+ * What a configured MCP server says about itself, when it is a Supabase one (hosted URL or the stdio
+ * package), else null: { ref, readOnly, docsOnly }. Never prints or returns a token.
+ */
+export function supabaseServerFacts(def) {
+  if (!def || typeof def !== 'object') return null;
+  const url = typeof def.url === 'string' ? def.url : '';
+  if (/mcp\.supabase\.com/i.test(url)) {
+    let q;
+    try { q = new URL(url).searchParams; } catch { q = new URLSearchParams(url.split('?')[1] || ''); }
+    return {
+      ref: q.get('project_ref') || null,
+      readOnly: /^(true|1)$/i.test(q.get('read_only') || ''),
+      docsOnly: (q.get('features') || '').trim().toLowerCase() === 'docs',
+    };
+  }
+  const args = Array.isArray(def.args) ? def.args.map(String) : [];
+  const cmd = typeof def.command === 'string' ? def.command : '';
+  if (![cmd, ...args].some((a) => a.includes('@supabase/mcp-server-supabase'))) return null;
+  const flag = (name) => {
+    for (let i = 0; i < args.length; i++) {
+      if (args[i] === `--${name}`) return args[i + 1] && !args[i + 1].startsWith('--') ? args[i + 1] : true;
+      if (args[i].startsWith(`--${name}=`)) return args[i].slice(name.length + 3);
+    }
+    return null;
+  };
+  const ro = flag('read-only');
+  const ref = flag('project-ref');
+  const features = flag('features');
+  return {
+    ref: typeof ref === 'string' && ref ? ref : null,
+    readOnly: ro === true || (typeof ro === 'string' && /^(true|1)$/i.test(ro)),
+    docsOnly: typeof features === 'string' && features.trim().toLowerCase() === 'docs',
+  };
+}
+
+/** Should this Supabase server be flagged for a project whose own ref is ownRef (null when none yet)? */
+export function supabaseServerUnsafe(facts, ownRef) {
+  if (!facts || facts.docsOnly) return false;
+  if (!ownRef || !facts.ref || facts.ref !== ownRef) return true;
+  return !facts.readOnly;
+}
+
 /** git with an argument array. Returns { status, stdout }; status is null when git is missing. */
 export function runGit(dir, args) {
   const r = spawnSync('git', args, { cwd: dir, encoding: 'utf8', maxBuffer: 16 * 1024 * 1024 });

@@ -492,6 +492,13 @@ export const commands = {
     const { cmd, report, result } = ctx.flags;
     if (cmd) {
       mode = 'cmd';
+      if (process.platform === 'win32') {
+        // cmd.exe exits 1 for an unknown command, like a failing test, so look the program up first.
+        const first = String(cmd).trim().match(/^"([^"]+)"|^(\S+)/);
+        const prog = first ? (first[1] || first[2]) : '';
+        const known = prog && (fs.existsSync(path.resolve(ctx.resolve(), prog)) || spawnSync('where', [prog], { encoding: 'utf8' }).status === 0);
+        if (!known) fail(`the command did not run (${prog || 'empty command'} was not found); fix the command, nothing recorded`);
+      }
       const r = spawnSync(cmd, { shell: true, timeout: 120000, cwd: ctx.resolve(), encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 });
       if (r.error || r.status === null || r.status === 126 || r.status === 127) fail(`the command did not run (${r.error ? r.error.message : r.status === null ? 'timeout or killed' : 'exit ' + r.status}); fix the command, nothing recorded`);
       exit = r.status;

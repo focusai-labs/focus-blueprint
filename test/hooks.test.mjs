@@ -1,5 +1,6 @@
 // Task 2: the upgraded hooks. Each test feeds the hook's stdin JSON and asserts exit code and output.
 import assert from 'node:assert/strict';
+import { fileURLToPath } from 'node:url';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -99,7 +100,7 @@ test('guard-migration: after launch, destructive SQL is blocked even through app
 });
 
 test('hooks.json routes apply_migration and execute_sql to guard-migration', () => {
-  const cfg = JSON.parse(fs.readFileSync(path.join(path.dirname(new URL(import.meta.url).pathname), '..', 'plugins', 'focus-blueprint', 'hooks', 'hooks.json'), 'utf8'));
+  const cfg = JSON.parse(fs.readFileSync(path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'plugins', 'focus-blueprint', 'hooks', 'hooks.json'), 'utf8'));
   const g = cfg.hooks.PreToolUse.find((x) => x.hooks[0].args[0].endsWith('guard-migration.mjs'));
   const re = new RegExp(`^(?:${g.matcher})$`);
   assert.ok(re.test('mcp__supabase__apply_migration'));

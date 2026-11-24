@@ -1,6 +1,6 @@
 // The read-only file route of the process panel, the clickable map and the new Hebrew strings.
 import { test } from 'node:test';
-import { pathToFileURL } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
@@ -9,7 +9,7 @@ import { PLUGIN, tmpProject } from './helpers.mjs';
 
 const { startUi } = await import(pathToFileURL(path.join(PLUGIN, 'ui', 'server.mjs')).href);
 const { processSvg } = await import(pathToFileURL(path.join(PLUGIN, 'ui', 'process-svg.mjs')).href);
-const here = path.dirname(new URL(import.meta.url).pathname);
+const here = path.dirname(fileURLToPath(import.meta.url));
 const map = JSON.parse(fs.readFileSync(path.join(here, 'fixtures', 'map', 'accountant.json'), 'utf8'));
 const ID = 'monthly-collection';
 

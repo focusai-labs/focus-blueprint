@@ -9,7 +9,7 @@ import { spawn } from 'node:child_process';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { migrateMap } from '../scripts/blueprint-model/map-model.mjs';
-import { answersFile, loadCatalog, nameOfRound, questionsFor, readAnswers, readJsonStrict, unconfirmedIds, writeJsonAtomic, dataPath } from './lib.mjs';
+import { answersFile, loadBank, loadCatalog, nameOfRound, questionsFor, readAnswers, readJsonStrict, ROUND_FILES, screensFor, unconfirmedIds, writeJsonAtomic, dataPath } from './lib.mjs';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const MAX_BODY = 1024 * 1024;
@@ -108,24 +108,75 @@ function listEvals(projectDir) {
   }
 }
 
+const escapeRe = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+/** The pending question ids with their text from the question banks. Round C ids match their {screen} template. */
+function pendingQuestions(state, map) {
+  const ids = Array.isArray(state?.pending) ? state.pending.map(String) : [];
+  if (!ids.length) return [];
+  const exact = new Map();
+  const templates = [];
+  for (const round of Object.keys(ROUND_FILES)) {
+    let bank = [];
+    try { bank = loadBank(round) || []; } catch { /* a damaged bank only leaves the text out */ }
+    for (const q of bank) {
+      const id = String(q.id || '');
+      if (id.includes('{screen}')) templates.push({ round, q, re: new RegExp(`^${id.split('{screen}').map(escapeRe).join('(.+)')}$`) });
+      else exact.set(id, { round, q });
+    }
+  }
+  const screens = screensFor(map);
+  return ids.map((id) => {
+    let hit = exact.get(id);
+    let text = hit ? hit.q.text : null;
+    if (!hit) {
+      for (const tpl of templates) {
+        const m = tpl.re.exec(id);
+        if (!m) continue;
+        const screen = screens.find((s) => s.id === m[1]);
+        hit = tpl;
+        text = String(tpl.q.text || '').split('{screen}').join(screen ? screen.label : m[1]);
+        break;
+      }
+    }
+    return { id, text: text ?? null, block: hit?.q.block ?? null, why: hit?.q.why ?? null, round: hit?.round ?? null };
+  });
+}
+
+/** Persona names from the headings of spec/users.md, such as "### המטייל הקבוע (`walker-regular`)". */
+function personaNames(projectDir) {
+  let text = '';
+  try { text = fs.readFileSync(path.join(projectDir, 'spec', 'users.md'), 'utf8'); } catch { return {}; }
+  const out = {};
+  for (const m of text.matchAll(/^#{2,4}\s+(.+?)\s*\(`([^`]+)`\)\s*$/gm)) out[m[2]] = m[1].trim();
+  return out;
+}
+
 function boardState(projectDir) {
   const p = (...rel) => path.join(projectDir, ...rel);
   const state = readJsonStrict(p('.blueprint', 'state.json'), null);
+  const map = readJsonStrict(p('.blueprint', 'map.json'), null);
   const closes = {};
   for (const [n, st] of Object.entries(state?.stages || {})) if (st && st.close) closes[n] = st.close;
   let stagesDef = [];
   try { stagesDef = readJsonStrict(dataPath('stages.json'), []).map((s) => ({ n: s.n, chapter: s.chapter, name: s.name })); } catch { /* optional */ }
   let lastSession = '';
   try { lastSession = fs.readFileSync(p('.blueprint', 'last-session.md'), 'utf8'); } catch { /* optional */ }
+  // which screen files exist, so the board links only to pages that open
+  const screenFiles = {};
+  for (const s of Array.isArray(map?.screens) ? map.screens : []) if (s && typeof s.file === 'string') screenFiles[s.file] = Boolean(safeProjectFile(projectDir, s.file));
   return {
     state,
-    map: readJsonStrict(p('.blueprint', 'map.json'), null),
+    map,
     evals: listEvals(projectDir),
     changes: readJsonStrict(p('.blueprint', 'changes.json'), []),
     rulings: readJsonStrict(p('.blueprint', 'rulings.json'), []),
     closes,
     stagesDef,
     lastSession,
+    pendingQuestions: pendingQuestions(state, map),
+    personas: personaNames(projectDir),
+    screenFiles,
     git: gitInfo(projectDir),
   };
 }

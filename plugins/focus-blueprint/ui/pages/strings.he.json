@@ -13,7 +13,35 @@
     "loading": "טוען",
     "loadFailed": "הטעינה נכשלה. בדקו שהחלון של Claude Code עדיין פתוח, ורעננו את הדף.",
     "yes": "כן",
-    "no": "לא"
+    "no": "לא",
+    "close": "סגירה",
+    "saveFailedShort": "השמירה נכשלה"
+  },
+  "nav": {
+    "board": "לוח המצב",
+    "process": "מפת התהליכים",
+    "menu": "תפריט",
+    "night": "מצב לילה",
+    "day": "מצב יום",
+    "stage": "שלב {n} · {name}"
+  },
+  "tabs": {
+    "overview": "סקירה",
+    "rulings": "הכרעות",
+    "changes": "שינויים",
+    "capabilities": "יכולות ובדיקות",
+    "closes": "סגירת שלבים",
+    "tech": "פרטים טכניים"
+  },
+  "drawer": {
+    "ruling": "הכרעה",
+    "step": "צעד בתהליך",
+    "timer": "שעון",
+    "case": "מקרה",
+    "screen": "מסך",
+    "capability": "יכולת",
+    "prev": "הצעד הקודם",
+    "next": "הצעד הבא"
   },
   "brainDump": {
     "title": "תיאור הרעיון",
@@ -59,7 +87,15 @@
     "finishAllAnswered": "עניתם על כל השאלות, ואפשר לסיים את הסבב.",
     "noQuestions": "בסבב הזה עוד אין שאלות שמתאימות לפרויקט שלכם.",
     "editLabel": "לשנות",
-    "otherLabel": "אחר"
+    "otherLabel": "אחר",
+    "allQuestions": "כל השאלות",
+    "status": {
+      "answered": "נענתה",
+      "pending": "עוד לא יודעים",
+      "decided": "Claude יחליט",
+      "prefilled": "מחכה לאישור",
+      "empty": "עוד לא נענתה"
+    }
   },
   "catalog": {
     "title": "קטלוג הסגנונות",
@@ -88,11 +124,7 @@
       "4": "להשיק"
     },
     "currentStage": "השלב הנוכחי",
-    "nextStep": "הצעד הבא",
-    "lastSummary": "סיכום השיחה האחרונה",
-    "decisions": "החלטות",
     "pending": "שאלות שמחכות לתשובה",
-    "map": "המפה",
     "capabilities": "יכולות: {real} אמיתיות מתוך {total}, ו-{mock} עם נתוני דמה",
     "screens": "מסכים",
     "tables": "טבלאות",
@@ -104,8 +136,6 @@
     "where": "איפה הכל נמצא",
     "drift": "בדיקת הפערים האחרונה",
     "connections": "חיבורים",
-    "limits": "מגבלות שכדאי לזכור",
-    "close": "איך השלב נסגר",
     "statuses": {
       "not_started": "עוד לא התחיל",
       "in_progress": "בעבודה",
@@ -126,7 +156,7 @@
       "stage": "שלב",
       "reported": "הוצג לכם"
     },
-    "newRuling": "חדש",
+    "newRuling": "חדשה",
     "evidence": "תוצאות הבדיקות",
     "red": "נכשלה לפני הבנייה",
     "green": "עוברת אחרי הבנייה",
@@ -146,14 +176,37 @@
     "clean": "אין שינויים שמחכים ל-commit.",
     "changedFiles": "יש {n} קבצים ששונו",
     "branch": "ענף",
-    "limitsNote": "את המגבלות של כל תוכנית בודקים בתיעוד הרשמי, וכותבים מתי נבדקו.",
     "noClose": "השלב עוד לא נסגר.",
     "noRulings": "עוד אין הכרעות.",
     "noEvidence": "עוד אין תוצאות בדיקה.",
     "noChanges": "עוד אין שינויים.",
     "stagesProgress": "השלבים",
     "capabilitiesEmpty": "עוד אין יכולות במפה.",
-    "processLink": "מפת התהליכים"
+    "waiting": "מחכה לכם",
+    "waitingQuestion": "שאלה שמחכה לתשובה: {text}",
+    "waitingRulingsOne": "הכרעה חדשה אחת ביומן",
+    "waitingRulingsMany": "{n} הכרעות חדשות ביומן",
+    "waitingStuck": "שלב {n} נתקע: {note}",
+    "waitingHalted": "{name} נעצרה אחרי שלושה סבבי תיקון",
+    "lastStop": "איפה עצרנו",
+    "readMore": "להמשך הקריאה",
+    "readLess": "לקצר",
+    "chapterOf": "פרק {n}, {name}",
+    "newOne": "חדשה אחת",
+    "newMany": "{n} חדשות",
+    "allStages": "כל השלבים",
+    "stageN": "שלב {n}",
+    "onlyNew": "רק חדשות",
+    "filterAll": "הכל",
+    "rulingsCount": "{n} הכרעות",
+    "toClose": "לסגירת השלב",
+    "connected": "מחובר",
+    "notConnected": "לא מחובר",
+    "open": "פתיחה",
+    "screensList": "המסכים",
+    "capabilitiesTile": "{real} אמיתיות מתוך {total}",
+    "capabilitiesLabel": "יכולות",
+    "realOne": "אמיתית"
   },
   "process": {
     "title": "מפת התהליכים",
@@ -218,6 +271,9 @@
       "test": "בדיקה",
       "close": "סגירה",
       "none": "אין"
-    }
+    },
+    "switch": "תהליך",
+    "fit": "התאמה לרוחב",
+    "full": "גודל מלא"
   }
 }

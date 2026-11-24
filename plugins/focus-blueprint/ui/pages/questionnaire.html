@@ -5,17 +5,21 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="color-scheme" content="light">
 <title>Focus Blueprint</title>
+<script>try{if(localStorage.getItem('bp-theme')==='dark')document.documentElement.dataset.theme='dark'}catch(e){}</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700&display=swap">
 <link rel="stylesheet" href="ui.css">
 </head>
 <body data-page="questionnaire" data-title="questionnaire.title">
+<header class="appbar" id="appbar"><span id="save" class="save" role="status" aria-live="polite"></span></header>
 <main>
-<header class="top"><h1 id="round-title" data-t="questionnaire.title"></h1><span id="save" class="save" role="status" aria-live="polite"></span></header>
-<div class="row spread small muted"><span id="progress-text"></span></div>
-<div class="progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><i id="progress-bar" style="width:0"></i></div>
-<section id="stage" class="card"></section>
+<div class="q-head">
+<h1 id="round-title" data-t="questionnaire.title"></h1>
+<button id="progress-text" type="button" class="bare qlist-btn" aria-haspopup="dialog" aria-expanded="false" hidden></button>
+</div>
+<div class="progress" role="progressbar" aria-labelledby="progress-text" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><i id="progress-bar" style="width:0"></i></div>
+<section id="stage" class="card q-card"></section>
 <p id="fatal" class="note" hidden role="alert"></p>
 </main>
 <script src="ui.js" defer></script>

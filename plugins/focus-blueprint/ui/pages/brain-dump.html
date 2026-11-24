@@ -5,14 +5,16 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="color-scheme" content="light">
 <title>Focus Blueprint</title>
+<script>try{if(localStorage.getItem('bp-theme')==='dark')document.documentElement.dataset.theme='dark'}catch(e){}</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700&display=swap">
 <link rel="stylesheet" href="ui.css">
 </head>
 <body data-page="brain-dump" data-title="brainDump.title">
+<header class="appbar" id="appbar"><span id="save" class="save" role="status" aria-live="polite"></span></header>
 <main>
-<header class="top"><h1 data-t="brainDump.title"></h1><span id="save" class="save" role="status" aria-live="polite"></span></header>
+<h1 data-t="brainDump.title"></h1>
 <section id="step-why" data-why-first class="card">
   <label for="why" data-t="brainDump.whyQuestion"></label>
   <p class="muted small" data-t="brainDump.whyHint"></p>

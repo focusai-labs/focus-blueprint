@@ -5,14 +5,16 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="color-scheme" content="light">
 <title>Focus Blueprint</title>
+<script>try{if(localStorage.getItem('bp-theme')==='dark')document.documentElement.dataset.theme='dark'}catch(e){}</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700&display=swap">
 <link rel="stylesheet" href="ui.css">
 </head>
 <body data-page="board" data-title="board.title">
+<header class="appbar" id="appbar"></header>
 <main class="wide">
-<div id="board" style="display:flex;flex-direction:column;gap:20px"></div>
+<div id="board"></div>
 <p id="fatal" class="note" hidden role="alert"></p>
 </main>
 <script src="ui.js" defer></script>

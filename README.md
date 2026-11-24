@@ -30,7 +30,7 @@ claude plugin install focus-blueprint@focus-ai
 
 אחרי עדכון של התוסף מריצים `bp update` פעם אחת בכל פרויקט, כדי שהבודק שבתוך הפרויקט יתעדכן לגרסה החדשה.
 
-כדי להתחיל, פותחים תיקייה ריקה ב-Claude Code וכותבים `/blueprint`. בפעם הראשונה הכלי מציג את תנאי השימוש, מתוך `plugins/focus-blueprint/TERMS.md`, ומבקש אישור. בשלב 1 הכלי בודק שיש במחשב Node.js בגרסה 20 ומעלה, Git ו-GitHub CLI מחובר.
+כדי להתחיל, פותחים תיקייה ריקה ב-Claude Code וכותבים `/blueprint`. בפעם הראשונה הכלי מציג את תנאי השימוש, מתוך `plugins/focus-blueprint/TERMS.md`, ומבקש אישור. בשלב 1 הכלי בודק שיש במחשב Node.js בגרסה 22 ומעלה, Git ו-GitHub CLI מחובר.
 
 ## מה מנחה ומה חוסם
 

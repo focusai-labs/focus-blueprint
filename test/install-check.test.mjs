@@ -12,7 +12,7 @@ test('install-check prints the documented JSON shape', () => {
   const out = JSON.parse(r.stdout);
   assert.match(out.node, /^v\d+\.\d+\.\d+/);
   assert.equal(typeof out.nodeOk, 'boolean');
-  assert.equal(out.nodeOk, Number(process.versions.node.split('.')[0]) >= 20);
+  assert.equal(out.nodeOk, Number(process.versions.node.split('.')[0]) >= 22);
   assert.equal(typeof out.git, 'boolean');
   assert.ok([true, false, 'unknown'].includes(out.playwrightMcp));
   assert.ok(out.superpowers && typeof out.superpowers === 'object');

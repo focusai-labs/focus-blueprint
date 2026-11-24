@@ -14,7 +14,7 @@ function run(cmd, args) {
 const major = Number(process.versions.node.split('.')[0]);
 const result = {
   node: `v${process.versions.node}`,
-  nodeOk: major >= 20,
+  nodeOk: major >= 22,
   git: run('git', ['--version']) !== null,
   playwrightMcp: 'unknown',
   superpowers: { installed: 'unknown', version: 'unknown' },

@@ -231,7 +231,7 @@ export const commands = {
     writeJsonAtomic(path.join(dir, '.blueprint', 'changes.json'), []);
     writeJsonAtomic(path.join(dir, '.blueprint', 'verified.json'), {});
     writeJsonAtomic(path.join(dir, '.blueprint', 'rulings.json'), []);
-    for (const f of ['spec', 'mockup', path.join('db', 'migrations'), 'evals', 'n8n', 'docs', path.join('.github', 'workflows'), 'scripts']) fs.mkdirSync(path.join(dir, f), { recursive: true });
+    for (const f of ['spec', 'mockup', 'db', 'evals', 'n8n', 'docs', path.join('.github', 'workflows'), 'scripts']) fs.mkdirSync(path.join(dir, f), { recursive: true });
     for (const [name, to] of [['README-spec.md', 'spec'], ['README-evals.md', 'evals'], ['README-n8n.md', 'n8n']]) {
       const src = path.join(tpl, 'project', name);
       if (fs.existsSync(src)) fs.copyFileSync(src, path.join(dir, to, 'README.md'));

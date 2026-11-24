@@ -26,7 +26,7 @@ main.dir-page { max-width: 1560px; padding: 24px 24px 32px; gap: 20px; }
 .acts { display: flex; flex-wrap: nowrap; gap: 8px; }
 .acts button { padding-inline: 12px; white-space: nowrap; }
 .acts .pick { flex: 1 1 0; min-width: 0; }
-.acts .pick[aria-pressed="true"] { background: var(--accent-soft); color: var(--accent); border: 2px solid var(--accent); }
+.acts .pick[aria-pressed="true"] { background: var(--accent); color: var(--on-accent); border-color: var(--accent); }
 
 /* Narrow window: the caption moves above its row, and the three columns stay side by side. */
 @media (max-width: 760px) {

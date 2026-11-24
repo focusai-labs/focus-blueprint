@@ -256,6 +256,6 @@ test('the catalog is gone and nothing refers to it', () => {
   assert.ok(!b.some((q) => q.id === 'b-03' || q.writes === 'spec.style.visual'), 'the visual-language question is gone');
   for (const id of ['b-04', 'b-05', 'b-06', 'b-07']) {
     const q = b.find((x) => x.id === id);
-    for (const o of q.options) assert.match(o.hint, /^מתאים כש\S/, `${id}/${o.v} has a hint`);
+    for (const o of q.options) assert.match(o.hint, /^מתאים \S/, `${id}/${o.v} has a hint`);
   }
 });

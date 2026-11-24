@@ -71,10 +71,11 @@
 
     // ---------------------------------------------------------------- the enlarged view
     const dlgTitle = h('h2', {});
+    const dlgCap = h('p', { class: 'muted small' });
     const dlgFrame = h('iframe', { sandbox: 'allow-scripts', title: '' });
     const dlgClose = h('button', { type: 'button', class: 'quiet' }, t('directions.close'));
     const dlg = h('dialog', { class: 'big', 'aria-labelledby': 'big-title' },
-      h('div', { class: 'big-head' }, dlgTitle, dlgClose), h('div', { class: 'big-body' }, dlgFrame));
+      h('div', { class: 'big-head' }, h('div', {}, dlgTitle, dlgCap), dlgClose), h('div', { class: 'big-body' }, dlgFrame));
     dlgTitle.id = 'big-title';
     document.body.append(dlg);
     let opener = null;
@@ -86,9 +87,10 @@
       const w = DESIGN[mode].w;
       dlg.style.setProperty('--bw', `${w + 32}px`);
       dlg.style.setProperty('--bwi', String(w));
-      const label = `${s.caption}, ${d.name || t('directions.directionN', { n: d.n })}`;
-      dlgTitle.textContent = label;
-      dlgFrame.title = label;
+      const name = d.name || t('directions.directionN', { n: d.n });
+      dlgTitle.textContent = name;
+      dlgCap.textContent = s.caption;
+      dlgFrame.title = `${s.caption}, ${name}`;
       dlgFrame.src = base + screenUrl(d.n, s.key);
       dlg.showModal();
       dlgClose.focus();
@@ -116,7 +118,7 @@
         if (!own) { row.append(h('div', { class: 'cellbox' }, h('div', { class: 'shot none' }, '—'))); continue; }
         const label = `${s.caption}, ${d.name || t('directions.directionN', { n: d.n })}`;
         const frame = h('iframe', { sandbox: 'allow-scripts', title: label, tabindex: '-1', src: base + screenUrl(d.n, s.key) });
-        const pick = h('button', { type: 'button', class: 'primary pick', 'aria-pressed': 'false', onclick: () => pickDirection(s.key, d.n) }, t('directions.choose'));
+        const pick = h('button', { type: 'button', class: 'pick', 'aria-pressed': 'false', onclick: () => pickDirection(s.key, d.n) }, t('directions.choose'));
         const big = h('button', { type: 'button', class: 'quiet', onclick: (e) => enlarge(d, s, e.currentTarget) }, t('directions.enlarge'));
         const box = h('div', { class: 'cellbox', 'data-screen': s.key, 'data-n': String(d.n), 'data-chosen': 'false' },
           h('div', { class: 'shot' }, frame), h('div', { class: 'acts' }, pick, big));

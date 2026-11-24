@@ -404,6 +404,22 @@ button.qitem:hover:not(:disabled) { background: var(--tint); }
 .st-prefilled { color: var(--accent); }
 .st-empty { color: var(--muted); }
 .q-card { overflow: hidden; }
+/* round C: the screen a question asks about, beside it on a wide window and in the sheet otherwise */
+.q-screen { display: none; flex-direction: column; gap: 12px; min-width: 0; }
+.qs-head { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; }
+.qs-name { font-size: 15px; font-weight: 600; margin-inline-end: auto; }
+.qs-stage { position: relative; margin-inline: auto; overflow: hidden; background: #ffffff; border: 1px solid var(--line-strong); border-radius: 10px; box-shadow: 0 8px 28px rgba(28, 26, 39, .1); color-scheme: light; }
+.qs-stage.is-phone { border-radius: 22px; }
+.qs-device { position: absolute; top: 0; left: 0; transform-origin: 0 0; }
+.qs-device iframe { display: block; width: 100%; height: 100%; border: 0; background: #ffffff; }
+.qs-show { align-self: flex-start; display: inline-flex; align-items: center; gap: 8px; }
+.qs-show .i { width: 16px; height: 16px; }
+@media (min-width: 1100px) {
+  main.has-screen { max-width: 1480px; padding-inline: 24px; display: grid; grid-template-columns: minmax(0, 560px) minmax(0, 1fr); column-gap: 32px; align-items: start; }
+  main.has-screen > * { grid-column: 1; }
+  main.has-screen > .q-screen { display: flex; grid-column: 2; grid-row: 1 / span 8; position: sticky; top: calc(var(--bar-h) + 16px); }
+  .qs-show { display: none; }
+}
 .q-body { display: flex; flex-direction: column; gap: 12px; }
 
 /* ---------------------------------------------------------------- sections */

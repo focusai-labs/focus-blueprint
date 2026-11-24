@@ -95,7 +95,9 @@
       "decided": "Claude יחליט",
       "prefilled": "מחכה לאישור",
       "empty": "עוד לא נענתה"
-    }
+    },
+    "screenShow": "הצגת המסך",
+    "screenOpen": "פתיחה בחלון חדש"
   },
   "board": {
     "title": "לוח המצב",

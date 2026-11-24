@@ -66,11 +66,32 @@ export function expandScreens(templates, screens) {
   return out;
 }
 
-export function screensFor(map, query) {
+/**
+ * The screens round C asks about, as [{ id: slug(file), label: name }].
+ * With a query (comma separated), a value names a map screen by its file name without .html, its
+ * full path, slug(file) or its name; a value that names no screen is left out. Without a query,
+ * only the screens whose file is already built (when projectDir is given), or all while none is.
+ */
+export function screensFor(map, query, projectDir) {
+  const all = (Array.isArray(map?.screens) ? map.screens : []).filter((s) => s && typeof s.file === 'string' && s.file);
+  const entry = (s) => ({ id: slug(s.file), label: s.name || s.file });
+  const base = (f) => path.posix.basename(f).replace(/\.html?$/i, '');
   if (query) {
-    return String(query).split(',').map((v) => v.trim()).filter(Boolean).map((v) => ({ id: slug(v), label: v }));
+    const out = [];
+    for (const v of String(query).split(',').map((x) => x.trim()).filter(Boolean)) {
+      const hit = all.find((s) => base(s.file) === base(v) || s.file === v || slug(s.file) === v || s.name === v);
+      if (hit && !out.some((x) => x.id === slug(hit.file))) out.push(entry(hit));
+    }
+    return out;
   }
-  return (map?.screens || []).map((s) => ({ id: slug(s.file), label: s.name || s.file }));
+  if (projectDir) {
+    const built = all.filter((s) => {
+      if (s.file.startsWith('/') || s.file.split('/').includes('..')) return false;
+      try { return fs.statSync(path.join(projectDir, ...s.file.split('/'))).isFile(); } catch { return false; }
+    });
+    if (built.length) return built.map(entry);
+  }
+  return all.map(entry);
 }
 
 /** Earlier answers by question id, across every round, plus state.context under the c-0N ids. */
@@ -112,7 +133,7 @@ export function questionsFor(projectDir, round, { screens } = {}) {
   const state = readJsonStrict(path.join(projectDir, '.blueprint', 'state.json'), null);
   if (round === 'c') {
     const map = readJsonStrict(path.join(projectDir, '.blueprint', 'map.json'), null);
-    bank = expandScreens(bank, screensFor(map, screens));
+    bank = expandScreens(bank, screensFor(map, screens, projectDir));
   }
   const saved = readAnswers(projectDir, ROUND_FILES[round]).answers || {};
   const values = answerValues(projectDir, state);

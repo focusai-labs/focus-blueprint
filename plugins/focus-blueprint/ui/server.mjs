@@ -204,7 +204,7 @@ function boardState(projectDir) {
   try { lastSession = fs.readFileSync(p('.blueprint', 'last-session.md'), 'utf8'); } catch { /* optional */ }
   // which screen files exist, so the board links only to pages that open
   const screenFiles = {};
-  for (const s of Array.isArray(map?.screens) ? map.screens : []) if (s && typeof s.file === 'string') screenFiles[s.file] = Boolean(safeProjectFile(projectDir, s.file));
+  for (const s of Array.isArray(map?.screens) ? map.screens : []) if (s && typeof s.file === 'string') screenFiles[s.file] = Boolean(safeAssetFile(projectDir, s.file.split('/').map(encodeURIComponent)));
   return {
     state,
     map,

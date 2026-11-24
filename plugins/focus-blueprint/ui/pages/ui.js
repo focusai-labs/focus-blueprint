@@ -433,6 +433,21 @@
     refresh();
   }
 
+  // ---------------------------------------------------------------- screens (pure helpers; test/ui-screens.test.mjs reads this block)
+  /** The slug of lib.mjs: lower case, no extension, anything else becomes a dash. */
+  const screenSlug = (s) => String(s).toLowerCase().replace(/\.[a-z0-9]+$/, '').replace(/[^a-z0-9\u0590-\u05FF]+/g, '-').replace(/^-+|-+$/g, '') || 'screen';
+  /** The map screen a round C question asks about: by its file, the file's own name or the screen's name. */
+  function matchScreen(id, screens) {
+    const want = String(id || '');
+    if (!want) return null;
+    return (Array.isArray(screens) ? screens : []).find((sc) => sc && sc.file && [screenSlug(sc.file), screenSlug(String(sc.file).split('/').pop()), sc.name ? screenSlug(sc.name) : ''].includes(want)) || null;
+  }
+  /** desktop for a desk persona or a manager's screen, otherwise phone. */
+  const defaultDevice = (sc) => (/desk/.test(String((sc && sc.persona) || '')) || /^manager/.test(String((sc && sc.file) || '').split('/').pop()) ? 'desktop' : 'phone');
+  /** A screen opens through files/, so its own styles, scripts and photos resolve; any other file through api/file. */
+  const fileHref = (rel) => (/\.html?$/i.test(String(rel)) ? `files/${String(rel).split('/').map(encodeURIComponent).join('/')}` : `api/file?path=${encodeURIComponent(rel)}`);
+  // ---------------------------------------------------------------- end of the screen helpers
+
   // ---------------------------------------------------------------- questionnaire
   const isPrefill = (a) => Boolean(a) && a.from === 'idea' && a.confirmed === false;
   /** answered | pending | decided | prefilled | empty */
@@ -461,6 +476,93 @@
     let finished = false;
     let current = null; // the editor on screen, so a move saves it first
     let moving = false;
+
+    // ---- round C: the screen each question asks about, live beside the question
+    const mapScreens = list.some((q) => q.screen) ? arr((await api('api/map').catch(() => ({}))).screens) : [];
+    const screenOf = (q) => (q && q.screen ? matchScreen(q.screen, mapScreens) : null);
+    const chosenDevice = new Map(); // file -> phone | desktop, while the page is open
+    const SIZES = { phone: [390, 844], desktop: [1280, 800] };
+    const main = card.closest('main');
+    const wide = window.matchMedia('(min-width: 1100px)');
+    /** A live screen in a frame, scaled to fit, with the device switch and a link out. */
+    function screenView(first, onDevice) {
+      const iframe = h('iframe', { sandbox: 'allow-scripts' });
+      const device = h('div', { class: 'qs-device' }, iframe);
+      const stage = h('div', { class: 'qs-stage' }, device);
+      const btns = {};
+      const seg = h('div', { class: 'seg', role: 'group' }, ['phone', 'desktop'].map((k) => {
+        btns[k] = h('button', { type: 'button', 'aria-pressed': 'false', onclick: () => { chosenDevice.set(view.sc.file, k); view.setDevice(k); if (onDevice) onDevice(k); } }, t(`directions.${k}`));
+        return btns[k];
+      }));
+      const open = h('a', { class: 'link ext small qs-open', target: '_blank', rel: 'noopener' }, t('questionnaire.screenOpen'), icon('ext'));
+      const name = h('h2', { class: 'qs-name' });
+      let box = [0, 0];
+      const view = {
+        sc: null, kind: 'phone', name, seg, open, stage,
+        setScreen(sc) {
+          if (view.sc && view.sc.file === sc.file) return;
+          view.sc = sc;
+          const label = sc.name || sc.file;
+          iframe.src = fileHref(sc.file); // a new screen is the only thing that loads the frame again
+          iframe.title = label; name.textContent = label; open.href = fileHref(sc.file); seg.setAttribute('aria-label', label);
+          view.setDevice(chosenDevice.get(sc.file) || defaultDevice(sc));
+        },
+        setDevice(kind) {
+          view.kind = kind;
+          for (const k of Object.keys(btns)) btns[k].setAttribute('aria-pressed', k === kind ? 'true' : 'false');
+          stage.classList.toggle('is-phone', kind === 'phone');
+          view.fit();
+        },
+        fit(maxW = box[0], maxH = box[1]) {
+          box = [maxW, maxH];
+          if (!(maxW > 0 && maxH > 0)) return;
+          const [w, ht] = SIZES[view.kind];
+          const k = Math.min(1, maxW / w, maxH / ht);
+          device.style.width = `${w}px`; device.style.height = `${ht}px`; device.style.transform = `scale(${k})`;
+          stage.style.width = `${Math.floor(w * k)}px`; stage.style.height = `${Math.floor(ht * k)}px`;
+        },
+      };
+      view.setScreen(first);
+      return view;
+    }
+    // wide windows: a column beside the question card
+    let side = null;
+    function fitSide() {
+      if (!side || side.el.hidden) return;
+      side.view.fit(side.el.clientWidth, window.innerHeight - 56 - 32 - side.head.offsetHeight - 12 - 16);
+    }
+    function syncScreen() {
+      const sc = finished ? null : screenOf(list[idx]);
+      if (!wide.matches || (!sc && !side)) { main.classList.remove('has-screen'); if (side) side.el.hidden = true; return; }
+      if (sc && !side) {
+        const view = screenView(sc, fitSide);
+        const head = h('div', { class: 'qs-head' }, view.name, view.seg, view.open);
+        side = { view, head, el: h('aside', { class: 'q-screen' }, head, view.stage) };
+        main.append(side.el);
+      } else if (sc) side.view.setScreen(sc);
+      side.el.setAttribute('aria-label', side.view.name.textContent);
+      side.el.hidden = false;
+      main.classList.add('has-screen');
+      fitSide();
+    }
+    wide.addEventListener('change', syncScreen);
+    let fitTimer = 0;
+    window.addEventListener('resize', () => { clearTimeout(fitTimer); fitTimer = setTimeout(fitSide, 100); });
+    // narrow windows: the same view in the sheet
+    function openScreenSheet(sc, from) {
+      const fitSheet = () => {
+        const el = drawer.element;
+        if (!el) return;
+        const body = el.querySelector('.drawer-body');
+        const sheet = el.offsetWidth >= document.documentElement.clientWidth - 1;
+        const room = (sheet ? window.innerHeight * 0.85 : window.innerHeight) - el.querySelector('.drawer-head').offsetHeight - row.offsetHeight - 60;
+        view.fit(body.clientWidth - 40, room);
+      };
+      const view = screenView(sc, () => fitSheet());
+      const row = h('div', { class: 'qs-head' }, view.seg, view.open);
+      drawer.open({ title: sc.name || sc.file, body: [row, view.stage], opener: from });
+      requestAnimationFrame(fitSheet);
+    }
 
     async function refetch() {
       const fresh = await api(`api/questions?${qs}`);
@@ -503,6 +605,7 @@
       if (target >= list.length) { idx = list.length; finished = true; renderEnd(); }
       else { idx = Math.max(0, target); finished = false; renderQuestion(); }
       updateProgress();
+      syncScreen();
     }
     async function moveBy(d) {
       if (moving) return;
@@ -529,9 +632,11 @@
     function openList() {
       if (popover.isOpenFor(listBtn)) { popover.close(); return; }
       const groups = [];
+      // round C groups by the screen the questions ask about
+      const groupOf = (q) => (q.screen ? ((screenOf(q) || {}).name || q.screen) : (q.block || ''));
       list.forEach((q, i) => {
         let g = groups[groups.length - 1];
-        if (!g || g.name !== (q.block || '')) { g = { name: q.block || '', items: [] }; groups.push(g); }
+        if (!g || g.name !== groupOf(q)) { g = { name: groupOf(q), items: [] }; groups.push(g); }
         g.items.push({ q, i });
       });
       const content = [h('p', { class: 'q-title', id: 'qlist-title' }, t('questionnaire.allQuestions'))];
@@ -678,9 +783,11 @@
       current = ed;
       const isOpen = q.type === 'open';
       const head = isOpen ? h('label', { for: `f-${q.id}`, class: 'qtext', style: 'font-size:20px' }, q.text) : h('p', { class: 'qtext', style: 'font-weight:600;font-size:20px;line-height:1.4' }, q.text);
+      const sc = screenOf(q);
       root.append(
         h('p', { class: 'muted small' }, q.block || ''),
         head,
+        sc ? h('button', { type: 'button', class: 'quiet qs-show', 'aria-haspopup': 'dialog', onclick: (e) => openScreenSheet(sc, e.currentTarget) }, icon('ext'), t('questionnaire.screenShow')) : null,
         q.why ? h('p', { class: 'muted small' }, `${t('questionnaire.whyLabel')}: ${q.why}`) : null,
         prefillBox, ed.el, status, actions);
       drawPrefill(); markNote(); drawActions();
@@ -712,7 +819,7 @@
 
     if (data.done) { root.append(h('p', { class: 'note' }, t('common.backToClaude'))); }
     if (list.length === 0) { root.append(h('p', {}, t('questionnaire.noQuestions'))); updateProgress(); }
-    else { renderQuestion(); updateProgress(); }
+    else { renderQuestion(); updateProgress(); syncScreen(); }
   }
 
   // ---------------------------------------------------------------- board
@@ -1187,7 +1294,7 @@
             h('div', { class: 'd-main' }, h('span', { class: 'd-name' }, sc.name || sc.file),
               sc.persona ? h('span', { class: 'd-sub' }, personaName(d, sc.persona)) : null,
               sc.journeyStage ? h('span', { class: 'd-sub' }, sc.journeyStage) : null),
-            sc.file && exists[sc.file] !== false ? h('a', { class: 'link ext', href: `api/file?path=${encodeURIComponent(sc.file)}`, target: '_blank', rel: 'noopener' }, t('board.open'), icon('ext')) : null))),
+            sc.file && exists[sc.file] !== false ? h('a', { class: 'link ext', href: fileHref(sc.file), target: '_blank', rel: 'noopener' }, t('board.open'), icon('ext')) : null))),
         };
       }
       if (spec.kind === 'list' && spec.id === 'capabilities' && map.capabilities.length) {
@@ -1314,7 +1421,7 @@
       })));
     }
 
-    const fileLink = (rel) => (rel ? h('a', { class: 'link', href: `api/file?path=${encodeURIComponent(rel)}`, target: '_blank', rel: 'noopener' }, h('bdi', { dir: 'ltr' }, rel)) : null);
+    const fileLink = (rel) => (rel ? h('a', { class: 'link', href: fileHref(rel), target: '_blank', rel: 'noopener' }, h('bdi', { dir: 'ltr' }, rel)) : null);
     const stageName = (p, id) => { const st = (p.stages || []).find((x) => x.id === id); return st ? (st.name || st.id) : (id || ''); };
     const filled = (v) => !(v == null || v === '' || (Array.isArray(v) && !v.length));
     // an empty field is left out
@@ -1479,7 +1586,7 @@
   register('board', board);
   register('process', processPage);
 
-  window.BP = { h, t, api, register, drawer, popover, icon, clear, $, params, base, indicator, autosaver, md: renderMd, bar, motionOK, selectNode };
+  window.BP = { h, t, api, register, drawer, popover, fileHref, icon, clear, $, params, base, indicator, autosaver, md: renderMd, bar, motionOK, selectNode };
 
   let started = false;
   async function start() {

@@ -150,7 +150,7 @@ test('render --file, a missing file and a path outside the project', () => {
   const dir = setup();
   fs.writeFileSync(path.join(dir, 'spec', 'other.md'), '<!-- gen:timers -->\n<!-- /gen:timers -->\n');
   const r = bp(dir, ['render', '--file', 'spec/other.md']);
-  assert.equal(r.code, 0); assert.ok(read(dir, 'spec', 'other.md').includes('אין עדיין טיימרים.'));
+  assert.equal(r.code, 0); assert.ok(read(dir, 'spec', 'other.md').includes('אין עדיין שעונים.'));
   assert.equal(bp(dir, ['render']).code, 1);   // no spec/prd.md
   assert.equal(bp(dir, ['render', '--file', '../x.md']).code, 1);
 });

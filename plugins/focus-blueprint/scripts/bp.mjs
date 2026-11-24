@@ -9,12 +9,13 @@ import { fileURLToPath } from 'node:url';
 import { findProject, profileDir } from '../hooks/lib.mjs';
 import { installGitHook } from './install-git-hook.mjs';
 import { impact, migrateMapInPlace, filesHash, NODE_TYPES } from './blueprint-model/map-model.mjs';
+import { renderDoc } from './render-doc.mjs';
 import { replaceBlocks, stampDocument, extractBlocks } from './blueprint-model/render-blocks.mjs';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const PLUGIN = path.resolve(here, '..');
 const CAP = 3;
-const BOOL_FLAGS = new Set(['unreported', 'baseline']);
+const BOOL_FLAGS = new Set(['unreported', 'baseline', 'client']);
 
 const ROLE_KINDS = ['anon', 'user', 'staff', 'admin', 'service'];
 const ACCESS_KINDS = ['table', 'view', 'function', 'bucket', 'realtime'];
@@ -831,6 +832,27 @@ export const commands = {
     s.connections[name] = { ok: o.ok === 'true', checkedAt: today(), note: o.note || '' };
     ctx.saveState();
     return s.connections[name];
+  },
+
+  // doc html <file.md> [--client]: one self-contained HTML page into docs/rendered/. Read-only on the map.
+  doc(args, ctx) {
+    const [sub, rel] = args;
+    if (sub !== 'html' || !rel) fail('usage: doc html <file.md> [--client]');
+    const root = ctx.resolve();
+    const file = path.resolve(process.cwd(), rel);
+    const rootFile = path.resolve(root, rel);
+    const src = fs.existsSync(file) && !path.relative(root, file).startsWith('..') ? file : rootFile;
+    const inside = path.relative(root, src);
+    if (inside.startsWith('..') || path.isAbsolute(inside)) fail('the file must be inside the project folder');
+    if (!fs.existsSync(src)) fail(`file not found: ${rel}`);
+    const tokensFile = path.join(root, 'design', 'tokens.css');
+    const tokens = fs.existsSync(tokensFile) ? fs.readFileSync(tokensFile, 'utf8') : '';
+    const client = ctx.flags.client === true || ctx.flags.client === 'true';
+    const html = renderDoc(fs.readFileSync(src, 'utf8'), ctx.map(), tokens, { client });
+    const name = path.basename(src).replace(/\.md$/i, '');
+    const outRel = path.join('docs', 'rendered', `${name}${client ? '.client' : ''}.html`);
+    writeTextAtomic(path.join(root, outRel), html);
+    return { file: outRel.split(path.sep).join('/'), version: client ? 'client' : 'review', tokens: Boolean(tokens) };
   },
 };
 

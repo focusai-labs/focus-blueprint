@@ -21,7 +21,7 @@ const OP = { select: 'קריאה', insert: 'הוספה', update: 'עדכון', d
 const SCOPE = { own: 'רק שלו', all: 'הכל', none: 'כלום' };
 const ACCESS_KIND = { table: 'טבלה', view: 'תצוגה', function: 'פונקציה', bucket: 'אחסון קבצים', realtime: 'זמן אמת' };
 const STEP_KIND = { system: 'אוטומטי (ירוק)', human: 'אדם (כתום)', ai: 'בינה מלאכותית (סגול)', external: 'גורם חיצוני (כחול)', rejection: 'דחייה (אדום)' };
-const CASE_KIND = { happy: 'רגיל', problem: 'תקלה', rejection: 'דחייה' };
+const CASE_KIND = { happy: 'תקין', problem: 'תקלה', rejection: 'דחייה' };
 const SRC = { client: 'הלקוח', ours: 'אנחנו', assumed: 'הנחה' };
 const OWNER = { client: 'הלקוח', me: 'אני', org: 'הארגון' };
 
@@ -81,7 +81,7 @@ const RENDER = {
   },
   timers(map) {
     const rows = procRows(map, (p) => arr(p.timers).map((t) => [p.name || p.id, t.text, duration(t.duration), t.onExpire, t.test]));
-    return rows.length ? table(['תהליך', 'טיימר', 'משך', 'כשהזמן נגמר', 'בדיקה'], rows) : none('טיימרים');
+    return rows.length ? table(['תהליך', 'שעון', 'משך', 'כשהזמן נגמר', 'בדיקה'], rows) : none('שעונים');
   },
   cases(map) {
     const rows = procRows(map, (p) => arr(p.cases).map((c) => [p.name || p.id, CASE_KIND[c.kind] || c.kind, c.text, c.eval]));

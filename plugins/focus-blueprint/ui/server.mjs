@@ -8,6 +8,7 @@ import path from 'node:path';
 import { spawn } from 'node:child_process';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
+import { migrateMap } from '../scripts/blueprint-model/map-model.mjs';
 import { answersFile, loadCatalog, nameOfRound, questionsFor, readAnswers, readJsonStrict, unconfirmedIds, writeJsonAtomic, dataPath } from './lib.mjs';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
@@ -56,7 +57,7 @@ export function openBrowser(url) {
  * Start the server. Resolves with the address once it is listening.
  * once: stop shortly after the first saved answer.
  */
-const PAGES = new Set(['brain-dump', 'questionnaire', 'catalog', 'board']);
+const PAGES = new Set(['brain-dump', 'questionnaire', 'catalog', 'board', 'process']);
 const STATIC = { 'ui.css': 'text/css; charset=utf-8', 'ui.js': 'text/javascript; charset=utf-8', 'strings.he.json': 'application/json; charset=utf-8' };
 const NAME = /^[a-z0-9-]{1,40}$/;
 const QID = /^[A-Za-z0-9_.֐-׿-]{1,100}$/;
@@ -219,6 +220,17 @@ export async function startUi({ projectDir, once = false, idleMinutes = 30 } = {
           const name = String(query.get('name') || '');
           if (!NAME.test(name)) return send(res, 400, { error: 'bad name' });
           return send(res, 200, readAnswers(projectDir, name));
+        }
+        if (route === 'process-svg.mjs') return send(res, 200, fs.readFileSync(path.join(here, 'process-svg.mjs'), 'utf8'), 'text/javascript; charset=utf-8');
+        // The map as the pages read it: migrated in memory, never written back.
+        if (route === 'api/map') return send(res, 200, migrateMap(readJsonStrict(path.join(projectDir, '.blueprint', 'map.json'), {})));
+        // One evals/*.md file as plain text, so a case can link to its test.
+        if (route === 'api/eval') {
+          const rel = String(query.get('path') || '').replace(/\\/g, '/');
+          const file = path.resolve(projectDir, rel);
+          const inside = path.relative(path.join(projectDir, 'evals'), file);
+          if (!rel.startsWith('evals/') || !rel.endsWith('.md') || inside.startsWith('..') || path.isAbsolute(inside) || !fs.existsSync(file)) return send(res, 404, { error: 'not found' });
+          return send(res, 200, fs.readFileSync(file, 'utf8'), 'text/plain; charset=utf-8');
         }
         if (route === 'api/state') return send(res, 200, boardState(projectDir));
         if (route === 'api/catalog') return send(res, 200, loadCatalog());

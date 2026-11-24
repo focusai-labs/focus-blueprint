@@ -146,6 +146,56 @@
     "noEvidence": "עוד אין ראיות.",
     "noChanges": "עוד אין שינויים.",
     "stagesProgress": "השלבים",
-    "capabilitiesEmpty": "עוד אין יכולות במפה."
+    "capabilitiesEmpty": "עוד אין יכולות במפה.",
+    "processLink": "מפת התהליכים"
+  },
+  "process": {
+    "title": "מפת התהליכים",
+    "all": "כל התהליכים",
+    "back": "חזרה ללוח",
+    "empty": "המפה מתמלאת בפרק להבין.",
+    "notFound": "אין תהליך כזה במפה.",
+    "stats": "{steps} צעדים, {stages} שלבים",
+    "legend": "מי עושה כל צעד",
+    "sourceLegend": "מי אמר את זה",
+    "kinds": {
+      "system": "אוטומטי",
+      "human": "אדם",
+      "ai": "בינה מלאכותית",
+      "external": "גורם חיצוני",
+      "rejection": "דחייה"
+    },
+    "src": {
+      "client": "הלקוח אמר",
+      "ours": "הצעה שלנו",
+      "assumed": "הנחה"
+    },
+    "srcLetter": {
+      "client": "ל",
+      "ours": "א",
+      "assumed": "?"
+    },
+    "actors": {
+      "screen": "מסך",
+      "server": "שרת",
+      "automation": "אוטומציה",
+      "ai": "בינה מלאכותית",
+      "external": "חיצוני"
+    },
+    "timers": "שעונים",
+    "cases": "מקרים",
+    "noCases": "עוד אין מקרים.",
+    "caseKinds": {
+      "happy": "תקין",
+      "problem": "תקלה",
+      "rejection": "דחייה"
+    },
+    "evalLink": "פתיחת הבדיקה",
+    "noTest": "עוד אין בדיקה",
+    "onExpire": "כשהזמן נגמר",
+    "failure": "אם נכשל",
+    "noSteps": "אין עדיין צעדים",
+    "frameHint": "אפשר לגלול בתוך המסגרת",
+    "open": "פתיחה"
   }
 }

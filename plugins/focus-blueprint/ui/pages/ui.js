@@ -344,7 +344,7 @@
       const map = s.map || { capabilities: [], screens: [], tables: [], automations: [], later: [] };
       const defs = s.stagesDef || [];
       clear(root);
-      root.append(h('header', { class: 'top' }, h('h1', {}, st.project || t('board.title')), h('p', { class: 'muted small' }, t('board.readOnly'))));
+      root.append(h('header', { class: 'top' }, h('h1', {}, st.project || t('board.title')), h('div', { class: 'row' }, h('a', { class: 'link', href: 'process' }, t('board.processLink')), h('p', { class: 'muted small' }, t('board.readOnly')))));
 
       // chapters and stages
       const chapters = [];
@@ -420,8 +420,92 @@
     window.addEventListener('pagehide', () => clearInterval(timer));
   }
 
+  // ---------------------------------------------------------------- process map
+  const KIND_COLORS = { system: ['#e3f4ea', '#18794e'], human: ['#fff1d6', '#b86e00'], ai: ['#efe9ff', '#5b3fd6'], external: ['#e4f0fd', '#1d62b8'], rejection: ['#fdecea', '#b42318'] };
+  const SRC_COLORS = { client: ['#5b3fd6', '#ffffff', '#5b3fd6'], ours: ['#ffffff', '#3d27a3', '#5b3fd6'], assumed: ['#fff4e0', '#8a4b00', '#b86e00'] };
+
+  async function processPage() {
+    const root = $('#process');
+    const tip = $('#tip');
+    const svgMod = await import(base + 'process-svg.mjs');
+    let map;
+    try { map = await api('api/map'); } catch { clear(root); root.append(h('p', { class: 'note' }, t('common.loadFailed'))); return; }
+    const labels = { kinds: strings.he.process.kinds, src: strings.he.process.src, srcLetter: strings.he.process.srcLetter, actors: strings.he.process.actors, timers: t('process.timers'), failure: t('process.failure'), noSteps: t('process.noSteps') };
+    const procs = map.processes || [];
+    const wanted = new URLSearchParams(location.search).get('p');
+
+    const back = (to, text) => h('a', { class: 'link', href: to }, text);
+    const frameSvg = (svg) => { const d = h('div', {}); d.innerHTML = svg; return d.firstChild; };
+
+    // one tooltip for every source bubble, on hover and on keyboard focus
+    function showTip(el) {
+      tip.textContent = el.getAttribute('data-tip') || '';
+      tip.hidden = false;
+      const r = el.getBoundingClientRect();
+      const w = tip.offsetWidth;
+      tip.style.top = `${Math.max(8, r.bottom + 8)}px`;
+      tip.style.left = `${Math.min(window.innerWidth - w - 8, Math.max(8, r.left + r.width / 2 - w / 2))}px`;
+    }
+    const hideTip = () => { tip.hidden = true; };
+    root.addEventListener('mouseover', (e) => { const el = e.target.closest && e.target.closest('[data-tip]'); if (el) showTip(el); });
+    root.addEventListener('mouseout', (e) => { if (e.target.closest && e.target.closest('[data-tip]')) hideTip(); });
+    root.addEventListener('focusin', (e) => { const el = e.target.closest && e.target.closest('[data-tip]'); if (el) showTip(el); });
+    root.addEventListener('focusout', hideTip);
+    window.addEventListener('scroll', hideTip, true);
+
+    const legend = () => h('div', { class: 'legend', 'aria-label': t('process.legend') },
+      Object.keys(KIND_COLORS).map((k) => h('span', { class: 'sw' }, h('i', { style: `background:${KIND_COLORS[k][0]};border-color:${KIND_COLORS[k][1]}` }), t(`process.kinds.${k}`))),
+      h('span', { class: 'muted' }, '|'),
+      Object.keys(SRC_COLORS).map((k) => h('span', { class: 'sw' }, h('i', { class: 'round', style: `background:${SRC_COLORS[k][0]};color:${SRC_COLORS[k][1]};border-color:${SRC_COLORS[k][2]}${k === 'assumed' ? ';border-style:dashed' : ''}` }, t(`process.srcLetter.${k}`)), t(`process.src.${k}`))));
+
+    function listView() {
+      clear(root);
+      root.append(h('header', { class: 'top' }, h('h1', {}, t('process.title')), back('board', t('process.back'))));
+      if (!procs.length) { root.append(h('p', { class: 'note' }, t('process.empty'))); return; }
+      root.append(legend());
+      root.append(h('div', { class: 'proc-grid' }, procs.map((p) => {
+        const st = svgMod.processStats(map, p.id);
+        const mini = h('div', { class: 'mini', 'aria-hidden': 'true' });
+        mini.innerHTML = svgMod.processSvg(map, p.id, { mini: true });
+        return h('a', { class: 'card proc-card', href: `process?p=${encodeURIComponent(p.id)}` }, mini, h('h2', {}, p.name || p.id), h('p', { class: 'muted small' }, t('process.stats', { steps: st.steps, stages: st.stages })));
+      })));
+    }
+
+    function oneView(p) {
+      clear(root);
+      const st = svgMod.processStats(map, p.id);
+      root.append(h('header', { class: 'top' }, h('div', {}, h('h1', {}, p.name || p.id), h('p', { class: 'muted small' }, t('process.stats', { steps: st.steps, stages: st.stages }))),
+        h('div', { class: 'row' }, procs.length > 1 ? back('process', t('process.all')) : null, back('board', t('process.back')))));
+      root.append(legend());
+      const frame = h('div', { class: 'proc-frame', tabindex: '0', role: 'region', 'aria-label': p.name || p.id });
+      frame.append(frameSvg(svgMod.processSvg(map, p.id, { labels })));
+      root.append(frame);
+
+      const timers = p.timers || [];
+      if (timers.length) {
+        root.append(h('section', { class: 'dim' }, h('h2', {}, t('process.timers')), h('div', {}, timers.map((tm) => h('div', { class: 'timer-row' },
+          h('span', { class: 'badge warn' }, svgMod.durationHe(tm.duration)), h('span', {}, tm.text), tm.onExpire ? h('span', { class: 'muted small' }, `${t('process.onExpire')}: ${tm.onExpire}`) : null)))));
+      }
+      const cases = p.cases || [];
+      root.append(h('section', { class: 'dim' }, h('h2', {}, t('process.cases')), cases.length ? h('div', {}, cases.map((c) => h('div', { class: 'case-row' },
+        h('span', { class: `badge ${c.kind === 'happy' ? 'ok' : c.kind === 'rejection' ? 'bad' : 'warn'}` }, t(`process.caseKinds.${c.kind}`) === `process.caseKinds.${c.kind}` ? c.kind : t(`process.caseKinds.${c.kind}`)),
+        h('span', {}, c.text),
+        c.eval ? h('a', { class: 'link small', href: `api/eval?path=${encodeURIComponent(c.eval)}`, target: '_blank', rel: 'noopener' }, t('process.evalLink')) : h('span', { class: 'badge warn' }, t('process.noTest'))))) : h('p', { class: 'muted small' }, t('process.noCases'))));
+    }
+
+    if (wanted) {
+      const p = procs.find((x) => x.id === wanted);
+      if (p) return oneView(p);
+      listView();
+      root.prepend(h('p', { class: 'note' }, t('process.notFound')));
+      return;
+    }
+    if (procs.length === 1) return oneView(procs[0]);
+    listView();
+  }
+
   // ---------------------------------------------------------------- start
-  const pages = { 'brain-dump': brainDump, questionnaire, catalog, board };
+  const pages = { 'brain-dump': brainDump, questionnaire, catalog, board, process: processPage };
   (async () => {
     await loadStrings();
     fillStatic();

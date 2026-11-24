@@ -1,0 +1,35 @@
+{
+  "schema": 2,
+  "capabilities": [{ "id": "monthly-reminder", "name": "תזכורת חודשית", "real": true, "files": [], "reviewedFilesHash": null }],
+  "screens": [{ "file": "upload.html", "name": "העלאת מסמכים" }],
+  "tables": [{ "name": "documents" }],
+  "automations": [], "later": [],
+  "roles": [{ "id": "client", "name": "לקוח", "kind": "user" }, { "id": "staff", "name": "רואת החשבון", "kind": "staff" }],
+  "access": [], "services": [],
+  "processes": [
+    {
+      "id": "monthly-collection", "name": "איסוף המסמכים החודשי",
+      "stages": [{ "id": "remind", "name": "תזכורת" }, { "id": "upload", "name": "העלאה" }, { "id": "check", "name": "בדיקה" }, { "id": "close", "name": "סגירה" }],
+      "actors": ["role:client", "automation", "ai", "role:staff"],
+      "steps": [
+        { "id": "s1", "stage": "remind", "actor": "automation", "kind": "system", "text": "ב-1 לחודש נשלחת תזכורת בוואטסאפ ללקוחות שלא העלו מסמכים", "onFailure": "התראה לרואת החשבון", "next": ["s2"], "src": "client", "source": "שיחת האפיון, 06.08" },
+        { "id": "s2", "stage": "upload", "actor": "role:client", "kind": "human", "text": "הלקוח מצלם ומעלה את הקבלות והחשבוניות", "next": ["s3"], "src": "client", "source": "שיחת האפיון, 06.08" },
+        { "id": "s3", "stage": "check", "actor": "ai", "kind": "ai", "text": "מזהים סוג מסמך, סכום ותאריך, ומסמנים מסמך לא קריא", "onFailure": "המסמך עובר לבדיקה ידנית", "next": ["s4", "s5"], "src": "ours", "source": "הצעה שלנו, לא נאמרה בשיחה" },
+        { "id": "s4", "stage": "check", "actor": "role:staff", "kind": "human", "text": "רואת החשבון מאשרת את המסמכים שסומנו בספק", "next": ["s6"], "src": "assumed", "source": "הנחה שלא אושרה עם הלקוח" },
+        { "id": "s5", "stage": "close", "actor": "role:client", "kind": "rejection", "text": "מסמך נדחה: הלקוח מקבל הודעה ומעלה מחדש", "onFailure": "תזכורת שנייה אחרי 3 ימים", "next": ["s2"], "src": "client", "source": "שיחת האפיון, 06.08" },
+        { "id": "s6", "stage": "close", "actor": "automation", "kind": "system", "text": "החודש נסגר והחבילה נשלחת למערכת החשבונאות", "onFailure": "התראה לרואת החשבון", "next": [], "src": "ours", "source": "" }
+      ],
+      "timers": [{ "id": "t1", "stage": "upload", "text": "מסמך תקף 90 יום", "duration": "P90D", "onExpire": "התראה ללקוח ולרואת החשבון", "test": null }, { "id": "t2", "text": "תזכורת שנייה אחרי שלושה ימים", "duration": "P3D", "onExpire": "הודעה נוספת", "test": null }],
+      "cases": [
+        { "id": "c1", "kind": "happy", "text": "לקוח מעלה שלוש קבלות והכל תקין", "eval": "evals/c1-happy.md" },
+        { "id": "c2", "kind": "problem", "text": "תמונה מטושטשת של קבלה", "eval": null },
+        { "id": "c3", "kind": "rejection", "text": "חשבונית של חודש אחר נדחית", "eval": null }
+      ]
+    },
+    { "id": "onboarding", "name": "קליטת לקוח חדש", "stages": [{ "id": "a", "name": "פתיחה" }, { "id": "b", "name": "אישור" }], "actors": ["role:staff", "automation"],
+      "steps": [
+        { "id": "o1", "stage": "a", "actor": "role:staff", "kind": "human", "text": "פותחים כרטיס לקוח", "next": ["o2"], "src": "client", "source": "" },
+        { "id": "o2", "stage": "b", "actor": "automation", "kind": "system", "text": "נשלח מייל ברוכים הבאים", "onFailure": "התראה", "next": [], "src": "ours", "source": "" } ],
+      "timers": [], "cases": [] }
+  ]
+}

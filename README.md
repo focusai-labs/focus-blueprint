@@ -8,21 +8,21 @@
 
 | מה | השם |
 |---|---|
-| המאגר של ה-marketplace ב-GitHub | `focusai-labs/focus-ai-plugins` |
+| המאגר של ה-marketplace ב-GitHub | `focusai-labs/focus-blueprint` |
 | השם של ה-marketplace | `focus-ai` |
 | התוסף | `focus-blueprint@focus-ai` |
 
 מתקינים מהטרמינל:
 
 ```
-claude plugin marketplace add focusai-labs/focus-ai-plugins
+claude plugin marketplace add focusai-labs/focus-blueprint
 claude plugin install focus-blueprint@focus-ai
 ```
 
 אפשר גם מתוך שיחה ב-Claude Code:
 
 ```
-/plugin marketplace add focusai-labs/focus-ai-plugins
+/plugin marketplace add focusai-labs/focus-blueprint
 /plugin install focus-blueprint@focus-ai
 ```
 

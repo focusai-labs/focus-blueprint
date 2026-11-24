@@ -911,11 +911,19 @@
       if (location.hash.slice(1) !== id) history.replaceState(null, '', `#${id}`);
       runAfterShow(id);
       positionInk();
+      showTab(motionOK() ? 'smooth' : 'auto');
       const b = els.tabs[id];
-      const lr = els.list.getBoundingClientRect(); const br = b.getBoundingClientRect();
-      if (br.left < lr.left || br.right > lr.right) els.list.scrollBy({ left: br.left < lr.left ? br.left - lr.left - 24 : br.right - lr.right + 24, behavior: motionOK() ? 'smooth' : 'auto' });
       if (focusTab) b.focus({ preventScroll: true });
-      if (br.top < 64) b.scrollIntoView({ block: 'nearest' });
+      if (b.getBoundingClientRect().top < 64) b.scrollIntoView({ block: 'nearest' });
+    }
+    // on a phone the strip scrolls: the chosen tab is always fully in view
+    function showTab(behavior) {
+      const b = els.tabs[ui.tab];
+      if (!b || !els.list) return;
+      const lr = els.list.getBoundingClientRect(); const br = b.getBoundingClientRect();
+      const pad = 44; // clear of the faded edge
+      if (br.left < lr.left + pad) els.list.scrollBy({ left: br.left - lr.left - pad, behavior });
+      else if (br.right > lr.right - pad) els.list.scrollBy({ left: br.right - lr.right + pad, behavior });
     }
     function runAfterShow(id) {
       const p = els.panels[id];
@@ -1086,7 +1094,7 @@
       : h('span', { class: 'status off' }, icon('dash'), h('span', { class: 'sr-only' }, t('common.no'))));
     const passNode = (v) => (v === 'pass'
       ? h('span', { class: 'status ok' }, icon('check'), t('board.pass'))
-      : h('span', { class: 'status off' }, icon('alert'), t('board.findings')));
+      : h('span', { class: 'status warn' }, icon('alert'), t('board.findings')));
     const capBadge = (c) => h('span', { class: `badge ${c.status === 'real' ? 'ok' : 'neutral'}` }, icon(c.status === 'real' ? 'check' : 'ring'), c.status === 'real' ? t('board.realOne') : t('board.mock'));
     const haltedBadge = () => h('span', { class: 'badge bad' }, icon('stop'), t('board.halted'));
     const findings = (list) => h('ul', { class: 'findings' }, list.map((f) => h('li', {}, f)));
@@ -1098,7 +1106,7 @@
         : h('p', { class: 'empty' }, t('board.capabilitiesEmpty'))];
       if (map.capabilities.length) {
         const col = (text) => h('th', { scope: 'col' }, text);
-        out.push(h('section', { class: 'card flush' }, h('table', { class: 'table stack' },
+        out.push(h('section', { class: 'card flush' }, h('table', { class: 'table stack caps' },
           h('thead', {}, h('tr', {}, col(t('drawer.capability')), col(t('board.red')), col(t('board.green')), col(t('board.review')))),
           h('tbody', {}, map.capabilities.map((c) => {
             const ev = c.evidence || {};
@@ -1108,7 +1116,7 @@
               ev.adopted
                 ? h('td', { class: 'mark', colspan: '2' }, h('span', { class: 'status ok' }, icon('check'), t('board.baseline')))
                 : [h('td', { class: 'mark' }, h('span', { class: 'cell-label' }, t('board.red')), markNode(ev.red)), h('td', { class: 'mark' }, h('span', { class: 'cell-label' }, t('board.green')), markNode(ev.green))],
-              h('td', { class: 'mark' }, h('span', { class: 'cell-label' }, t('board.review')), c.review ? h('span', { class: 'row', style: 'gap:4px 10px' }, passNode(c.review.spec), passNode(c.review.quality)) : h('span', { class: 'status off' }, icon('dash'))));
+              h('td', { class: 'mark' }, h('span', { class: 'cell-label' }, t('board.review')), c.review ? passNode(c.review.spec === 'pass' && c.review.quality === 'pass' ? 'pass' : 'findings') : h('span', { class: 'status off' }, icon('dash'), h('span', { class: 'sr-only' }, t('common.no')))));
           })))));
       }
       const evals = arr(s.evals);
@@ -1246,6 +1254,7 @@
       const keepFocus = active && root.contains(active) && active.dataset ? active.dataset.key : null;
       const popWas = popover.isOpen() ? ui.popStage : null;
       const focusInPop = Boolean(popover.element && popover.element.contains(active));
+      const stripX = els.list ? els.list.scrollLeft : 0;
       if (popover.isOpen()) popover.close({ returnFocus: false, instant: true });
       els = { tabs: {}, panels: {}, ink: null, wrap: null, list: null };
       const tabs = tabsNode(d);
@@ -1258,6 +1267,8 @@
       for (const id of TABS) fillPanel(id, d);
       runAfterShow(ui.tab);
       positionInk();
+      if (first) showTab('auto');
+      else els.list.scrollLeft = stripX;
       updateFades();
       if (!first) window.scrollTo(0, y);
       if (keepFocus) focusKey(keepFocus);
@@ -1352,6 +1363,34 @@
         ['capability', s.capability], ['tables', (s.tables || []).join(', ')], ['permission', s.permission], ['test', fileLink(s.test)]];
     }
 
+    // The clock chips on a stage header are sized by an estimate of the text width. With Heebo a
+    // label can come out wider and end in an ellipsis: widen such a chip toward the left, and move
+    // the chips after it on the same header by the same amount.
+    function fitClockChips(frame) {
+      let shift = 0; let prevLeft = null;
+      for (const g of frame.querySelectorAll('.bp-timer')) {
+        const pill = g.querySelector('.bp-pill'); const fo = g.querySelector('foreignObject');
+        const box = fo && fo.firstElementChild; const text = box && box.firstElementChild;
+        if (!pill || !text || Number(pill.getAttribute('height')) !== 28) continue;
+        // always from the drawn geometry, so a second pass (after the font loads) starts clean
+        if (!g.dataset.x0) Object.assign(g.dataset, { x0: pill.getAttribute('x'), w0: pill.getAttribute('width'), fx0: fo.getAttribute('x'), fw0: fo.getAttribute('width') });
+        const x = Number(g.dataset.x0); const w = Number(g.dataset.w0); const fw = Number(g.dataset.fw0);
+        if (prevLeft === null || Math.abs(x + w - (prevLeft - 8)) > 0.6) shift = 0;
+        prevLeft = x;
+        const keep = text.getAttribute('style');
+        text.style.display = 'inline-block'; text.style.whiteSpace = 'nowrap'; text.style.maxWidth = 'none'; text.style.webkitLineClamp = 'unset';
+        const need = Math.max(0, text.offsetWidth + 2 - fw);
+        text.setAttribute('style', keep);
+        pill.setAttribute('x', String(x - need)); pill.setAttribute('width', String(w + need));
+        fo.setAttribute('x', String(Number(g.dataset.fx0) - need)); fo.setAttribute('width', String(fw + need));
+        box.style.width = `${fw + need}px`; text.style.maxWidth = `${fw + need}px`;
+        const hit = g.querySelector('.bp-hit');
+        if (hit) { hit.setAttribute('x', String(x - need)); hit.setAttribute('width', String(w + need)); }
+        if (shift) g.setAttribute('transform', `translate(${-shift} 0)`); else g.removeAttribute('transform');
+        shift += need;
+      }
+    }
+
     function oneView(p) {
       drawer.close({ returnFocus: false, instant: true });
       clear(root);
@@ -1372,6 +1411,19 @@
       fitBtn.addEventListener('click', () => setFit(true));
       fullBtn.addEventListener('click', () => setFit(false));
       root.append(h('div', { class: 'frame-box' }, h('div', { class: 'frame-bar' }, h('div', { class: 'seg' }, fitBtn, fullBtn)), frame));
+      fitClockChips(frame);
+      if (document.fonts) {
+        document.fonts.ready.then(() => fitClockChips(frame));
+        document.fonts.addEventListener('loadingdone', () => fitClockChips(frame));
+      }
+      // a clock chip is short: an invisible strip makes it at least 44px tall to tap
+      frame.querySelectorAll('.bp-timer[role=button]').forEach((g) => {
+        const b = g.getBBox();
+        if (b.height >= 44) return;
+        const hit = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+        for (const [k, v] of Object.entries({ x: b.x, y: b.y - (44 - b.height) / 2, width: b.width, height: 44, fill: 'transparent', class: 'bp-hit' })) hit.setAttribute(k, String(v));
+        g.prepend(hit);
+      });
 
       // ---- the drawer: docked on the left, no backdrop, the map stays in view
       function markCurrent(el) {

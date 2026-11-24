@@ -1,0 +1,73 @@
+/* The three directions page. Tokens come from ui.css. */
+main.dir-page { max-width: 1560px; padding: 24px 24px 32px; gap: 20px; }
+.dir-top { align-items: flex-start; }
+.dir-titles { display: flex; flex-direction: column; gap: 4px; }
+
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; background: var(--surface); }
+.seg button { border: 0; border-radius: 0; min-width: 96px; background: transparent; color: var(--muted); font-weight: 500; }
+.seg button[aria-pressed="true"] { background: var(--accent); color: var(--on-accent); font-weight: 600; }
+.seg button:focus-visible { outline-offset: -3px; }
+
+/* One grid for the heads and every row, so the three columns always line up. */
+.board { --s: 1; --dw: 390; --dh: 844; --cap: 150px; --gapx: 24px; display: flex; flex-direction: column; gap: 28px; }
+.board[data-mode="desktop"] { --dw: 1280; --dh: 800; }
+.heads, .shot-row { display: grid; grid-template-columns: var(--cap) repeat(3, minmax(0, 1fr)); column-gap: var(--gapx); align-items: start; }
+.heads { align-items: end; padding-block-end: 4px; border-bottom: 1px solid var(--line); }
+.head h2 { font-size: 22px; }
+.head .dn { font-size: 14px; font-weight: 600; color: var(--accent); }
+.head p { color: var(--muted); font-size: 15px; line-height: 1.5; margin-top: 2px; }
+.cap { font-size: 18px; font-weight: 600; line-height: 1.4; padding-block-start: 6px; }
+
+.cellbox { min-width: 0; display: flex; flex-direction: column; gap: 10px; }
+.shot { position: relative; overflow: hidden; width: 100%; height: calc(var(--dh) * var(--s) * 1px); background: #fff; border: 2px solid var(--line); border-radius: 12px; }
+.shot iframe { position: absolute; top: 0; left: 0; width: calc(var(--dw) * 1px); height: calc(var(--dh) * 1px); border: 0; background: #fff; transform: scale(var(--s)); transform-origin: top left; pointer-events: none; }
+.cellbox[data-chosen="true"] .shot { border-color: var(--accent); }
+.shot.none { display: flex; align-items: center; justify-content: center; color: var(--muted); height: 120px; }
+.acts { display: flex; flex-wrap: nowrap; gap: 8px; }
+.acts button { padding-inline: 12px; white-space: nowrap; }
+.acts .pick { flex: 1 1 0; min-width: 0; }
+.acts .pick[aria-pressed="true"] { background: var(--accent-soft); color: var(--accent); border: 2px solid var(--accent); }
+
+/* Narrow window: the caption moves above its row, and the three columns stay side by side. */
+@media (max-width: 760px) {
+  main.dir-page { padding-inline: 12px; }
+  .board { --gapx: 8px; }
+  .heads, .shot-row { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .heads .spacer { display: none; }
+  .shot-row .cap { grid-column: 1 / -1; padding-block-start: 0; }
+  .head h2 { font-size: 17px; }
+  .head p { font-size: 13px; }
+  .acts button { padding-inline: 6px; font-size: 14px; }
+}
+
+/* The sticky footer. */
+.dir-foot { position: sticky; bottom: 0; z-index: 5; background: var(--surface); border-top: 1px solid var(--line); box-shadow: 0 -6px 20px rgba(29, 26, 43, .08); }
+.dir-foot-in { max-width: 1560px; margin: 0 auto; padding: 12px 24px; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px 24px; align-items: end; }
+.dir-note { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.dir-note label { font-size: 15px; }
+.dir-note textarea { min-height: 60px; max-height: 120px; }
+.dir-finish { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; }
+.dir-finish .save { min-height: 0; }
+.dir-back { grid-column: 1 / -1; font-weight: 600; color: var(--ok); }
+@media (max-width: 760px) {
+  .dir-foot-in { grid-template-columns: 1fr; padding: 8px 12px; }
+  .dir-finish { flex-direction: row; flex-wrap: wrap; align-items: center; }
+}
+
+/* The enlarged view. */
+dialog.big { padding: 0; border: 0; border-radius: 14px; background: var(--surface); color: var(--fg); width: min(var(--bw, 440px), 96vw); height: 92vh; max-width: 96vw; max-height: 92vh; overflow: hidden; }
+dialog.big[open] { display: flex; flex-direction: column; }
+dialog.big::backdrop { background: rgba(29, 26, 43, .55); }
+.big-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 16px; border-bottom: 1px solid var(--line); }
+.big-head h2 { font-size: 18px; }
+.big-body { flex: 1; min-height: 0; display: flex; justify-content: center; background: #ececf2; }
+.big-body iframe { width: min(calc(var(--bwi, 390) * 1px), 100%); height: 100%; border: 0; background: #fff; }
+
+/* Motion: 180ms ease-out on the chosen border and on the dialog. */
+@media (prefers-reduced-motion: no-preference) {
+  .shot { transition: border-color 180ms ease-out; }
+  dialog.big[open] { animation: dir-dlg 180ms ease-out; }
+  dialog.big[open]::backdrop { animation: dir-fade 180ms ease-out; }
+}
+@keyframes dir-dlg { from { opacity: 0; transform: translateY(8px) scale(.98); } to { opacity: 1; transform: none; } }
+@keyframes dir-fade { from { opacity: 0; } to { opacity: 1; } }

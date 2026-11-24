@@ -9,7 +9,7 @@ import { spawn } from 'node:child_process';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { migrateMap } from '../scripts/blueprint-model/map-model.mjs';
-import { answersFile, loadCatalog, nameOfRound, questionsFor, readAnswers, readJsonStrict, unconfirmedIds, writeJsonAtomic, dataPath } from './lib.mjs';
+import { answersFile, directionScreenDocument, directionsSummary, loadDirections, nameOfRound, questionsFor, readAnswers, readJsonStrict, unconfirmedIds, writeJsonAtomic, dataPath } from './lib.mjs';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const MAX_BODY = 1024 * 1024;
@@ -57,8 +57,8 @@ export function openBrowser(url) {
  * Start the server. Resolves with the address once it is listening.
  * once: stop shortly after the first saved answer.
  */
-const PAGES = new Set(['brain-dump', 'questionnaire', 'catalog', 'board', 'process']);
-const STATIC = { 'ui.css': 'text/css; charset=utf-8', 'ui.js': 'text/javascript; charset=utf-8', 'strings.he.json': 'application/json; charset=utf-8' };
+const PAGES = new Set(['brain-dump', 'questionnaire', 'directions', 'board', 'process']);
+const STATIC = { 'ui.css': 'text/css; charset=utf-8', 'ui.js': 'text/javascript; charset=utf-8', 'directions.js': 'text/javascript; charset=utf-8', 'directions.css': 'text/css; charset=utf-8', 'strings.he.json': 'application/json; charset=utf-8' };
 const NAME = /^[a-z0-9-]{1,40}$/;
 const QID = /^[A-Za-z0-9_.֐-׿-]{1,100}$/;
 
@@ -66,6 +66,46 @@ const QID = /^[A-Za-z0-9_.֐-׿-]{1,100}$/;
 const FILE_ROOTS = ['mockup', 'evals', 'docs/rendered'];
 const FILE_TYPES = { '.html': 'text/html; charset=utf-8', '.htm': 'text/html; charset=utf-8', '.md': 'text/plain; charset=utf-8', '.txt': 'text/plain; charset=utf-8' };
 const MAX_FILE = 4 * 1024 * 1024;
+
+// The path-style route files/<relative path>: whatever a mockup page links to (fonts, photos,
+// styles), served from inside the project folder only.
+const ASSET_TYPES = {
+  '.html': 'text/html; charset=utf-8', '.css': 'text/css; charset=utf-8', '.js': 'text/javascript; charset=utf-8',
+  '.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.webp': 'image/webp', '.gif': 'image/gif', '.svg': 'image/svg+xml',
+  '.woff': 'font/woff', '.woff2': 'font/woff2', '.ttf': 'font/ttf', '.otf': 'font/otf',
+};
+const FONT_EXT = new Set(['.woff', '.woff2', '.ttf', '.otf']);
+const MAX_ASSET = 40 * 1024 * 1024;
+
+/** Resolves url path segments (still percent-encoded) to a real file inside the project, or null. */
+export function safeAssetFile(projectDir, rawSegments) {
+  if (!Array.isArray(rawSegments) || !rawSegments.length) return null;
+  const segs = [];
+  for (const raw of rawSegments) {
+    let seg;
+    try { seg = decodeURIComponent(raw); } catch { return null; }
+    if (!seg || seg === '.' || seg === '..' || seg.startsWith('.') || seg === 'node_modules' || /[\\/:\0]/.test(seg)) return null;
+    segs.push(seg);
+  }
+  const ext = path.extname(segs[segs.length - 1]).toLowerCase();
+  const type = Object.hasOwn(ASSET_TYPES, ext) ? ASSET_TYPES[ext] : null;
+  if (!type) return null;
+  try {
+    const realProject = fs.realpathSync(projectDir);
+    let cur = realProject;
+    for (const seg of segs) {
+      cur = path.join(cur, seg);
+      if (fs.lstatSync(cur).isSymbolicLink()) return null;
+    }
+    const rel = path.relative(realProject, cur);
+    if (!rel || rel.startsWith('..') || path.isAbsolute(rel)) return null;
+    const st = fs.statSync(cur);
+    if (!st.isFile() || st.size > MAX_ASSET) return null;
+    return { file: cur, type, ext };
+  } catch {
+    return null;
+  }
+}
 
 /** Resolves a project-relative path to a real file under an allowed folder, or null. */
 export function safeProjectFile(projectDir, relRaw) {
@@ -130,10 +170,41 @@ function boardState(projectDir) {
   };
 }
 
+/** The page of the three directions saves exactly: screen:<key> = a direction number, and note = free text. */
+function saveDirectionAnswer(projectDir, data) {
+  const id = String(data.id || '');
+  const now = new Date().toISOString();
+  const file = answersFile(projectDir, 'directions');
+  if (id === 'note') {
+    if (typeof data.value !== 'string' || data.value.length > 5000) return { status: 400, body: { error: 'bad note' } };
+    const doc = readAnswers(projectDir, 'directions');
+    doc.answers = doc.answers && typeof doc.answers === 'object' ? doc.answers : {};
+    doc.answers.note = { value: data.value, decidedBy: 'user', at: now };
+    doc.savedAt = now;
+    writeJsonAtomic(file, doc);
+    return { status: 200, body: { ok: true } };
+  }
+  const m = /^screen:([A-Za-z0-9_-]{1,40})$/.exec(id);
+  if (!m) return { status: 400, body: { error: 'bad id' } };
+  const dirs = loadDirections(projectDir);
+  const key = m[1];
+  if (!dirs.some((d) => d.screens.some((s) => s.key === key))) return { status: 400, body: { error: 'unknown screen' } };
+  const pick = data.value;
+  const chosen = dirs.find((d) => d.n === pick);
+  if (!Number.isInteger(pick) || !chosen || !chosen.screens.some((s) => s.key === key)) return { status: 400, body: { error: 'bad direction' } };
+  const doc = readAnswers(projectDir, 'directions');
+  doc.answers = doc.answers && typeof doc.answers === 'object' ? doc.answers : {};
+  doc.answers[id] = { value: pick, decidedBy: 'user', at: now };
+  doc.savedAt = now;
+  writeJsonAtomic(file, doc);
+  return { status: 200, body: { ok: true } };
+}
+
 /** Merge one answer into its file. Returns { status, body }. */
 function saveAnswer(projectDir, data) {
   const name = String(data.name || '');
   if (!NAME.test(name)) return { status: 400, body: { error: 'bad name' } };
+  if (name === 'directions') return saveDirectionAnswer(projectDir, data);
   const file = answersFile(projectDir, name);
   const doc = readAnswers(projectDir, name);
   const now = new Date().toISOString();
@@ -178,6 +249,11 @@ function markDone(projectDir, data) {
   if (name === 'brain-dump') {
     const why = doc.answers?.why?.value;
     if (typeof why !== 'string' || !why.trim()) return { status: 400, body: { error: 'why missing' } };
+  }
+  if (name === 'directions') {
+    const keys = new Set(loadDirections(projectDir).flatMap((d) => d.screens.map((s) => s.key)));
+    const missing = [...keys].filter((k) => !Number.isInteger(doc.answers?.[`screen:${k}`]?.value));
+    if (!keys.size || missing.length) return { status: 409, body: { error: 'missing choices', screens: missing } };
   }
   const ids = unconfirmedIds(doc);
   if (ids.length) return { status: 409, body: { error: 'unconfirmed prefill', ids } };
@@ -268,7 +344,24 @@ export async function startUi({ projectDir, once = false, idleMinutes = 30 } = {
           return res.end(fs.readFileSync(hit.file));
         }
         if (route === 'api/state') return send(res, 200, boardState(projectDir));
-        if (route === 'api/catalog') return send(res, 200, loadCatalog());
+        if (route === 'api/directions') return send(res, 200, directionsSummary(projectDir));
+        if (route === 'api/direction-screen') {
+          const n = Number(query.get('n'));
+          const key = String(query.get('screen') || '');
+          const doc = Number.isInteger(n) && /^[A-Za-z0-9_-]{1,40}$/.test(key) ? directionScreenDocument(projectDir, n, key, `/${token}/files/mockup/`) : null;
+          if (!doc) return send(res, 404, { error: 'not found' });
+          return send(res, 200, doc, 'text/html; charset=utf-8');
+        }
+        if (parts[1] === 'files' && parts.length > 2) {
+          const hit = safeAssetFile(projectDir, parts.slice(2));
+          if (!hit) return send(res, 404, { error: 'not found' });
+          const headers = { 'Content-Type': hit.type, 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff', 'Referrer-Policy': 'no-referrer' };
+          // The screens sit in sandboxed frames with an opaque origin, so fonts need an explicit allowance.
+          if (FONT_EXT.has(hit.ext)) headers['Access-Control-Allow-Origin'] = '*';
+          if (hit.ext === '.html' || hit.ext === '.svg') headers['Content-Security-Policy'] = "sandbox allow-scripts; default-src * data: blob: 'unsafe-inline' 'unsafe-eval'";
+          res.writeHead(200, headers);
+          return res.end(fs.readFileSync(hit.file));
+        }
       }
 
       if (req.method === 'POST' && (route === 'api/answer' || route === 'api/done')) {

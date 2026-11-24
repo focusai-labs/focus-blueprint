@@ -52,29 +52,13 @@ ans('round-a', {
   'a-03': { value: 'אוהבים את הגיליון, שונאים את המרדף', decidedBy: null, from: 'idea', quote: 'הגיליון נוח אבל המרדף אחרי הלקוחות הורג אותי', confirmed: false },
 });
 ans('brain-dump', { why: { value: 'כי כל חודש מאבדים ימים', decidedBy: 'user' } }, { answer: 'אני רואה חשבון ורודף אחרי לקוחות בוואטסאפ כל חודש' });
-ans('round-b', { 'b-03': { value: 'glass', decidedBy: 'user', confirmed: true } });
-
-// A stub catalog, until the real one lands.
-const cat = path.join(dir, '.data');
-fs.mkdirSync(path.join(cat, 'catalog', 'examples'), { recursive: true });
-const dims = {
-  visual: [['minimal', 'מינימלית', 'Minimal'], ['glass', 'זכוכית', 'Glass'], ['bento', 'בנטו', 'Bento']],
-  nav: [['top-bar', 'סרגל עליון', 'Top bar'], ['side-bar', 'תפריט צד', 'Side bar']],
-  structure: [['single-page', 'דף אחד', 'Single page'], ['multi-page', 'כמה דפים', 'Multi page']],
-  login: [['centered-card', 'כרטיס במרכז', 'Centered card']],
-  density: [['comfortable', 'מרווח', 'Comfortable'], ['compact', 'צפוף', 'Compact']],
-};
-for (const [dim, items] of Object.entries(dims)) {
-  fs.writeFileSync(path.join(cat, 'catalog', `${dim}.json`), JSON.stringify(items.map(([id, he, en]) => ({ id, name_he: he, term_en: en, example: `${id}.html`, fits: 'יש הרבה תוכן לקרוא', less: 'צריך הרבה פעולות מהירות', default_for: [] }))));
-  for (const [id, he] of items) fs.writeFileSync(path.join(cat, 'catalog', 'examples', `${id}.html`), `<!doctype html><html lang="he" dir="rtl"><body style="font-family:sans-serif;margin:0;padding:16px;background:#f4f1ff"><h3>${he}</h3><div style="background:#fff;padding:12px;border-radius:12px">דוגמה חיה</div></body></html>`);
-}
-process.env.FOCUS_BLUEPRINT_DATA = cat;
+ans('round-b', { 'b-04': { value: 'side-bar', decidedBy: 'user', confirmed: true } });
 
 const { startUi } = await import(pathToFileURL(path.join(PLUGIN, 'ui', 'server.mjs')).href);
 const ui = await startUi({ projectDir: dir });
 const pages = {
   'brain-dump': 'brain-dump', 'brain-dump-why': 'brain-dump', 'questionnaire-a': 'questionnaire?round=a', 'questionnaire-b': 'questionnaire?round=b',
-  'questionnaire-c': 'questionnaire?round=c', catalog: 'catalog', board: 'board',
+  'questionnaire-c': 'questionnaire?round=c', board: 'board',
 };
 const problems = [];
 const browser = await chromium.launch();
@@ -100,16 +84,8 @@ try {
       if (dir_ !== 'rtl/he') problems.push(`${name}@${tag}: dir/lang ${dir_}`);
       const small = await page.evaluate(() => [...document.querySelectorAll('button, input:not([type=hidden]), textarea')].filter((e) => { const r = e.getBoundingClientRect(); return r.width > 0 && (r.width < 24 || r.height < 24); }).length);
       if (small) problems.push(`${name}@${tag}: ${small} controls under 24x24`);
-      const raw = await page.evaluate(() => /\b(brainDump|questionnaire|common|board|catalog)\.[a-zA-Z]+/.test(document.body.innerText));
+      const raw = await page.evaluate(() => /\b(brainDump|questionnaire|common|board)\.[a-zA-Z]+/.test(document.body.innerText));
       if (raw) problems.push(`${name}@${tag}: an untranslated key is visible`);
-      if (name === 'catalog') {
-        const empty = await page.evaluate(() => [...document.querySelectorAll('iframe')].filter((f) => !f.srcdoc).length);
-        if (empty) problems.push(`catalog@${tag}: ${empty} empty example frames`);
-        await page.locator('iframe').last().scrollIntoViewIfNeeded();
-        await page.waitForTimeout(400);
-        const inner = await page.locator('iframe').last().contentFrame().locator('body').innerText();
-        if (!inner.trim()) problems.push(`catalog@${tag}: last example frame renders empty`);
-      }
       await page.evaluate(async () => { for (let y = 0; y < document.body.scrollHeight; y += 400) { window.scrollTo(0, y); await new Promise((r) => setTimeout(r, 60)); } window.scrollTo(0, 0); });
       await page.waitForTimeout(300);
       await page.screenshot({ path: path.join(here, `${name}-${tag}.png`), fullPage: true });

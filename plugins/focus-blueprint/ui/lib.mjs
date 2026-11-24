@@ -10,7 +10,6 @@ export const PLUGIN = path.resolve(here, '..');
 export { writeJsonAtomic };
 
 export const ROUND_FILES = { context: 'context', a: 'round-a', b: 'round-b', c: 'round-c', d: 'round-d' };
-export const CATALOG_DIMENSIONS = ['visual', 'nav', 'structure', 'login', 'density'];
 
 /** A missing file gives the fallback; anything else unreadable throws, so a damaged file is never overwritten. */
 export function readJsonStrict(file, fallback) {
@@ -139,19 +138,103 @@ export function progress(projectDir, name) {
   return { answered: Object.entries(doc.answers || {}).filter(([id, a]) => (!qs || ids.has(id)) && isAnswered(a)).length, total, done: doc.done === true };
 }
 
-/** Catalog files with each example's HTML embedded, ready for an iframe srcdoc. */
-export function loadCatalog() {
-  const out = {};
-  for (const dim of CATALOG_DIMENSIONS) {
-    const list = readJsonStrict(dataPath('catalog', `${dim}.json`), []);
-    out[dim] = list.map((e) => {
-      let html = '';
-      const name = path.basename(String(e.example || ''));
-      if (name) {
-        try { html = fs.readFileSync(dataPath('catalog', 'examples', name), 'utf8'); } catch { /* no example yet */ }
-      }
-      return { ...e, html };
-    });
+// ---------------------------------------------------------------- the three directions
+// The project's mockup/_direction-1..3.html files. See the contract in the docs of
+// the design-system stage: style blocks in the head, <svg id="symbols">, an h1
+// .dir-name, a p .dir-move, and screens between <!-- screen:key --> markers.
+
+export const DIRECTION_NUMBERS = [1, 2, 3];
+const SCREEN_KEY = /^[A-Za-z0-9_-]{1,40}$/;
+
+const decodeEntities = (s) => s.replace(/&quot;/g, '"').replace(/&#39;|&apos;/g, "'").replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&');
+const plainText = (html) => decodeEntities(String(html || '').replace(/<[^>]*>/g, ' ')).replace(/\s+/g, ' ').trim();
+
+let mainScreenText = null;
+function mainScreenCaption() {
+  if (mainScreenText) return mainScreenText;
+  try { mainScreenText = JSON.parse(fs.readFileSync(path.join(here, 'pages', 'strings.he.json'), 'utf8')).directions.mainScreen; } catch { /* fall back */ }
+  if (typeof mainScreenText !== 'string') mainScreenText = 'המסך המרכזי';
+  return mainScreenText;
+}
+
+export function directionFile(projectDir, n) {
+  return path.join(projectDir, 'mockup', `_direction-${n}.html`);
+}
+
+/** Parse one direction file's text. Pure: no file access. */
+export function parseDirectionHtml(html, n) {
+  const src = String(html);
+  const head = (/<head[^>]*>([\s\S]*?)<\/head>/i.exec(src) || [])[1] || '';
+  const bodyInner = (/<body[^>]*>([\s\S]*?)<\/body>/i.exec(src) || [])[1] ?? src;
+  const symbolsMatch = /<svg\b[^>]*\bid=["']symbols["'][^>]*>[\s\S]*?<\/svg>/i.exec(bodyInner);
+  const symbols = symbolsMatch ? symbolsMatch[0] : '';
+  const nameHtml = (/<h1\b[^>]*\bclass=["'][^"']*\bdir-name\b[^"']*["'][^>]*>([\s\S]*?)<\/h1>/i.exec(bodyInner) || [])[1];
+  const moveHtml = (/<p\b[^>]*\bclass=["'][^"']*\bdir-move\b[^"']*["'][^>]*>([\s\S]*?)<\/p>/i.exec(bodyInner) || [])[1];
+  const titleHtml = (/<title[^>]*>([\s\S]*?)<\/title>/i.exec(head) || [])[1];
+  // Direction rules are scoped to a class such as "d1" on the element that holds the screens.
+  const wrapMatch = /\bclass=["']phones\s+([^"']+)["']/.exec(bodyInner);
+  const wrapClass = wrapMatch ? wrapMatch[1].trim() : '';
+  const captionOf = (mainHtml) => {
+    const m = /<main\b[^>]*\bdata-caption=(?:"([^"]*)"|'([^']*)')/i.exec(mainHtml || '');
+    return m ? plainText(m[1] ?? m[2]) : '';
+  };
+
+  const screens = [];
+  const re = /<!--\s*screen:([A-Za-z0-9_-]+)\s*-->([\s\S]*?)<!--\s*\/screen:\1\s*-->/g;
+  let m;
+  while ((m = re.exec(bodyInner))) {
+    const key = m[1];
+    if (!SCREEN_KEY.test(key) || screens.some((s) => s.key === key)) continue;
+    const mainM = /<main\b[\s\S]*<\/main>/i.exec(m[2]);
+    const block = mainM ? mainM[0] : m[2].trim();
+    screens.push({ key, caption: captionOf(block) || key, html: block });
+  }
+  if (!screens.length) {
+    const block = bodyInner.replace(symbolsMatch ? symbolsMatch[0] : '', '').trim();
+    screens.push({ key: 'main', caption: captionOf(block) || mainScreenCaption(), html: block });
+  }
+  return {
+    n,
+    name: plainText(nameHtml) || plainText(titleHtml) || '',
+    move: plainText(moveHtml),
+    head,
+    symbols,
+    wrapClass,
+    screens,
+  };
+}
+
+/** Every direction file that exists, parsed. Missing or unreadable files are skipped. */
+export function loadDirections(projectDir) {
+  const out = [];
+  for (const n of DIRECTION_NUMBERS) {
+    let html;
+    try { html = fs.readFileSync(directionFile(projectDir, n), 'utf8'); } catch { continue; }
+    out.push(parseDirectionHtml(html, n));
   }
   return out;
+}
+
+/** The shape of api/directions. */
+export function directionsSummary(projectDir) {
+  const dirs = loadDirections(projectDir);
+  const screens = [];
+  for (const d of dirs) for (const s of d.screens) if (!screens.some((x) => x.key === s.key)) screens.push({ key: s.key, caption: s.caption });
+  return { directions: dirs.map((d) => ({ n: d.n, name: d.name, move: d.move, screens: d.screens.map((s) => ({ key: s.key, caption: s.caption })) })), screens };
+}
+
+const escAttr = (s) => String(s).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
+
+/** One screen of one direction as a full document, or null. baseHref: absolute path of the mockup folder on this server. */
+export function directionScreenDocument(projectDir, n, key, baseHref) {
+  const d = loadDirections(projectDir).find((x) => x.n === n);
+  const s = d && d.screens.find((x) => x.key === key);
+  if (!s) return null;
+  const keep = d.head
+    .replace(/<title[^>]*>[\s\S]*?<\/title>/gi, '')
+    .replace(/<meta\b[^>]*\bcharset=[^>]*>/gi, '')
+    .replace(/<meta\b[^>]*\bname=["']viewport["'][^>]*>/gi, '')
+    .replace(/<base\b[^>]*>/gi, '');
+  const body = d.wrapClass ? `<div class="${escAttr(d.wrapClass)}">\n${s.html}\n</div>` : s.html;
+  return `<!doctype html><html lang="he" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><base href="${escAttr(baseHref)}"><title>${escAttr(s.caption)}</title>${keep}</head><body>${d.symbols}${body}</body></html>`;
 }

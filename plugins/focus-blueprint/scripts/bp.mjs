@@ -15,6 +15,7 @@ import { saveAnswer } from '../ui/server.mjs';
 import { renderDoc } from './render-doc.mjs';
 import { buildPrototype, scanPrototype } from './prototype.mjs';
 import { addNote, doneNote, listNotes } from './prototype-notes.mjs';
+import { mcpList } from './mcp-list.mjs';
 import { replaceBlocks, stampDocument, extractBlocks } from './blueprint-model/render-blocks.mjs';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
@@ -942,6 +943,12 @@ export const commands = {
     s.connections[name] = { ok: o.ok === 'true', checkedAt: today(), note: o.note || '' };
     ctx.saveState();
     return s.connections[name];
+  },
+
+  // mcp list: the MCP servers this project can see. Only name, scope, transport, connected and Supabase booleans are printed.
+  mcp(args, ctx) {
+    if (args[0] !== 'list') fail('usage: mcp list');
+    return mcpList({ dir: ctx.resolve() });
   },
 
   // prototype build [--test] | scan [--test]: the built screens joined into one self-contained file, mockup/prototype.html

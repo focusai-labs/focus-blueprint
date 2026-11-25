@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{TITLE}}</title>
+<style>{{TOKENS}}</style>
+<style>{{CSS}}</style>
+</head>
+<body>
+<header class="bp-bar" id="bp-bar">
+  <strong class="bp-project" id="bp-project"></strong>
+  <span class="bp-banner" id="bp-banner"></span>
+  <span class="bp-spacer"></span>
+  <div class="bp-device" id="bp-device" role="group">
+    <button type="button" id="bp-phone" aria-pressed="false"></button>
+    <button type="button" id="bp-computer" aria-pressed="false"></button>
+  </div>
+  <button type="button" class="bp-mapbtn" id="bp-map-btn"></button>
+</header>
+<main class="bp-stage" id="bp-stage" data-device="computer">
+  <div class="bp-frame-wrap" id="bp-frame-wrap"><iframe id="bp-frame"></iframe></div>
+  <section class="bp-placeholder" id="bp-placeholder" hidden>
+    <h2 id="bp-ph-title"></h2>
+    <p id="bp-ph-text"></p>
+    <button type="button" id="bp-ph-back"></button>
+  </section>
+</main>
+<dialog class="bp-dialog" id="bp-dialog" aria-labelledby="bp-dialog-title">
+  <div class="bp-dialog-head"><h2 id="bp-dialog-title"></h2><button type="button" id="bp-dialog-close"></button></div>
+  <p class="bp-counter" id="bp-counter"></p>
+  <div id="bp-groups"></div>
+</dialog>
+<div class="bp-toast" id="bp-toast" role="status" aria-live="polite"></div>
+<script type="application/json" id="bp-screens">{{SCREENS}}</script>
+<script type="application/json" id="bp-data">{{DATA}}</script>
+<script>{{BOOT}}</script>
+<script>{{JS}}</script>
+</body>
+</html>

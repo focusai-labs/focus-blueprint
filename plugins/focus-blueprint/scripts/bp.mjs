@@ -13,12 +13,13 @@ import { impact, migrateMapInPlace, filesHash, NODE_TYPES } from './blueprint-mo
 import { questionsFor, ROUND_FILES } from '../ui/lib.mjs';
 import { saveAnswer } from '../ui/server.mjs';
 import { renderDoc } from './render-doc.mjs';
+import { buildPrototype, scanPrototype } from './prototype.mjs';
 import { replaceBlocks, stampDocument, extractBlocks } from './blueprint-model/render-blocks.mjs';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const PLUGIN = path.resolve(here, '..');
 const CAP = 3;
-const BOOL_FLAGS = new Set(['unreported', 'baseline', 'client']);
+const BOOL_FLAGS = new Set(['unreported', 'baseline', 'client', 'test']);
 
 const ROLE_KINDS = ['anon', 'user', 'staff', 'admin', 'service'];
 /** The branch a stage works on: stage-02, two digits, like the skill folders. */
@@ -901,6 +902,28 @@ export const commands = {
     s.connections[name] = { ok: o.ok === 'true', checkedAt: today(), note: o.note || '' };
     ctx.saveState();
     return s.connections[name];
+  },
+
+  // prototype build [--test] | scan [--test]: the built screens joined into one self-contained file, mockup/prototype.html
+  // (--test: mockup/prototype-test.html, without the page map and the device toggle, for a test with a real person).
+  prototype(args, ctx) {
+    const [sub] = args;
+    if (!['build', 'scan'].includes(sub)) fail('usage: prototype build [--test] | prototype scan [--test]');
+    const root = ctx.resolve();
+    const test = ctx.flags.test === true;
+    const rel = test ? 'mockup/prototype-test.html' : 'mockup/prototype.html';
+    if (sub === 'build') {
+      const { html, report } = buildPrototype(root, { test });
+      writeTextAtomic(path.join(root, rel), html);
+      const out = { file: rel, total: report.total, built: report.built, missing: report.missing, bytes: report.bytes };
+      if (report.external.length) out.external = report.external;
+      if (report.unresolved.length) out.unresolved = report.unresolved;
+      if (report.tooLarge) { out.tooLarge = true; out.largest = report.largest; }
+      return out;
+    }
+    const file = path.join(root, rel);
+    if (!fs.existsSync(file)) fail(`${rel} does not exist. Run: prototype build${test ? ' --test' : ''}`);
+    return scanPrototype(fs.readFileSync(file, 'utf8'));
   },
 
   // doc html <file.md> [--client]: one self-contained HTML page into docs/rendered/. Read-only on the map.

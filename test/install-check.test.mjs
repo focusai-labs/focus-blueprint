@@ -14,9 +14,9 @@ test('install-check prints the documented JSON shape', () => {
   assert.equal(typeof out.nodeOk, 'boolean');
   assert.equal(out.nodeOk, Number(process.versions.node.split('.')[0]) >= 22);
   assert.equal(typeof out.git, 'boolean');
-  assert.ok([true, false, 'unknown'].includes(out.playwrightMcp));
+  assert.ok([true, false, null].includes(out.playwrightMcp));
   assert.ok(out.superpowers && typeof out.superpowers === 'object');
-  assert.ok([true, false, 'unknown'].includes(out.superpowers.installed));
+  assert.ok([true, false, null].includes(out.superpowers.installed));
   assert.ok(out.superpowers.version === null || typeof out.superpowers.version === 'string');
 });
 
@@ -29,8 +29,8 @@ test('install-check reports unknown, not a hang, when claude is missing', () => 
   fs.rmSync(bin, { recursive: true, force: true });
   assert.equal(r.status, 0, r.stderr);
   const out = JSON.parse(r.stdout);
-  assert.equal(out.playwrightMcp, 'unknown');
-  assert.equal(out.superpowers.installed, 'unknown');
+  assert.equal(out.playwrightMcp, null);
+  assert.equal(out.superpowers.installed, null);
 });
 
 test('install-check parses claude --version and compares it with 2.1.277', async () => {
@@ -61,4 +61,32 @@ test('install-check reports claudeCli, a fake claude is read, a missing one is u
     assert.deepEqual(out.claudeCli, { version: '2.1.290', ok: true });
   }
   fs.rmSync(bin, { recursive: true, force: true });
+});
+
+test('a check that cannot run is null, never false', async () => {
+  const { playwrightFrom, superpowersFrom, runClaude } = await import('../plugins/focus-blueprint/scripts/install-check.mjs');
+  assert.equal(playwrightFrom(null), null);
+  assert.equal(playwrightFrom('playwright: ok'), true);
+  assert.equal(playwrightFrom('github: ok'), false);
+  assert.deepEqual(superpowersFrom(null), { installed: null, version: null });
+  assert.deepEqual(superpowersFrom('nothing here'), { installed: false, version: null });
+  assert.deepEqual(superpowersFrom('superpowers@5.0.1'), { installed: true, version: '5.0.1' });
+  const failing = () => ({ error: new Error('ENOENT'), status: null });
+  assert.equal(runClaude(['mcp', 'list'], { platform: 'linux', spawn: failing }), null);
+  assert.equal(runClaude(['mcp', 'list'], { platform: 'win32', spawn: failing }), null);
+});
+
+test('on Windows a failed spawn of claude is retried through the shell', async () => {
+  const { runClaude } = await import('../plugins/focus-blueprint/scripts/install-check.mjs');
+  const calls = [];
+  const spawn = (cmd, a, b) => {
+    const opts = Array.isArray(a) ? b : a;
+    calls.push({ cmd, shell: Boolean(opts && opts.shell) });
+    return opts && opts.shell ? { status: 0, stdout: 'playwright' } : { error: new Error('ENOENT'), status: null };
+  };
+  assert.equal(runClaude(['mcp', 'list'], { platform: 'win32', spawn }), 'playwright');
+  assert.deepEqual(calls, [{ cmd: 'claude', shell: false }, { cmd: 'claude mcp list', shell: true }]);
+  calls.length = 0;
+  assert.equal(runClaude(['mcp', 'list'], { platform: 'linux', spawn }), null);
+  assert.equal(calls.length, 1);
 });

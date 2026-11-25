@@ -6,7 +6,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
-import { findProject, profileDir } from '../hooks/lib.mjs';
+import { findProject, profileDir, termsAccepted } from '../hooks/lib.mjs';
 import { installGitHook } from './install-git-hook.mjs';
 import { syncProjectFiles } from './project-files.mjs';
 import { impact, migrateMapInPlace, filesHash, NODE_TYPES } from './blueprint-model/map-model.mjs';
@@ -43,6 +43,36 @@ const PROCESS_DEFAULTS = {
   timer: { duration: null, onExpire: null, test: null },
   case: { eval: null },
 };
+
+/** Output printed as plain lines instead of JSON. */
+class RawText { constructor(text) { this.text = text; } }
+const MODEL_LINES = {
+  fable: 'מומלץ לעבוד בשלב הזה עם Fable, המודל החזק ביותר, ומחליפים אליו ב-/model fable. אם ליד Fable כתוב "Requires usage credits", השימוש בו מחויב בקרדיטים נוספים, ואפשר להישאר עם Opus.',
+  opus: 'מומלץ לעבוד בשלב הזה עם Opus, שהוא ברירת המחדל. אם החלפתם מודל, חוזרים אליו ב-/model opus.',
+  sonnet: 'השלב הזה מכני יותר, ולכן מספיק לעבוד בו עם Sonnet, שצורך פחות מהמכסה. מחליפים אליו ב-/model sonnet.',
+};
+const stageList = () => readJsonFile(path.join(PLUGIN, 'data', 'stages.json'), []);
+
+/** The opening every stage starts with: where the student is, the goal, what will be true at the end, the model to use. */
+function stageOpening(n) {
+  const st = stageList().find((x) => x.n === n) || fail(`stage ${n} is not in stages.json`);
+  const req = readJsonFile(path.join(PLUGIN, 'data', 'requirements', 'default.json'), {});
+  const items = arr(req && req.stages && req.stages[String(n)]);
+  return [
+    `זה שלב ${n} מתוך 15, ${st.name}, בפרק "${st.chapter}".`,
+    st.goal,
+    'מה יהיה נכון בסוף השלב:',
+    ...items.map((i) => `- ${i}`),
+    MODEL_LINES[st.session_model],
+  ].join('\n');
+}
+
+/** The line that closes a stage: which stage comes next and the command that opens it. */
+function stageNext(n) {
+  if (n >= 15) return 'זה היה השלב האחרון, וכל 15 השלבים הושלמו.';
+  const nx = stageList().find((x) => x.n === n + 1);
+  return `השלב הבא הוא שלב ${nx.n}, ${nx.name}. פותחים שיחה חדשה ומקלידים /focus-blueprint:${nx.skill}`;
+}
 
 class Fail extends Error {}
 const fail = (msg) => { throw new Fail(msg); };
@@ -257,13 +287,14 @@ export const commands = {
     if (!['default', 'final-project'].includes(mode)) fail('--mode must be default or final-project');
     const dir = flags.project ? path.resolve(flags.project) : process.cwd();
     ctx.dir = dir;
+    if (!termsAccepted()) fail('עוד לא אישרתם את תנאי השימוש. מקלידים /blueprint, קוראים את התנאים ומאשרים, ורק אחר כך פותחים פרויקט.');
     if (fs.existsSync(path.join(dir, '.blueprint', 'state.json'))) fail('already initialised: .blueprint/state.json exists');
     const tpl = path.join(PLUGIN, 'templates');
     const state = {
-      schema: 2, project: flags.name, createdAt: today(), updatedAt: nowIso(), stage: 1, status: 'not_started', mode,
+      schema: 2, project: flags.name, createdAt: today(), updatedAt: nowIso(), stage: 1, status: 'in_progress', mode,
       context: null, track: null, live: false, connections: {},
       where: { repo: '', supabaseRef: '', vercelProject: '', n8nBase: '' },
-      stages: {}, pending: [], superpowers: { installed: false, version: null }, lastDriftCheck: null,
+      stages: { 1: { status: 'in_progress', startedAt: nowIso(), branch: stageBranch(1) } }, pending: [], superpowers: { installed: false, version: null }, lastDriftCheck: null,
     };
     writeJsonAtomic(path.join(dir, '.blueprint', 'map.json'), migrateMapInPlace({ schema: 2 }));
     writeJsonAtomic(path.join(dir, '.blueprint', 'changes.json'), []);
@@ -320,12 +351,14 @@ export const commands = {
     const [sub, nRaw, ...rest] = args;
     const n = Number(nRaw);
     if (!Number.isInteger(n) || n < 1 || n > 15) fail('stage number must be 1-15');
+    if (sub === 'intro') return new RawText(stageOpening(n));
     const s = ctx.state();
+    s.stages ||= {};
     if (sub === 'start') {
       const prev = { ...(s.stages[n] || {}) }; delete prev.close; delete prev.doneAt;
       s.stages[n] = { ...prev, status: 'in_progress', startedAt: nowIso(), branch: stageBranch(n) };
       s.stage = n; s.status = 'in_progress';
-      return ctx.saveState();
+      return { ...ctx.saveState(), opening: stageOpening(n) };
     }
     if (sub === 'done') {
       const { status, note, proof } = ctx.flags;
@@ -346,9 +379,11 @@ export const commands = {
         st.status = 'done'; st.doneAt = at;
         if (n < 15) { s.stage = n + 1; s.status = 'not_started'; } else { s.stage = n; s.status = 'done'; }
       } else { st.status = status; s.stage = n; s.status = status; }
-      return ctx.saveState();
+      const out = { ...ctx.saveState() };
+      if (st.status === 'done') out.next = stageNext(n);
+      return out;
     }
-    return fail('usage: stage start N | stage done N --status ...');
+    return fail('usage: stage intro N | stage start N | stage done N --status ...');
   },
 
   round(args, ctx) {
@@ -979,7 +1014,7 @@ function isMain() {
 if (isMain()) {
   try {
     const out = run(process.argv.slice(2));
-    process.stdout.write(JSON.stringify(out === undefined ? null : out, null, 2) + '\n');
+    process.stdout.write((out instanceof RawText ? out.text : JSON.stringify(out === undefined ? null : out, null, 2)) + '\n');
   } catch (e) {
     process.stderr.write(`bp: ${String(e && e.message ? e.message : e).replace(/\r?\n/g, ' ')}\n`);
     process.exit(1);

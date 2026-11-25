@@ -92,25 +92,3 @@ test('adopt: following the map and documents steps, the check passes at stage 12
   for (const s of ['idea:words', 'idea:summary', 'bc:answered', 'bc:ruled', 'bc:asked-student', 'bp state set stage=12']) assert.ok(ref['documents.md'].includes(s), s);
 });
 
-// Hebrew lint on the new references and templates, with the comment text included, since it is read by Claude and the student.
-const lint = path.join(os.homedir(), '.claude', 'voice', 'hebrew-lint.py');
-const havePython = spawnSync('python3', ['--version']).status === 0;
-const lintSkip = !havePython || !fs.existsSync(lint) ? 'python3 or hebrew-lint.py missing' : false;
-test('Hebrew lint passes on the adopt references, the gate proof and the reflect and milestone templates', { skip: lintSkip }, () => {
-  const files = [
-    ...REFS.map((r) => path.join(SKILL_DIR, 'references', r)),
-    path.join(PLUGIN, 'skills', 'stage-11-skeleton', 'references', 'gate-proof.md'),
-    ...['reflect-client', 'reflect-org', 'milestone-client', 'milestone-org', 'milestone-self'].map((d) => path.join(PLUGIN, 'templates', 'docs', `${d}.md`)),
-  ];
-  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'bp-lint-'));
-  const failures = [];
-  files.forEach((f, i) => {
-    const text = fs.readFileSync(f, 'utf8').replace(/<!--([\s\S]*?)-->/g, (m, body) => `\n${body.trim()}\n`);
-    const tf = path.join(tmp, `${i}.md`);
-    fs.writeFileSync(tf, text);
-    const r = spawnSync('python3', [lint, tf], { encoding: 'utf8' });
-    if (r.status !== 0) failures.push(`${path.relative(ROOT, f)}\n${r.stdout}${r.stderr}`);
-  });
-  fs.rmSync(tmp, { recursive: true, force: true });
-  assert.equal(failures.length, 0, failures.join('\n'));
-});

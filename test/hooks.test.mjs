@@ -162,7 +162,7 @@ test('prompt-context: one line outside the build stages, two with ruling add in 
   const at = (stage) => ctx(hook('prompt-context', { cwd: repo({ state: { stage } }), prompt: 'x' }));
   const s8 = at(8);
   assert.equal(s8.split('\n').length, 1);
-  assert.match(s8, /^הכלי Focus Blueprint: שלב 8, הצגה לאדם אמיתי\. כל שינוי בהיקף עובר דרך \/blueprint\./);
+  assert.match(s8, /^הפרויקט בשלב 8 מתוך 15, הצגה לאדם אמיתי\. שינוי בהיקף עובר דרך \/blueprint\./);
   for (const n of [9, 12]) {
     const t = at(n);
     assert.equal(t.split('\n').length, 2, String(n));
@@ -171,6 +171,11 @@ test('prompt-context: one line outside the build stages, two with ruling add in 
     assert.ok(t.length < 700, `len ${t.length}`);
   }
   assert.equal(at(13).split('\n').length, 1);
+});
+
+test('prompt-context: the build-stage line states the rule as a fact', () => {
+  const lines = ctx(hook('prompt-context', { cwd: repo({ state: { stage: 10 } }), prompt: 'x' })).split('\n');
+  assert.equal(lines[1], 'זה שלב בנייה, ולכן כל הכרעה נרשמת ביומן ההכרעות (bp.mjs ruling add), והעבודה נעצרת לשאלה רק לפני מחיקת נתונים, לפני שינוי בהרשאות או במפתחות, לפני פעולה שעולה כסף או מעלה משהו לאוויר, וכשאי אפשר להמשיך בלי לנחש.');
 });
 
 test('halted: prompt-context and session-start name the item, only when halted', () => {

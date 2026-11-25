@@ -77,7 +77,7 @@ test('session start: found from a subfolder, and quiet to the user after a compa
 test('prompt context carries the stage and the change route', () => {
   const res = run(hook('prompt-context.mjs'), { cwd: project(), prompt: 'add an export button' });
   assert.equal(res.json.hookSpecificOutput.hookEventName, 'UserPromptSubmit');
-  assert.match(res.json.hookSpecificOutput.additionalContext, /^הכלי Focus Blueprint: שלב 3, שאלון\. כל שינוי בהיקף עובר דרך \/blueprint\./);
+  assert.match(res.json.hookSpecificOutput.additionalContext, /^הפרויקט בשלב 3 מתוך 15, שאלון\. שינוי בהיקף עובר דרך \/blueprint\./);
 });
 
 test('post edit: a screen the map does not list gets a note, a listed one does not', () => {

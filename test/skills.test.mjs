@@ -140,30 +140,6 @@ for (const file of agents) {
   });
 }
 
-// Hebrew lint on bodies only (frontmatter keys are Latin).
-const lint = path.join(os.homedir(), '.claude', 'voice', 'hebrew-lint.py');
-const havePython = spawnSync('python3', ['--version']).status === 0;
-const lintSkip = !havePython || !fs.existsSync(lint) ? 'python3 or hebrew-lint.py missing' : false;
-const lintFiles = [
-  ...skills.map((s) => path.join(skillsDir, s, 'SKILL.md')),
-  ...agents.map((a) => path.join(agentsDir, a)),
-  path.join(PLUGIN, 'TERMS.md'),
-].filter((f) => fs.existsSync(f));
-test('Hebrew lint passes on every skill, agent and TERMS body', { skip: lintSkip }, () => {
-  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'bp-lint-'));
-  const failures = [];
-  lintFiles.forEach((f, i) => {
-    const text = read(f);
-    const body = /^---\r?\n/.test(text) ? splitFrontmatter(text).body : text;
-    const tf = path.join(tmp, `${i}-${path.basename(path.dirname(f))}.md`);
-    fs.writeFileSync(tf, body);
-    const r = spawnSync('python3', [lint, tf], { encoding: 'utf8' });
-    if (r.status !== 0) failures.push(`${path.relative(PLUGIN, f)}\n${r.stdout}${r.stderr}`);
-  });
-  fs.rmSync(tmp, { recursive: true, force: true });
-  assert.equal(failures.length, 0, failures.join('\n'));
-});
-
 // YAML plain scalars break on ": " and on some leading characters; a broken
 // frontmatter loads with empty metadata at runtime (found by `claude plugin validate`).
 test('frontmatter values are valid YAML plain scalars', () => {

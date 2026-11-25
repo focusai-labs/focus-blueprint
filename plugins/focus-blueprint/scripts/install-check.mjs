@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // Prints one JSON line describing what is installed. Every child process has a
-// timeout; a timeout, a missing binary or a non-zero exit means "unknown".
+// timeout; a timeout, a missing binary or a non-zero exit means "unknown", reported as null (never false).
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 
@@ -32,14 +32,39 @@ function run(cmd, args) {
   return r.stdout || '';
 }
 
-// On Windows claude is often a .cmd shim that only a shell finds, so retry through one.
+/**
+ * Run `claude` with these arguments. On Windows claude is often a .cmd shim that only a shell finds,
+ * so a failed first spawn is retried through the shell. Returns the output, or null when it cannot run.
+ */
+export function runClaude(args, { platform = process.platform, spawn = spawnSync } = {}) {
+  const first = spawn('claude', args, { encoding: 'utf8', timeout: TIMEOUT_MS, windowsHide: true });
+  if (!first.error && !first.signal && first.status === 0) return first.stdout || '';
+  if (platform !== 'win32') return null;
+  const r = spawn(['claude', ...args].join(' '), { encoding: 'utf8', timeout: TIMEOUT_MS, windowsHide: true, shell: true });
+  if (r.error || r.signal || r.status !== 0) return null;
+  return r.stdout || '';
+}
+
 function claudeCliVersion() {
-  let out = run('claude', ['--version']);
-  if (out === null && process.platform === 'win32') {
-    const r = spawnSync('claude --version', { encoding: 'utf8', timeout: TIMEOUT_MS, windowsHide: true, shell: true });
-    if (!r.error && !r.signal && r.status === 0) out = r.stdout || '';
-  }
+  const out = runClaude(['--version']);
   return out === null ? 'unknown' : parseClaudeVersion(out);
+}
+
+/** Playwright MCP is true or false when `claude mcp list` ran, and null when it could not run. */
+export function playwrightFrom(mcpOut) {
+  return mcpOut === null ? null : /playwright/i.test(mcpOut);
+}
+
+/** superpowers: installed null (unknown) when `claude plugin list` could not run. */
+export function superpowersFrom(pluginsOut) {
+  if (pluginsOut === null) return { installed: null, version: null };
+  const lines = pluginsOut.split('\n');
+  const i = lines.findIndex((l) => /superpowers/i.test(l));
+  if (i === -1) return { installed: false, version: null };
+  // Versions sit on the line itself or on the "Version:" line right below it.
+  const near = lines.slice(i, i + 4).join('\n');
+  const v = near.match(/(?:Version:\s*|@|\bv)(\d+\.\d+\.\d+[^\s]*)/i);
+  return { installed: true, version: v ? v[1] : 'unknown' };
 }
 
 function main() {
@@ -49,29 +74,15 @@ const result = {
   nodeOk: major >= 22,
   git: run('git', ['--version']) !== null,
   claudeCli: { version: claudeCliVersion(), ok: null },
-  playwrightMcp: 'unknown',
-  superpowers: { installed: 'unknown', version: 'unknown' },
+  playwrightMcp: null,
+  superpowers: { installed: null, version: null },
 };
 
 // ok is null, never false, when there is no version to compare.
 result.claudeCli.ok = result.claudeCli.version === 'unknown' ? null : versionAtLeast(result.claudeCli.version);
 
-const mcp = run('claude', ['mcp', 'list']);
-if (mcp !== null) result.playwrightMcp = /playwright/i.test(mcp);
-
-const plugins = run('claude', ['plugin', 'list']);
-if (plugins !== null) {
-  const lines = plugins.split('\n');
-  const i = lines.findIndex((l) => /superpowers/i.test(l));
-  if (i === -1) {
-    result.superpowers = { installed: false, version: null };
-  } else {
-    // Versions sit on the line itself or on the "Version:" line right below it.
-    const near = lines.slice(i, i + 4).join('\n');
-    const v = near.match(/(?:Version:\s*|@|\bv)(\d+\.\d+\.\d+[^\s]*)/i);
-    result.superpowers = { installed: true, version: v ? v[1] : 'unknown' };
-  }
-}
+result.playwrightMcp = playwrightFrom(runClaude(['mcp', 'list']));
+result.superpowers = superpowersFrom(runClaude(['plugin', 'list']));
 
 process.stdout.write(JSON.stringify(result) + '\n');
 }

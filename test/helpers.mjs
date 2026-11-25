@@ -18,7 +18,15 @@ export function tmpProject({ state = null, map = null, git = true } = {}) {
   return dir;
 }
 
+/** A profile that accepted the current terms, written into the test's own profile folder. */
+export function acceptTerms(home) {
+  const version = JSON.parse(fs.readFileSync(path.join(PLUGIN, 'data', 'terms', 'terms.json'), 'utf8')).version;
+  fs.mkdirSync(home, { recursive: true });
+  fs.writeFileSync(path.join(home, 'profile.json'), JSON.stringify({ terms: { version, acceptedAt: '2026-01-01' }, defaults: {}, projects: [], designSystems: [] }));
+}
+
 export function bp(dir, args, env = {}) {
+  if (args[0] === 'init' && !env.FOCUS_BLUEPRINT_HOME && !fs.existsSync(path.join(dir, '.home', 'profile.json'))) acceptTerms(path.join(dir, '.home'));
   const r = spawnSync(process.execPath, [path.join(PLUGIN, 'scripts', 'bp.mjs'), ...args, '--project', dir], {
     encoding: 'utf8', env: { ...process.env, FOCUS_BLUEPRINT_HOME: path.join(dir, '.home'), ...env },
   });

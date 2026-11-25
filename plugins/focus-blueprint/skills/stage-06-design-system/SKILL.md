@@ -21,7 +21,7 @@ disable-model-invocation: true
 
 ## מה עושים
 
-1. מריצים `bp stage start 6`.
+1. מריצים `bp stage start 6`. מעבירים לסטודנט, מילה במילה, את הפתיחה שהפקודה הדפיסה.
 2. שואלים אם יש לוגו, צבעים, גופנים או תמונות של המותג, ומבקשים לשים אותם בתיקייה `design/assets`.
 3. פותחים את הסבב השני של השאלון עם `node "${CLAUDE_PLUGIN_ROOT}/ui/serve.mjs" --page questionnaire --round b --detach`, ומחכים עם `node "${CLAUDE_PLUGIN_ROOT}/ui/wait.mjs" --name round-b --until done --timeout 280`.
 4. בוחרים את המסכים המרכזיים מתוך מפת המסכים: לכל פרסונה עיקרית, המסך שהיא משתמשת בו הכי הרבה. בדרך כלל אלה שניים או שלושה מסכים.
@@ -61,4 +61,4 @@ disable-model-invocation: true
 3. סוגרים את השלב עם `bp stage done 6 --status <done|done_with_concerns|blocked|needs_context> --note "<מה פתוח>" --proof "<הפלט>"`. כשעיקרון ברמה `should` נדחה לרשימת "אחר כך", הסטטוס הנכון הוא `done_with_concerns`, וכותבים את העיקרון בהערה.
 4. עושים commit בענף `stage-06` עם הודעה בעברית, פותחים PR וממזגים אחרי שהבדיקה עוברת.
 5. כותבים את `.blueprint/last-session.md`.
-6. אומרים לסטודנט במשפט אחד, בלי לייפות, איך השלב נסגר. אחר כך אומרים בשתי שורות שהשלב הבא הוא בניית ה-mockup, ושפותחים אותו בשיחה חדשה עם `/blueprint`.
+6. אומרים לסטודנט במשפט אחד, בלי לייפות, איך השלב נסגר. אחר כך מעבירים לסטודנט, מילה במילה, את השורה על השלב הבא שהפקודה `bp stage done` הדפיסה.

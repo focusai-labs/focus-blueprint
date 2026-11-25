@@ -75,3 +75,10 @@ test('bp mcp list without claude gives connected null, never a guess', () => {
   const rows = buildMcpList({ listText: null, userServers: { a: { command: 'x', args: ['secret-9'] } }, ownRef: null }).slice();
   assert.deepEqual(rows, [{ name: 'a', scope: 'user', transport: 'stdio', connected: null }]);
 });
+
+test('bp mcp list runs in a folder that is not a Blueprint project yet (stage 1 runs it before bp init)', () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'bp-mcp-noproj-'));
+  const r = spawnSync(process.execPath, [path.join(PLUGIN, 'scripts', 'bp.mjs'), 'mcp', 'list'], { cwd: dir, encoding: 'utf8', env: { ...process.env, PATH: '', HOME: dir, USERPROFILE: dir } });
+  assert.equal(r.status, 0, r.stderr);
+  assert.ok(Array.isArray(JSON.parse(r.stdout).servers));
+});

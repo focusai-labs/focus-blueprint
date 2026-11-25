@@ -60,7 +60,7 @@ function stageOpening(n) {
   const req = readJsonFile(path.join(PLUGIN, 'data', 'requirements', 'default.json'), {});
   const items = arr(req && req.stages && req.stages[String(n)]);
   return [
-    `זה שלב ${n} מתוך 15, ${st.name}, בפרק "${st.chapter}".`,
+    `זה שלב ${n} מתוך 15, "${st.name}", בפרק "${st.chapter}".`,
     st.goal,
     'מה יהיה נכון בסוף השלב:',
     ...items.map((i) => `- ${i}`),
@@ -948,7 +948,11 @@ export const commands = {
   // mcp list: the MCP servers this project can see. Only name, scope, transport, connected and Supabase booleans are printed.
   mcp(args, ctx) {
     if (args[0] !== 'list') fail('usage: mcp list');
-    return mcpList({ dir: ctx.resolve() });
+    // Stage 1 lists the servers before bp init, so a folder without a project is fine: with no map, no Supabase ref is
+    // this project's, and every Supabase server counts as unsafe until the map holds a ref.
+    if (ctx.flags.project) return mcpList({ dir: ctx.resolve() });
+    const found = findProject({ cwd: process.cwd() });
+    return mcpList({ dir: found ? found.dir : process.cwd() });
   },
 
   // prototype build [--test] | scan [--test]: the built screens joined into one self-contained file, mockup/prototype.html

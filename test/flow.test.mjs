@@ -21,7 +21,7 @@ test('stage intro prints the opening and needs no project', () => {
   const r = bp(dir, ['stage', 'intro', '3']);
   assert.equal(r.code, 0);
   const lines = r.out.split('\n');
-  assert.equal(lines[0], 'זה שלב 3 מתוך 15, שאלון, בפרק "להבין".');
+  assert.equal(lines[0], 'זה שלב 3 מתוך 15, "שאלון", בפרק "להבין".');
   assert.equal(lines[1], stages[2].goal);
   assert.equal(lines[2], 'מה יהיה נכון בסוף השלב:');
   assert.deepEqual(lines.slice(3, 3 + req.stages['3'].length), req.stages['3'].map((i) => `- ${i}`));
@@ -33,7 +33,7 @@ test('the model line follows session_model', () => {
   assert.match(bp(tmpProject({ git: false }), ['stage', 'intro', '6']).out, /עם Opus, שהוא ברירת המחדל/);
   for (const s of stages) {
     const out = bp(tmpProject({ git: false }), ['stage', 'intro', String(s.n)]).out;
-    assert.ok(out.includes(`זה שלב ${s.n} מתוך 15, ${s.name}`), `stage ${s.n}`);
+    assert.ok(out.includes(`זה שלב ${s.n} מתוך 15, "${s.name}"`), `stage ${s.n}`);
     for (const i of req.stages[String(s.n)] || []) assert.ok(out.includes(`- ${i}`));
   }
 });

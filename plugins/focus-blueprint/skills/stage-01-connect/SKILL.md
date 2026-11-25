@@ -22,6 +22,8 @@ disable-model-invocation: true
 ## מה עושים
 
 1. מריצים את `install-check.mjs` ומציגים שורה לכל בדיקה: Node, Git, Playwright MCP ו-superpowers. כשחסר Node או Git, מראים איך מתקינים אותם לפי התיעוד הרשמי, דרך `/focus-blueprint:docs-verify`, ומחכים עד שההתקנה מסתיימת.
+   - בודקים גם את הגרסה של Claude Code, כי בגרסה ישנה מ-2.1.277 חלק מהכללים והבדיקות של הכלי לא עובדים כמו שצריך. ב-VS Code הגרסה של Claude Code היא הגרסה של התוסף Claude Code, ולכן מבקשים מהסטודנט לפתוח את חלון התוספים (Cmd+Shift+X ב-Mac, Ctrl+Shift+X ב-Windows) ולכתוב איזו גרסה מופיעה ליד התוסף. מי שעובד בטרמינל מריץ `claude --version`. הגרסה של הפקודה `claude` בטרמינל לא תמיד זהה לגרסה של החלון ב-VS Code, כי התוסף מביא עותק משלו.
+   - כשהגרסה נמוכה מ-2.1.277, הסטודנט מעדכן לפני שממשיכים. ב-VS Code מעדכנים את התוסף בחלון התוספים, ובטרמינל לפי https://code.claude.com/docs/en/setup, שקוראים דרך `/focus-blueprint:docs-verify`. אחרי העדכון פותחים שיחה חדשה.
 2. בודקים את החיבור ל-GitHub עם `gh auth status`. אם הסטודנט לא מחובר, הוא מריץ בעצמו `gh auth login`, כי זו פעולה בחשבון שלו, ואחר כך בודקים שוב.
 3. כש-Playwright MCP לא רשום, מראים את פקודת ההתקנה מהתיעוד הרשמי שלו, דרך `docs-verify`. אומרים לסטודנט שאחרי התקנה של MCP צריך לפתוח שיחה חדשה, כי הכלים נטענים רק בתחילת שיחה.
 4. רושמים מה עוד מחובר, בלי לחבר שום דבר חדש: Supabase, Vercel, n8n, Cloudinary ו-fal. לכל אחד מהם מריצים `bp connections set <name> ok=<true|false> note="<מה נמצא>"`, וגם ל-`github` ול-`playwright`.

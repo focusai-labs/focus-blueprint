@@ -209,3 +209,66 @@ export function checkCommand(command, prod = {}) {
   }
   return null;
 }
+
+// C6: outward actions ask the student first (PreToolUse permissionDecision "ask"). Only these; plain
+// git push, gh pr create and gh pr merge stay frictionless.
+export const ASK_MSG = 'הפקודה הזו מעלה משהו לאוויר, משנה הרשאות או מוחקת מידע, ולכן היא מחכה לאישור שלכם.';
+const DESTRUCTIVE_SQL = /\bdelete\s+from\b|\bdrop\s|\btruncate\b|\balter\s/i;
+const LOCAL_HOST = /^(localhost|127(\.\d+){3}|::1|\[::1\]|host\.docker\.internal)$/i;
+
+/** Host of a postgres URL, or null when the text is not one. */
+function urlHost(t) {
+  const m = /^postgres(?:ql)?:\/\/(?:[^@\/]*@)?(\[[^\]]+\]|[^:\/?#]+)/i.exec(t);
+  return m ? m[1] : null;
+}
+
+/** True when a psql or supabase db query segment points at something that is not the local machine. */
+function nonLocalDatabase(seg, k) {
+  const args = seg.slice(k + 1);
+  const hosts = [];
+  let unknown = false;
+  for (let i = 0; i < args.length; i++) {
+    const a = args[i];
+    if (a === '-h' || a === '--host') { hosts.push(args[++i] || ''); continue; }
+    if (a.startsWith('--host=')) { hosts.push(a.slice(7)); continue; }
+    if (/^-h./.test(a) && !a.startsWith('--')) { hosts.push(a.slice(2)); continue; }
+    if (a === '--linked' || a === '--remote' || a === '--project-ref' || a.startsWith('--project-ref=')) { unknown = true; continue; }
+    const eq = a.startsWith('--db-url=') ? a.slice(9) : a.startsWith('--dbname=') ? a.slice(9) : null;
+    const val = eq !== null ? eq : (a === '--db-url' || a === '--dbname' || a === '-d') ? args[++i] || '' : a;
+    const h = urlHost(val);
+    if (h) hosts.push(h);
+    else if (/\$/.test(val) && !/^-/.test(val) && !DESTRUCTIVE_SQL.test(val)) unknown = true; // "$DATABASE_URL": cannot be read here
+  }
+  return unknown || hosts.some((h) => !LOCAL_HOST.test(h));
+}
+
+/** Does this command need the student's yes? Never true for a command that checkCommand blocks. */
+export function needsApproval(command) {
+  for (const seg of tokenize(String(command || ''))) {
+    let k = 0;
+    while (k < seg.length && (isAssign(seg[k]) || ['sudo', 'command', 'env', 'time', 'nohup'].includes(base(seg[k])))) k++;
+    if (k >= seg.length) continue;
+    const prog = base(seg[k]);
+    const rest = seg.slice(k + 1);
+    const words = rest.filter((t) => !t.startsWith('-'));
+    const hasFlag = (re) => rest.some((t) => re.test(t));
+    if (prog === 'gh') {
+      if (words[0] === 'repo' && (words[1] === 'create' || words[1] === 'delete')) return true;
+      if (words[0] === 'repo' && words[1] === 'edit' && hasFlag(/^--visibility(=|$)/)) return true;
+      if (words[0] === 'secret' && words[1] === 'set') return true;
+      if (words[0] === 'release' && words[1] === 'create') return true;
+    } else if (prog === 'vercel') {
+      if (hasFlag(/^--prod(uction)?$/) && (words.length === 0 || words[0] === 'deploy')) return true;
+      if (words[0] === 'promote') return true;
+      if (words[0] === 'alias' && words[1] === 'set') return true;
+      if (words[0] === 'domains' && words[1] === 'add') return true;
+    } else if (prog === 'netlify') {
+      if (words[0] === 'deploy' && hasFlag(/^--prod(uction)?$|^-p$/)) return true;
+    } else if (prog === 'npm') {
+      if (words[0] === 'publish') return true;
+    } else if (prog === 'psql' || (prog === 'supabase' && words[0] === 'db' && words[1] === 'query')) {
+      if (DESTRUCTIVE_SQL.test(rest.join(' ')) && nonLocalDatabase(seg, k)) return true;
+    }
+  }
+  return false;
+}

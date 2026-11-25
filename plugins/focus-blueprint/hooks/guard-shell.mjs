@@ -6,8 +6,8 @@
 // commits Claude makes, which is how the people this tool is for work.
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
-import { readInput, findProjectForGuard, block, PROTECTED_BRANCHES, supabaseTarget } from './lib.mjs';
-import { checkCommand, MAIN_PUSH_MSG } from './shell-rules.mjs';
+import { readInput, findProjectForGuard, block, emit, PROTECTED_BRANCHES, supabaseTarget } from './lib.mjs';
+import { checkCommand, needsApproval, ASK_MSG, MAIN_PUSH_MSG } from './shell-rules.mjs';
 
 const input = await readInput();
 const project = findProjectForGuard(input);
@@ -128,4 +128,9 @@ for (const g of findAllGit('push')) {
         'Work on a branch and merge through a pull request; history of main is never rewritten.'
     );
   }
+}
+
+// C6: nothing above blocked it; outward actions still wait for the student's yes.
+if (needsApproval(command)) {
+  emit({ hookSpecificOutput: { hookEventName: 'PreToolUse', permissionDecision: 'ask', permissionDecisionReason: ASK_MSG } });
 }

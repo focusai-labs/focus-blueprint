@@ -136,3 +136,16 @@ test('no possibly-null child is appended raw', () => {
   assert.doesNotMatch(js, /out\.append\(tilesNode\(d\), prototypeCard\(d\)/);
   assert.match(js, /out\.append\(\.\.\.\[tilesNode\(d\), prototypeCard\(d\), lastStopNode\(\)\]\.filter\(Boolean\)\)/);
 });
+
+test('questionnaire end screen: owner strings for missing answers, and the count excludes "עוד לא יודעים"', () => {
+  assert.equal(strings.questionnaire.missingTitle, 'עוד לא עניתם על {n} שאלות');
+  assert.equal(strings.questionnaire.missingOne, 'עוד לא עניתם על שאלה אחת');
+  assert.equal(strings.questionnaire.missingHint, 'אפשר לחזור לכל אחת מהן, או לסמן בה ״עוד לא יודעים״.');
+  assert.equal(strings.questionnaire.missingGo, 'לשאלה הזו');
+  const end = js.slice(js.indexOf('function renderEnd()'), js.indexOf("if (data.done) { root.append"));
+  assert.match(end, /answerStatus\(q\.answer\) === 'empty'/);
+  assert.match(end, /finishAllAnswered/);
+  // the all-answered text only when nothing is missing, and the finish button stays when something is
+  assert.match(end, /!missing\.length && !pre\.length/);
+  assert.match(end, /missing\.length > 0 \|\| pre\.length === 0/);
+});

@@ -823,24 +823,36 @@
       clear(root);
       current = null;
       const pre = list.filter((q) => isPrefill(q.answer));
+      const missing = list.filter((q) => answerStatus(q.answer) === 'empty');
       if (list.length === 0) { root.append(h('p', {}, t('questionnaire.noQuestions'))); return; }
-      root.append(h('h2', {}, t('questionnaire.finishTitle')));
       const backToLast = () => slide(-1, () => show(list.length - 1));
+      const goTo = (q) => slide(-1, () => show(list.indexOf(q)));
+      const jumpList = (qs, withButton) => {
+        const ul = h('ul', { class: 'plain' });
+        qs.forEach((q) => ul.append(withButton
+          ? h('li', { class: 'row spread' }, h('span', {}, q.text), h('button', { type: 'button', class: 'quiet', onclick: () => goTo(q) }, t('questionnaire.missingGo')))
+          : h('li', {}, h('button', { type: 'button', class: 'quiet', onclick: () => goTo(q) }, q.text))));
+        return ul;
+      };
+      root.append(h('h2', {}, missing.length
+        ? (missing.length === 1 ? t('questionnaire.missingOne') : t('questionnaire.missingTitle', { n: missing.length }))
+        : t('questionnaire.finishTitle')));
+      if (missing.length) {
+        root.append(h('p', { class: 'muted' }, t('questionnaire.missingHint')));
+        root.append(jumpList(missing, true));
+      }
       if (pre.length) {
         root.append(h('p', {}, t('questionnaire.unconfirmedTitle')));
-        const ul = h('ul', { class: 'plain' });
-        pre.forEach((q) => ul.append(h('li', {}, h('button', { type: 'button', class: 'quiet', onclick: () => slide(-1, () => show(list.indexOf(q))) }, q.text))));
-        root.append(ul);
-      } else {
-        root.append(h('p', { class: 'muted' }, t('questionnaire.finishAllAnswered')));
-        root.append(h('div', { class: 'row spread' },
-          h('button', { type: 'button', class: 'quiet', onclick: backToLast }, t('common.back')),
-          h('button', { type: 'button', class: 'primary', id: 'round-done', onclick: async () => {
-            try { await api('api/done', { name: data.name }); clear(root); root.append(h('p', { class: 'note' }, t('common.backToClaude'))); }
-            catch (e) { if (e.status === 409) { await refetch(); renderEnd(); } else setState('failed'); }
-          } }, t('questionnaire.roundDone'))));
+        root.append(jumpList(pre, false));
       }
-      if (pre.length) root.append(h('div', { class: 'row' }, h('button', { type: 'button', class: 'quiet', onclick: backToLast }, t('common.back'))));
+      if (!missing.length && !pre.length) root.append(h('p', { class: 'muted' }, t('questionnaire.finishAllAnswered')));
+      const doneBtn = h('button', { type: 'button', class: 'primary', id: 'round-done', onclick: async () => {
+        try { await api('api/done', { name: data.name }); clear(root); root.append(h('p', { class: 'note' }, t('common.backToClaude'))); }
+        catch (e) { if (e.status === 409) { await refetch(); renderEnd(); } else setState('failed'); }
+      } }, t('questionnaire.roundDone'));
+      // With unconfirmed guesses and nothing missing the round cannot close yet; a missing answer never traps the student.
+      const canFinish = missing.length > 0 || pre.length === 0;
+      root.append(h('div', { class: 'row spread' }, h('button', { type: 'button', class: 'quiet', onclick: backToLast }, t('common.back')), canFinish ? doneBtn : null));
     }
 
     if (data.done) { root.append(h('p', { class: 'note' }, t('common.backToClaude'))); }

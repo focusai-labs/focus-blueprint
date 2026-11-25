@@ -70,6 +70,7 @@ const REMOTE_MSG = 'שינוי במסד הנתונים האמיתי נעשה ר�
 const ALWAYS_BLOCKED = [['functions', 'deploy'], ['secrets', 'set'], ['secrets', 'unset'], ['branches', 'delete'], ['projects', 'delete']];
 // Read-only or local-state subcommands the skills use; they stay allowed against a remote target in a live project.
 const READ_ONLY = [['migration', 'list'], ['db', 'advisors'], ['db', 'pull'], ['db', 'diff'], ['db', 'lint'], ['db', 'dump'], ['inspect'], ['gen', 'types'], ['projects', 'list'], ['link'], ['functions', 'list'], ['functions', 'download'], ['secrets', 'list'], ['branches', 'list'], ['branches', 'get']];
+export const MAIN_PUSH_MSG = 'דחיפה ישירה ל-main נחסמה. עובדים בענף, פותחים PR וממזגים אחרי שהבדיקה עוברת.';
 const startsWith = (words, prefix) => prefix.every((w, i) => words[i] === w);
 
 /** Target of the remote flags: 'local' (none), 'dev' or 'prod'. */
@@ -160,6 +161,11 @@ export function checkCommand(command, prod = {}) {
     while (k < seg.length && (isAssign(seg[k]) || ['sudo', 'command', 'env', 'time', 'nohup', 'xargs'].includes(base(seg[k])))) k++;
     if (k < seg.length && DELETERS.has(base(seg[k])) && seg.slice(k + 1).some(touchesHooks)) {
       return 'Blocked by Focus Blueprint: .githooks/ is the commit gate. It is not deleted, moved or chmod-ed from the shell. Ask the owner.';
+    }
+    if (k < seg.length && base(seg[k]) === 'gh') {
+      const rest = seg.slice(k + 1);
+      const i = rest.indexOf('pr');
+      if (i >= 0 && rest[i + 1] === 'merge' && rest.some((t) => t === '--admin' || t.startsWith('--admin='))) return MAIN_PUSH_MSG;
     }
     const sb = supabaseCheck(seg, p);
     if (sb) return sb;

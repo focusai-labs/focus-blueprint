@@ -168,7 +168,7 @@
       "stage": 12,
       "intent": "כשיש ליכולת פעולה אוטומטית, היא מופעלת מ-webhook של מסד הנתונים, ממשימה מתוזמנת או מ-workflow ב-n8n",
       "docs": ["https://supabase.com/docs/guides/database/webhooks", "https://supabase.com/docs/guides/cron"],
-      "safety": "האוטומציה לא שולחת הודעה החוצה בלי אישור של אדם, וכל כתובת webhook מוגנת בסוד",
+      "safety": "האוטומציה לא שולחת הודעה החוצה בלי אישור של אדם, חוץ מהודעה קבועה שאדם אישר את הנוסח שלה פעם אחת מראש, וכל כתובת webhook מוגנת בסוד",
       "proof": "one triggering event produces exactly one run, shown in the logs"
     },
     {

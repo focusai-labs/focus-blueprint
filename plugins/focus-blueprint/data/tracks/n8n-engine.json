@@ -55,7 +55,7 @@
       "docs": [
         "https://docs.n8n.io/build/flow-logic/handle-errors-gracefully"
       ],
-      "safety": "שום דבר לא נשלח החוצה בלי אישור של אדם, וקודם בודקים על נתוני בדיקה",
+      "safety": "שום דבר לא נשלח החוצה בלי אישור של אדם, חוץ מהודעה קבועה שאדם אישר את הנוסח שלה פעם אחת מראש. לפני כן בודקים על נתוני בדיקה",
       "proof": "one run succeeds, one forced failure triggers the error workflow, both quoted from the executions list"
     },
     {

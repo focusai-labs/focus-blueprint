@@ -1,7 +1,7 @@
 ---
 name: stage-15-handover
 description: שלב 15 של Focus Blueprint. מי שיפעיל את המערכת מבצע לבד שלוש משימות מתוך המדריך, וכך בודקים שהמסירה באמת עובדת. הוא מקבל גם רשימת חשבונות בלי אף סוד. בשלב הזה מפיקים גם את הדוח החודשי. מריצים אחרי שלב 14.
-model: sonnet
+model: opus
 disable-model-invocation: true
 ---
 

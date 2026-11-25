@@ -14,12 +14,19 @@ if (!project) process.exit(0);
 const { dir, state } = project;
 
 // Claude Code compacted this conversation: mark it, so the next stage close sends the student to a fresh one.
-if (input.source === 'compact') {
+// A fresh conversation (startup or /clear) clears the mark an earlier one left. resume and fork keep it,
+// because they continue a conversation that may be the compacted one.
+const freshStart = input.source === 'startup' || input.source === 'clear';
+if (input.source === 'compact' || freshStart) {
   try {
     const file = path.join(dir, '.blueprint', 'state.json');
     const fresh = readJson(file);
-    if (fresh && typeof fresh === 'object') {
-      fresh.session = { ...(fresh.session && typeof fresh.session === 'object' ? fresh.session : {}), compactedAt: new Date().toISOString() };
+    const session = fresh && typeof fresh === 'object' && fresh.session && typeof fresh.session === 'object' ? fresh.session : null;
+    if (fresh && typeof fresh === 'object' && (input.source === 'compact' || (session && session.compactedAt))) {
+      const next = { ...(session || {}) };
+      if (input.source === 'compact') next.compactedAt = new Date().toISOString();
+      else delete next.compactedAt;
+      fresh.session = next;
       const tmp = `${file}.${process.pid}.tmp`;
       fs.writeFileSync(tmp, JSON.stringify(fresh, null, 2) + '\n');
       fs.renameSync(tmp, file);

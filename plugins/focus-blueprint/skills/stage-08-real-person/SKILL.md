@@ -1,7 +1,7 @@
 ---
 name: stage-08-real-person
 description: שלב 08 של Focus Blueprint. אדם אמיתי מנסה את ה-mockup לפי תוכנית בדיקה, את הממצאים מסווגים לשלוש רמות ומתקנים לפי עדיפות, ובסוף כותבים את המסמך שמאשרים לפני הבנייה, כלומר הצעת מחיר, בקשת אישור או תוכנית. מריצים אחרי שלב 7.
-model: opus
+model: inherit
 disable-model-invocation: true
 ---
 

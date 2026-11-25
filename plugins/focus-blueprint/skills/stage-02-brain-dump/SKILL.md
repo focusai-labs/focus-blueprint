@@ -1,7 +1,7 @@
 ---
 name: stage-02-brain-dump
 description: שלב 02 של Focus Blueprint. הסטודנט עונה קודם למה דווקא הרעיון הזה ולמה עכשיו, ואחר כך כותב את כל הרעיון בלי סדר. Claude מסכם אותו בחלקים ומסמן מה הסטודנט אמר ומה Claude השלים. מריצים אחרי שלב 1.
-model: opus
+model: inherit
 disable-model-invocation: true
 ---
 

@@ -352,7 +352,7 @@ test('route: superpowers only when installed and inside the tested range', () =>
 test('stages.json: 15 entries with skill, model, outputs and proof', () => {
   const stages = JSON.parse(fs.readFileSync(path.join(PLUGIN, 'data', 'stages.json'), 'utf8'));
   assert.equal(stages.length, 15);
-  const models = ['1:sonnet', '2:opus', '3:opus', '4:opus', '5:opus', '6:opus', '7:sonnet', '8:opus', '9:sonnet', '10:opus', '11:sonnet', '12:inherit', '13:opus', '14:opus', '15:sonnet'];
+  const models = ['1:sonnet', '2:inherit', '3:inherit', '4:inherit', '5:inherit', '6:opus', '7:opus', '8:inherit', '9:sonnet', '10:opus', '11:sonnet', '12:opus', '13:opus', '14:opus', '15:opus'];
   stages.forEach((s, i) => {
     assert.equal(s.n, i + 1); assert.ok(s.chapter && s.name);
     assert.match(s.skill, new RegExp(`^stage-${String(s.n).padStart(2, '0')}-`));

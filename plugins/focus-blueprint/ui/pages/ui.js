@@ -441,8 +441,11 @@
     const whySaver = autosaver(sendWhy, setState);
     const dumpSaver = autosaver((v) => api('api/answer', { name: 'brain-dump', answer: v }), setState);
 
+    const shortNote = h('p', { class: 'muted small', id: 'short-note', 'data-key': 'short-note' }, t('brainDump.shortNote'));
+    dump.after(shortNote);
+    dump.setAttribute('aria-describedby', 'short-note');
     const words = () => (dump.value.trim() ? dump.value.trim().split(/\s+/).length : 0);
-    const refresh = () => { count.textContent = t('brainDump.wordCount', { n: words() }); done.disabled = words() === 0; };
+    const refresh = () => { count.textContent = t('brainDump.wordCount', { n: words() }); done.disabled = words() === 0; shortNote.hidden = words() >= 15; };
     const unlock = () => { stepWhy.hidden = true; stepDump.hidden = false; dump.disabled = false; dump.focus(); refresh(); };
 
     why.value = (saved.answers && saved.answers.why && saved.answers.why.value) || '';
@@ -1483,7 +1486,8 @@
     root.addEventListener('focusout', hideTip);
     window.addEventListener('scroll', hideTip, true);
 
-    const legend = () => h('div', { class: 'legend', 'aria-label': t('process.legend') },
+    const legend = () => h('div', { class: 'legend-wrap' }, h('p', { class: 'muted small', 'data-key': 'legend-note' }, t('process.legendNote')), legendRow());
+    const legendRow = () => h('div', { class: 'legend', 'aria-label': t('process.legend') },
       Object.keys(KIND_COLORS).map((k) => h('span', { class: 'sw' }, h('i', { style: `background:${KIND_COLORS[k][0]};border-color:${KIND_COLORS[k][1]}` }), t(`process.kinds.${k}`))),
       h('span', { class: 'sep', 'aria-hidden': 'true' }),
       Object.keys(SRC_COLORS).map((k) => h('span', { class: 'sw' }, h('i', { class: 'round', style: `background:${SRC_COLORS[k][0]};color:${SRC_COLORS[k][1]};border-color:${SRC_COLORS[k][2]}${k === 'assumed' ? ';border-style:dashed' : ''}` }, t(`process.srcLetter.${k}`)), t(`process.src.${k}`))));

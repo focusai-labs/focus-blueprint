@@ -482,7 +482,7 @@ const newRules = [
       }
     }
     for (const [f, text] of items) {
-      for (const h of scanText(text)) {
+      for (const h of scanText(text, { file: f })) {
         const k = `${f}:${h.line}`;
         if (errors.some((e) => e.rule === '25' && e.item === k)) continue;
         err('29', k, `בקובץ ${f} בשורה ${h.line} יש ${h.name}. סוד שנכנס ל-Git נשאר בהיסטוריה גם אחרי שמוחקים אותו. מעבירים אותו למשתנה סביבה בקובץ שלא נכנס ל-Git.`);

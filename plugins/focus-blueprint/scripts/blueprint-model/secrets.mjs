@@ -19,6 +19,22 @@ const PLACEHOLDER_PW = /^(?:\[.*\]|<.*>|password|postgres|pass|changeme)$/i;
 const SECRET_NAME = `(?:${['secret', 'token', 'api_?key', 'apikey', 'password', 'passwd', 'private_?key'].join('|')})`;
 const FAKE_VALUE = /your|example|changeme|xxx|\*\*\*|\$\{|\{\{/i;
 
+
+const hasUpperLower = (t) => /[a-z]/.test(t) && /[A-Z]/.test(t);
+const URI_PW = (scheme) => (m) => { const pw = new RegExp(`^${scheme}://[^:@/]+:([^@]*)@`).exec(m); return !!pw && !!pw[1] && !PLACEHOLDER_PW.test(pw[1]) && !/\$\{|\{\{/.test(pw[1]); };
+const LOOSE_FAKE = /your_|your-|xxx|<.*>|changeme|example|\$\{|\{\{|\*\*\*|process\.env/i;
+const LOOSE_NAME = /^[ \t]*(?:export[ \t]+)?([A-Z][A-Z0-9_]*)[ \t]*=[ \t]*([^\s"'`#<>]{20,})[ \t]*$/gm;
+const looseCheck = (m) => {
+  const x = /^[ \t]*(?:export[ \t]+)?([A-Z][A-Z0-9_]*)[ \t]*=[ \t]*(\S+)[ \t]*$/.exec(m);
+  if (!x) return false;
+  const [, name, val] = x;
+  if (!/(?:^|_)(?:SECRET|TOKEN|KEY)$/.test(name) && name !== 'API_SECRET') return false;
+  if (/(?:^|_)(?:PUBLIC|PUBLISHABLE|ANON)(?:_|$)/.test(name)) return false;
+  if (LOOSE_FAKE.test(val) || /^[/.~$]/.test(val) || val.includes('://')) return false;
+  if (!/\d/.test(val) || !/[A-Za-z]/.test(val) || /^(.)\1*$/.test(val)) return false;
+  return !/^[a-z0-9]+(?:[_-][a-z0-9]+)+$/.test(val);
+};
+
 export const SECRET_PATTERNS = [
   { name: 'Supabase secret key', regex: /\bsb_secret_[A-Za-z0-9_-]{16,}/g, source: 'https://supabase.com/docs/guides/api/api-keys', documented: true },
   {
@@ -43,6 +59,25 @@ export const SECRET_PATTERNS = [
   { name: 'Cloudinary URL', regex: /\bcloudinary:\/\/[A-Za-z0-9_-]+:[A-Za-z0-9_-]+@[A-Za-z0-9_-]+/g, source: 'https://cloudinary.com/documentation/node_integration', documented: true },
   { name: 'Telegram bot token', regex: /\b\d{8,10}:[A-Za-z0-9_-]{34,36}\b/g, source: 'https://core.telegram.org/bots/api#authorizing-your-bot', documented: true, check: (m) => /[A-Za-z]/.test(m.split(':')[1]) && /\d/.test(m.split(':')[1]) },
   { name: 'n8n API key (JWT)', regex: JWT_RE, source: 'https://docs.n8n.io/api/authentication/', documented: false, check: (m) => { const p = decodeJwt(m); return !!p && (p.iss === 'n8n' || p.aud === 'public-api'); } },
+  { name: 'Supabase personal access token', regex: /\bsbp_[A-Za-z0-9]{20,}\b/g, source: 'https://supabase.com/docs/guides/platform/personal-access-tokens', documented: false, check: shape(/^sbp_/) },
+  { name: 'OpenRouter API key', regex: /\bsk-or-v1-[a-f0-9]{64}\b/g, source: 'https://openrouter.ai/docs/api-reference/authentication', documented: true },
+  { name: 'Stripe test, restricted or organization key', regex: /\b(?:sk_test|rk_test|sk_org)_[A-Za-z0-9]{16,}/g, source: 'https://docs.stripe.com/keys', documented: true },
+  { name: 'Stripe webhook signing secret', regex: /\bwhsec_[A-Za-z0-9]{16,}/g, source: 'https://docs.stripe.com/webhooks', documented: true },
+  { name: 'SendGrid API key', regex: /\bSG\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+/g, source: 'https://www.twilio.com/docs/sendgrid/api-reference/api-keys/create-api-keys', documented: true, check: (m) => m.length === 69 },
+  { name: 'Hugging Face token', regex: /\bhf_[A-Za-z0-9]{34,}\b/g, source: 'https://huggingface.co/docs/hub/security-tokens', documented: false, check: (m) => hasUpperLower(m.slice(3)) },
+  { name: 'npm token', regex: /\bnpm_[A-Za-z0-9]{30,}\b/g, source: 'https://github.blog/changelog/2021-09-23-npm-security-update-new-token-format/', documented: true, check: (m) => hasUpperLower(m.slice(4)) },
+  { name: 'Replicate API token', regex: /\br8_[A-Za-z0-9]{37}\b/g, source: 'https://replicate.com/docs/topics/security/api-tokens', documented: true, check: (m) => hasUpperLower(m.slice(3)) },
+  { name: 'MySQL connection URI with a password', regex: /\bmysql:\/\/[^\s:@\/'"`<>]+:[^\s@\/'"`]+@[^\s'"`]+/g, source: 'https://dev.mysql.com/doc/refman/8.0/en/connecting-using-uri-or-key-value-pairs.html', documented: true, check: URI_PW('mysql') },
+  { name: 'MongoDB connection URI with a password', regex: /\bmongodb(?:\+srv)?:\/\/[^\s:@\/'"`<>]+:[^\s@\/'"`]+@[^\s'"`]+/g, source: 'https://www.mongodb.com/docs/manual/reference/connection-string/', documented: true, check: URI_PW('mongodb(?:\\+srv)?') },
+  {
+    name: 'Authorization Bearer token', regex: /\bAuthorization["']?[ \t]*[:=][ \t]*["']?Bearer[ \t]+[A-Za-z0-9._~+\/=-]{24,}/gi,
+    source: 'https://datatracker.ietf.org/doc/html/rfc6750#section-2.1', documented: false,
+    check: (m) => { const t = m.split(/Bearer[ \t]+/i).pop(); return /\d/.test(t) && /[A-Za-z]/.test(t) && !LOOSE_FAKE.test(t) && !/^(.)\1*$/.test(t); },
+  },
+  {
+    name: 'Unquoted secret assignment', regex: LOOSE_NAME, skipInEnvFiles: true,
+    source: 'https://owasp.org/www-community/vulnerabilities/Use_of_hard-coded_password', documented: false, check: looseCheck,
+  },
   {
     name: 'Hardcoded secret value',
     regex: new RegExp(`(["']?)[A-Za-z0-9_.-]*${SECRET_NAME}[A-Za-z0-9_.-]*\\1\\s*[:=]\\s*(["'\`])([^"'\`\\n]{16,})\\2`, 'gi'),
@@ -90,13 +125,15 @@ export function isClientPath(rel, text) {
   return true;
 }
 
-/** Finds secrets in text: [{ name, line, source, preview }]. The preview is redacted. */
-export function scanText(text) {
+/** Finds secrets in text: [{ name, line, source, preview }]. The preview is redacted. file (optional) is the path; the loose unquoted-assignment pattern is skipped for .env* files. */
+export function scanText(text, { file } = {}) {
+  const inEnvFile = /(?:^|[\/\\])\.env(?:\.|$)/.test(String(file || ''));
   const s = String(text ?? '');
   const out = [];
   const allowed = new Set();
   s.split('\n').forEach((l, i) => { if (l.includes('blueprint-allow-secret')) allowed.add(i + 1); });
   for (const pat of SECRET_PATTERNS) {
+    if (pat.skipInEnvFiles && inEnvFile) continue;
     const re = new RegExp(pat.regex.source, pat.regex.flags.includes('g') ? pat.regex.flags : pat.regex.flags + 'g');
     let m;
     while ((m = re.exec(s))) {

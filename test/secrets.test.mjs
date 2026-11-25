@@ -59,7 +59,7 @@ const MISS = [
   'const apiKey = process.env.API_KEY;', 'const password = "<password>";', 'const token = "xxxxxxxxxxxxxxxxxxxx";', 'const secret = "your-secret-goes-here-1234";',
   'const apiKey = "example-api-key-value-1";', 'const secret = "changeme-changeme-12";', 'const token = "${TOKEN}${TOKEN}";', 'const t = "Zk29fLq81zPwXy77aB"',
   'const passwordLabel = "Choose a strong password please";', 'const secret = "short";', 'const apiKey = "***************";',
-  `sb_publishable_${A(30)}`, jwt('anon'), `sk_test_${A(24, 'c')}`, `pk_live_${A(24, 'c')}`, 'AKIA_SHORT', 'https://x.app.n8n.cloud/webhook/monthly',
+  `sb_publishable_${A(30)}`, jwt('anon'), `pk_test_${A(24, 'c')}`, `pk_live_${A(24, 'c')}`, 'AKIA_SHORT', 'https://x.app.n8n.cloud/webhook/monthly',
   'const sk = skills.length', 'hello world', '-----BEGIN CERTIFICATE-----',
 ];
 
@@ -118,4 +118,54 @@ test('secrets: new patterns carry a source and the documented flag', () => {
   assert.match(by['Telegram bot token'].source, /core\.telegram\.org/);
   assert.equal(by['n8n API key (JWT)'].documented, false);
   for (const p of SECRET_PATTERNS.filter((x) => !x.documented)) assert.equal(typeof p.check, 'function', `${p.name} needs a check`);
+});
+
+// ---------- C5: more vendor shapes, built from pieces at run time ----------
+const HEX = (n) => 'a1b2c3d4e5f60718'.repeat(Math.ceil(n / 16)).slice(0, n);
+const C5_HIT = [
+  ['Supabase personal access token', 'sb' + 'p_' + HEX(40)],
+  ['OpenRouter API key', 'sk-or' + '-v1-' + HEX(64)],
+  ['Stripe test, restricted or organization key', 'sk_' + 'test_' + MX(24)],
+  ['Stripe test, restricted or organization key', 'rk_' + 'test_' + MX(24)],
+  ['Stripe test, restricted or organization key', 'sk_' + 'org_' + MX(24)],
+  ['Supabase personal access token', 'sb' + 'p_fc' + MX(30)],
+  ['Stripe live secret key', 'rk_' + 'live_' + MX(24)],
+  ['Stripe webhook signing secret', 'wh' + 'sec_' + MX(32)],
+  ['SendGrid API key', 'S' + 'G.' + MX(22) + '.' + MX(43)],
+  ['Hugging Face token', 'hf' + '_' + MX(34)],
+  ['Hugging Face token', 'hf' + '_' + MX(40)],
+  ['npm token', 'npm' + '_' + MX(36)],
+  ['Replicate API token', 'r8' + '_' + MX(37)],
+  ['MySQL connection URI with a password', 'mysql' + '://app:Xk29fLq81zPw@db.internal:3306/app'],
+  ['MongoDB connection URI with a password', 'mongodb' + '://app:Xk29fLq81zPw@db.internal:27017/app'],
+  ['MongoDB connection URI with a password', 'mongodb+' + 'srv://app:Xk29fLq81zPw@cluster0.abc.mongodb.net/app'],
+  ['Authorization Bearer token', 'Authorization: Bear' + 'er ' + MX(40)],
+  ['Authorization Bearer token', "headers: { 'Authorization': 'Bear" + "er " + MX(40) + "' }"],
+  ['Unquoted secret assignment', 'API_' + 'SECRET=' + MX(24)],
+  ['Unquoted secret assignment', 'STRIPE_' + 'SECRET=' + MX(30)],
+  ['Unquoted secret assignment', 'export GITHUB_' + 'TOKEN=' + MX(30)],
+  ['Unquoted secret assignment', 'SERVICE_' + 'KEY=' + HEX(32)],
+];
+for (const [name, text] of C5_HIT) test(`secrets C5: finds ${name} (${text.slice(0, 8)})`, () => {
+  const hits = scanText(`line one\n${text}\n`);
+  assert.ok(hits.some((h) => h.name === name), JSON.stringify(hits));
+  assert.equal(hits.find((h) => h.name === name).line, 2);
+  assert.ok(!hits[0].preview.includes(MX(12)), 'preview is redacted');
+});
+const C5_MISS = [
+  'hf_' + A(34, 'a'), 'hf_some_long_identifier_name_for_a_helper_fn', 'npm_' + A(36, 'a'), 'npm_config_registry_override_value_here', 'r8_' + A(37, 'a'), 'sb' + 'p_' + A(40, 'a'), 'sb' + 'p_' + MX(15), 'sb_publishable_' + MX(30), 'SG.' + MX(22) + '.' + MX(44), 'SG.' + MX(22) + '.' + MX(42), 'npm_' + MX(25), 'sk-or' + '-v1-' + HEX(63) + 'G',
+  'sk-or' + '-v1-' + HEX(30), 'wh' + 'sec_short', 'SG.short.part', 'mysql://localhost/db', 'mysql://root@localhost/db', 'mysql://u:password@localhost/db', 'mysql://u:${PW}@localhost/db',
+  'mongodb://localhost:27017/db', 'mongodb+srv://u:<password>@cluster0.mongodb.net/db', 'mongodb://u:changeme@localhost/db',
+  'Authorization: Bearer ${token}', 'Authorization: Bearer <your-token-here-12345678>', 'Authorization: Bearer ' + A(30, 'x'), 'Authorization: Bearer token', "const h = 'Authorization'",
+  'API_SECRET=your_secret_goes_here_1234', 'API_SECRET=<paste-the-secret-here-1234>', 'API_SECRET=xxxxxxxxxxxxxxxxxxxx', 'API_SECRET=changeme-changeme-change', 'API_SECRET=short1', 'API_KEY=${API_KEY}${API_KEY}12',
+  'STORAGE_KEY=user_preference_storage_key_2', 'API_KEY=process.env.API_KEY_FROM_HOST1', 'SSH_KEY=/home/user/.ssh/id_rsa_work_machine1', 'NEXT_PUBLIC_ANON_KEY=' + MX(30), 'PUBLISHABLE_KEY=' + MX(30),
+  'API_KEY = "' + A(10, 'a') + '"', 'DEBUG=' + MX(30), 'apiKey=' + MX(30), 'KEYBOARD=' + MX(30),
+];
+for (const text of C5_MISS) test(`secrets C5: ignores ${text.slice(0, 28)}`, () => assert.deepEqual(scanText(text), []));
+test('secrets C5: the unquoted assignment is skipped in .env files, other patterns are not', () => {
+  const line = 'API_' + 'SECRET=' + MX(24);
+  assert.deepEqual(scanText(line, { file: '.env.local' }), []);
+  assert.deepEqual(scanText(line, { file: 'app/.env.example' }), []);
+  assert.equal(scanText(line, { file: 'deploy.sh' }).length, 1);
+  assert.equal(scanText('hf' + '_' + MX(34), { file: '.env' }).length, 1);
 });

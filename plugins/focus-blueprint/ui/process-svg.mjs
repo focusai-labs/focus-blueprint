@@ -1,6 +1,6 @@
 // Draws one process of the map as an SVG: stages in columns (the first stage on the
 // right), actors in rows, one card per step, arrows along `next`. Pure and isomorphic:
-// no imports, no DOM, so the same file runs in the browser and in Node.
+// no static imports, no DOM, so the same file runs in the browser and in Node.
 
 export const KIND_STYLE = {
   system: { fill: '#e3f4ea', stroke: '#18794e', ink: '#0f5132' },
@@ -11,15 +11,21 @@ export const KIND_STYLE = {
 };
 export const KINDS = Object.keys(KIND_STYLE);
 
+// The process-map labels live in pages/strings.he.json (process.*), the one source. Node reads
+// the file here (the review document is drawn without the page); the browser always passes the
+// labels it already loaded, and falls back to the plain keys if it did not.
+const SOURCE = (typeof process !== 'undefined' && process.versions && process.versions.node)
+  ? JSON.parse((await import('node:fs')).readFileSync(new URL('./pages/strings.he.json', import.meta.url), 'utf8')).process || {}
+  : {};
+const group = (name, keys) => Object.fromEntries(keys.map((k) => [k, (SOURCE[name] || {})[k] ?? k]));
 export const DEFAULT_LABELS = {
-  kinds: { system: 'אוטומטי', human: 'אדם', ai: 'בינה מלאכותית', external: 'גורם חיצוני', rejection: 'דחייה' },
-  src: { client: 'הלקוח', ours: 'אנחנו', assumed: 'הנחה' },
-  srcLetter: { client: 'ל', ours: 'א', assumed: '?' },
-  actors: { screen: 'מסך', server: 'שרת', automation: 'אוטומציה', ai: 'בינה מלאכותית', external: 'חיצוני' },
-  stages: 'שלבים',
-  timers: 'שעונים',
-  failure: 'אם נכשל',
-  noSteps: 'אין עדיין צעדים',
+  kinds: group('kinds', ['system', 'human', 'ai', 'external', 'rejection']),
+  src: group('src', ['client', 'ours', 'assumed']),
+  srcLetter: group('srcLetter', ['client', 'ours', 'assumed']),
+  actors: group('actors', ['screen', 'server', 'automation', 'ai', 'external']),
+  timers: SOURCE.timers ?? 'timers',
+  failure: SOURCE.failure ?? 'failure',
+  noSteps: SOURCE.noSteps ?? 'noSteps',
 };
 
 const SRC_STYLE = {

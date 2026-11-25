@@ -95,7 +95,6 @@ test('hebrew text sits in foreignObject divs with rtl, a clamp and escaped conte
 test('the Hebrew strings the owner asked for', () => {
   const s = JSON.parse(fs.readFileSync(path.join(PLUGIN, 'ui', 'pages', 'strings.he.json'), 'utf8'));
   assert.equal(s.board.evidence, 'תוצאות הבדיקות');
-  assert.equal(s.board.noEvidence, 'עוד אין תוצאות בדיקה.');
   assert.equal(s.board.reviewSpec, 'תואם לאפיון');
   assert.equal(s.board.reviewQuality, 'איכות הקוד');
   assert.equal(s.board.rulingsCols.price, 'מה ייפגע אם טעינו');

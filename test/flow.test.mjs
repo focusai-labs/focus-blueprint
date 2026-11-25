@@ -97,7 +97,7 @@ test('bp init refuses until the current terms are accepted', () => {
   const home = path.join(dir, 'empty-home');
   const r = bp(dir, ['init', '--name', 'x'], { FOCUS_BLUEPRINT_HOME: home });
   assert.equal(r.code, 1);
-  assert.ok(r.err.includes('עוד לא אישרתם את תנאי השימוש. מקלידים /blueprint, קוראים את התנאים ומאשרים, ורק אחר כך פותחים פרויקט.'));
+  assert.ok(r.err.includes('עוד לא אישרתם את תנאי השימוש. מקלידים `/blueprint`, קוראים את התנאים ומאשרים, ורק אחר כך פותחים פרויקט.'));
   assert.ok(!fs.existsSync(path.join(dir, '.blueprint')));
   fs.mkdirSync(home, { recursive: true });
   fs.writeFileSync(path.join(home, 'profile.json'), JSON.stringify({ terms: { version: '2000-01-01' } }));

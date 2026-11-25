@@ -48,9 +48,9 @@ const PROCESS_DEFAULTS = {
 /** Output printed as plain lines instead of JSON. */
 class RawText { constructor(text) { this.text = text; } }
 const MODEL_LINES = {
-  fable: 'מומלץ לעבוד בשלב הזה עם Fable, המודל החזק ביותר, ומחליפים אליו ב-/model fable. אם ליד Fable כתוב "Requires usage credits", השימוש בו מחויב בקרדיטים נוספים, ואפשר להישאר עם Opus.',
-  opus: 'מומלץ לעבוד בשלב הזה עם Opus, שהוא ברירת המחדל. אם החלפתם מודל, חוזרים אליו ב-/model opus.',
-  sonnet: 'השלב הזה מכני יותר, ולכן מספיק לעבוד בו עם Sonnet, שצורך פחות מהמכסה. מחליפים אליו ב-/model sonnet.',
+  fable: 'מומלץ לעבוד בשלב הזה עם Fable, המודל החזק ביותר, ומחליפים אליו ב-`/model fable`. אם ליד Fable כתוב "Requires usage credits", השימוש בו מחויב בקרדיטים נוספים, ואפשר להישאר עם Opus.',
+  opus: 'מומלץ לעבוד בשלב הזה עם Opus, שהוא ברירת המחדל. אם החלפתם מודל, חוזרים אליו ב-`/model opus`.',
+  sonnet: 'השלב הזה מכני יותר, ולכן מספיק לעבוד בו עם Sonnet, שצורך פחות מהמכסה. מחליפים אליו ב-`/model sonnet`.',
 };
 const stageList = () => readJsonFile(path.join(PLUGIN, 'data', 'stages.json'), []);
 
@@ -75,7 +75,7 @@ function stageNext(n, compactedAt = null, startedAt = null) {
   const nx = stageList().find((x) => x.n === n + 1);
   const compacted = compactedAt && (!startedAt || Date.parse(compactedAt) > Date.parse(startedAt));
   const head = `השלב הבא הוא שלב ${nx.n}, ${nx.name}`;
-  const open = `פותחים שיחה חדשה ומקלידים /focus-blueprint:${nx.skill}`;
+  const open = `פותחים שיחה חדשה ומקלידים \`/focus-blueprint:${nx.skill}\``;
   if (nx.n === 12) return { continueHere: false, next: `${head}. כל יכולת נבנית בשיחה חדשה משלה, ולכן ${open}` };
   if (compacted) return { continueHere: false, next: `${head}. השיחה הזאת כבר נדחסה, ולכן ${open}` };
   if (cur && cur.chapter !== nx.chapter) return { continueHere: false, next: `${head}, והוא פותח את הפרק "${nx.chapter}". כדי שיתחיל עם הקשר נקי, ${open}` };
@@ -302,7 +302,7 @@ export const commands = {
     if (!['default', 'final-project'].includes(mode)) fail('--mode must be default or final-project');
     const dir = flags.project ? path.resolve(flags.project) : process.cwd();
     ctx.dir = dir;
-    if (!termsAccepted()) fail('עוד לא אישרתם את תנאי השימוש. מקלידים /blueprint, קוראים את התנאים ומאשרים, ורק אחר כך פותחים פרויקט.');
+    if (!termsAccepted()) fail('עוד לא אישרתם את תנאי השימוש. מקלידים `/blueprint`, קוראים את התנאים ומאשרים, ורק אחר כך פותחים פרויקט.');
     if (fs.existsSync(path.join(dir, '.blueprint', 'state.json'))) fail('already initialised: .blueprint/state.json exists');
     const tpl = path.join(PLUGIN, 'templates');
     const state = {
@@ -373,7 +373,7 @@ export const commands = {
       if (!closed && !never) fail('השלב הנוכחי עוד לא נסגר, ולכן אי אפשר להתחיל את השלב הבא. קודם סוגרים אותו.');
       const target = closed ? cur + 1 : cur;
       const nx = stageList().find((x) => x.n === target) || fail(closed ? 'זה היה השלב האחרון, אין שלב הבא.' : `stage ${target} is not in stages.json`);
-      return new RawText(`ממשיכים לשלב ${nx.n}, ${nx.name}, באותה שיחה. מכאן עובדים לפי ההוראות של השלב, כמו אחרי /focus-blueprint:${nx.skill}.\n\n${stageBody(nx)}`);
+      return new RawText(`ממשיכים לשלב ${nx.n}, ${nx.name}, באותה שיחה. מכאן עובדים לפי ההוראות של השלב, כמו אחרי \`/focus-blueprint:${nx.skill}\`.\n\n${stageBody(nx)}`);
     }
     const n = Number(nRaw);
     if (!Number.isInteger(n) || n < 1 || n > 15) fail('stage number must be 1-15');

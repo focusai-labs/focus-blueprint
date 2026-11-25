@@ -353,6 +353,7 @@ export const commands = {
     if (!Number.isInteger(n) || n < 1 || n > 15) fail('stage number must be 1-15');
     if (sub === 'intro') return new RawText(stageOpening(n));
     const s = ctx.state();
+    s.stages ||= {};
     if (sub === 'start') {
       const prev = { ...(s.stages[n] || {}) }; delete prev.close; delete prev.doneAt;
       s.stages[n] = { ...prev, status: 'in_progress', startedAt: nowIso(), branch: stageBranch(n) };

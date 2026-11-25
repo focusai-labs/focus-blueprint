@@ -796,14 +796,16 @@
       const drawActions = () => {
         clear(actions);
         const pre = isPrefill(q.answer);
-        const nextBtn = h('button', { type: 'button', class: pre ? '' : 'primary', onclick: () => moveBy(1) }, t('common.next'));
+        // A prefilled answer nobody confirmed cannot be skipped by accident: next waits for confirm, or a changed answer.
+        const nextBtn = h('button', { type: 'button', class: pre ? '' : 'primary', disabled: pre, 'aria-disabled': pre ? 'true' : null, onclick: () => { if (!pre) moveBy(1); } }, t('common.next'));
+        const confirmHint = pre ? h('span', { class: 'muted small confirm-first' }, t('questionnaire.confirmFirst')) : null;
         const confirmBtn = pre ? h('button', { type: 'button', class: 'primary', onclick: async () => { await save(q, { confirm: true }); q.answer = { ...q.answer, confirmed: true, decidedBy: 'user' }; drawPrefill(); drawActions(); updateProgress(); } }, t('questionnaire.confirm')) : null;
         const side = h('div', { class: 'row' },
           q.decideButton !== false ? h('button', { type: 'button', class: 'quiet', onclick: async () => { await save(q, { decidedBy: 'claude' }); q.answer = { value: null, decidedBy: 'claude' }; markNote(); drawPrefill(); drawActions(); updateProgress(); } }, t('questionnaire.decideForMe')) : null,
           h('button', { type: 'button', class: 'quiet', onclick: async () => { await save(q, { value: null, pending: true }); q.answer = { value: null, pending: true }; markNote(); drawPrefill(); drawActions(); updateProgress(); } }, t('questionnaire.dontKnow')));
         const nav = h('div', { class: 'row spread' },
           h('button', { type: 'button', class: 'quiet', disabled: idx === 0, onclick: () => moveBy(-1) }, t('common.back')),
-          h('div', { class: 'row' }, confirmBtn, nextBtn));
+          h('div', { class: 'row' }, confirmBtn, nextBtn, confirmHint));
         actions.append(side, nav);
       };
       const ed = editor(q, (v) => {

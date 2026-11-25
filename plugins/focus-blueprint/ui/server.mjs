@@ -26,7 +26,7 @@ const SCREEN_CSP = "sandbox allow-scripts; default-src * data: blob: 'unsafe-inl
 
 function send(res, status, body, type = 'application/json; charset=utf-8', extra = {}) {
   res.writeHead(status, { ...BASE_HEADERS, 'Content-Security-Policy': PAGE_CSP, 'Content-Type': type || 'application/json; charset=utf-8', ...extra });
-  res.end(typeof body === 'string' ? body : JSON.stringify(body));
+  res.end(typeof body === 'string' || Buffer.isBuffer(body) ? body : JSON.stringify(body));
 }
 
 function readBody(req) {
@@ -68,7 +68,7 @@ export function openBrowser(url) {
  * once: stop shortly after the first saved answer.
  */
 const PAGES = new Set(['brain-dump', 'questionnaire', 'directions', 'board', 'process']);
-const STATIC = { 'theme.js': 'text/javascript; charset=utf-8', 'ui.css': 'text/css; charset=utf-8', 'ui.js': 'text/javascript; charset=utf-8', 'directions.js': 'text/javascript; charset=utf-8', 'directions.css': 'text/css; charset=utf-8', 'strings.he.json': 'application/json; charset=utf-8' };
+const STATIC = { 'theme.js': 'text/javascript; charset=utf-8', 'ui.css': 'text/css; charset=utf-8', 'ui.js': 'text/javascript; charset=utf-8', 'directions.js': 'text/javascript; charset=utf-8', 'directions.css': 'text/css; charset=utf-8', 'strings.he.json': 'application/json; charset=utf-8', 'fonts/Heebo-var.woff2': 'font/woff2', 'fonts/OFL.txt': 'text/plain; charset=utf-8' };
 const PROTOTYPE_SEGS = ['mockup', 'prototype.html'];
 // The prototype sits in a sandboxed page with no origin of its own, so its notes routes answer cross-origin (the token in the path is the key).
 const CORS = { 'Access-Control-Allow-Origin': '*' };
@@ -418,7 +418,7 @@ export async function startUi({ projectDir, once = false, idleMinutes = 30, page
         if (Object.hasOwn(STATIC, route)) {
           const file = path.join(here, 'pages', route);
           if (!fs.existsSync(file)) return send(res, 404, { error: 'not found' });
-          return send(res, 200, fs.readFileSync(file, 'utf8'), STATIC[route]);
+          return send(res, 200, fs.readFileSync(file, STATIC[route].startsWith('font/') ? undefined : 'utf8'), STATIC[route]);
         }
         if (route === 'api/questions') {
           const round = query.get('round') || 'a';

@@ -1,4 +1,6 @@
 /* Focus Blueprint local pages. One accent colour, day by default with a night mode, Hebrew RTL. */
+/* Heebo (SIL Open Font License, see fonts/OFL.txt), variable weight, Hebrew and Latin subset, served by this same server so the pages look the same offline. */
+@font-face { font-family: Heebo; font-style: normal; font-weight: 100 900; font-display: swap; src: url(fonts/Heebo-var.woff2) format('woff2'); }
 :root {
   color-scheme: light;
   --bg: #f6f5fa; --surface: #ffffff; --surface-2: #faf9fd; --fg: #1c1a27; --muted: #5d5970;

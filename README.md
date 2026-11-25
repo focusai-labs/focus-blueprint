@@ -59,3 +59,7 @@ claude plugin install focus-blueprint@focus-ai
 - בתיקייה `plugins/focus-blueprint` נמצא התוסף עצמו, עם הסקילים, ה-hooks, הסקריפטים, הנתונים והתבניות.
 - בתיקייה `test` נמצאות הבדיקות, ומריצים אותן עם `node --test 'test/**/*.test.mjs'`.
 - הקובץ `.claude-plugin/marketplace.json` מגדיר את ה-marketplace.
+
+## מה הכלי שומר מחוץ לפרויקט
+
+הכלי כותב קובץ אחד בלבד מחוץ לתיקיית הפרויקט, `~/.focus-blueprint/profile.json` שבתיקיית הבית. בקובץ הזה נשמר האישור של תנאי השימוש, כדי שלא ישאלו עליו שוב בכל פרויקט חדש.

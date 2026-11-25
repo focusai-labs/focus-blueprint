@@ -7,7 +7,7 @@
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { readInput, findProjectForGuard, block, PROTECTED_BRANCHES, supabaseTarget } from './lib.mjs';
-import { checkCommand } from './shell-rules.mjs';
+import { checkCommand, MAIN_PUSH_MSG } from './shell-rules.mjs';
 
 const input = await readInput();
 const project = findProjectForGuard(input);
@@ -95,6 +95,32 @@ for (const g of findAllGit('push')) {
   const deletesProtected = positional.some((t) => (t.startsWith(':') || deleting) && isProtected(destOf(t)));
   if (deletesProtected) {
     block('Blocked by Focus Blueprint: deleting the protected branch main or master on the remote is not run. Ask the owner first.');
+  }
+  // A push whose destination ref is main or master, whatever the source is called.
+  const unq = (t) => t.replace(/^["']+|["']+$/g, '');
+  const VALUE_OPTS = new Set(['-o', '--push-option', '--repo', '--receive-pack', '--exec']);
+  const args = [];
+  for (let i = 0; i < tokens.length; i++) {
+    if (VALUE_OPTS.has(tokens[i])) { i++; continue; }
+    if (!tokens[i].startsWith('-')) args.push(unq(tokens[i]));
+  }
+  const branchNow = currentBranch(git);
+  const remote = args[0] || (branchNow ? (git(['config', `branch.${branchNow}.remote`]).stdout || '').trim() || 'origin' : null);
+  const refspecs = args.slice(1);
+  const tracked = (name) => !!remote && git(['rev-parse', '--verify', '-q', `refs/remotes/${remote}/${name}`]).status === 0;
+  const destinations = refspecs.length ? refspecs : (remote && branchNow ? [branchNow] : []);
+  if (!deleting && !flags.includes('--all') && !mirror) {
+    for (const t of destinations) {
+      if (t.startsWith(':')) continue;
+      const spec = t.replace(/^\+/, '');
+      const [src, dst0] = spec.includes(':') ? [spec.slice(0, spec.indexOf(':')), spec.slice(spec.indexOf(':') + 1)] : [spec, spec];
+      const dst = (dst0 === 'HEAD' ? branchNow : dst0).replace(/^refs\/heads\//, '');
+      if (!isProtected(dst)) continue;
+      // The first push of a new repository: main goes to a remote that has no main yet.
+      const srcName = (src === 'HEAD' ? branchNow : src).replace(/^refs\/heads\//, '');
+      if (srcName === dst && branchNow === dst && !tracked(dst)) continue;
+      block(MAIN_PUSH_MSG);
+    }
   }
   if (forced && (mirror || isProtected(currentBranch(git)) || positional.some((t) => isProtected(destOf(t))))) {
     block(

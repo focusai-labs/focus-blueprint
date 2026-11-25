@@ -479,3 +479,44 @@ test('session-start: warns when CLAUDE.md does not import AGENTS.md, silent othe
   fs.writeFileSync(path.join(dir, 'CLAUDE.md'), '# mine\n@AGENTS.md\n');
   assert.doesNotMatch(ctx(hook('session-start', { cwd: dir })), warn);
 });
+
+// ---------- C2: pushes whose destination is main ----------
+const MAIN_PUSH_HE = 'דחיפה ישירה ל-main נחסמה. עובדים בענף, פותחים PR וממזגים אחרי שהבדיקה עוברת.';
+test('C2: a push whose destination is main or master is blocked, whatever the source', () => {
+  const dir = repo();
+  sh(dir, 'switch', '-c', 'feat');
+  for (const c of [
+    'git push origin HEAD:main', 'git push origin feat:main', 'git push origin HEAD:refs/heads/main', 'git push origin +feat:main', 'git push origin feat:master',
+    'git push origin "HEAD:main"', "git push -u origin feat:refs/heads/main", 'git push origin feat:feat2 HEAD:main', 'git push --force-with-lease origin HEAD:main',
+    'git -C . push origin HEAD:main', 'git push -o ci.skip origin HEAD:main', 'git push origin main', 'git push origin refs/heads/main',
+  ]) {
+    const r = shell(dir, c);
+    assert.equal(r.code, 2, c);
+    if (!/force|\+/.test(c)) assert.equal(r.err, MAIN_PUSH_HE, c);
+  }
+});
+test('C2: feature branches to their own name stay allowed, also with a remote tracking ref', () => {
+  const dir = repo();
+  sh(dir, 'switch', '-c', 'feat');
+  sh(dir, 'update-ref', 'refs/remotes/origin/main', 'HEAD');
+  for (const c of ['git push origin feat', 'git push -u origin feat', 'git push origin feat:feat', 'git push origin HEAD', 'git push origin HEAD:refs/heads/feat', 'git push', 'git push origin feat:main-fix', 'git push origin :feat', 'git push origin refs/heads/feat:refs/heads/feat']) {
+    assert.equal(shell(dir, c).code, 0, c);
+  }
+});
+test('C2: the first push of main to a remote that has no main yet stays allowed, a second one does not', () => {
+  const dir = repo();
+  assert.equal(shell(dir, 'git push -u origin main').code, 0);
+  assert.equal(shell(dir, 'git push origin main:main').code, 0);
+  assert.equal(shell(dir, 'git push origin HEAD:main').code, 0, 'HEAD is main here');
+  sh(dir, 'update-ref', 'refs/remotes/origin/main', 'HEAD');
+  assert.equal(shell(dir, 'git push origin main').code, 2);
+  assert.equal(shell(dir, 'git push').code, 2);
+});
+test('C2: gh pr merge --admin is blocked, a plain merge is not', () => {
+  const dir = repo();
+  for (const c of ['gh pr merge 12 --admin', 'gh pr merge --admin --squash 12', 'gh pr merge 12 --squash --admin', 'cd x && gh pr merge 3 --admin']) {
+    const r = shell(dir, c);
+    assert.equal(r.code, 2, c); assert.equal(r.err, MAIN_PUSH_HE, c);
+  }
+  for (const c of ['gh pr merge 12 --squash', 'gh pr merge 12 --auto', 'gh pr create --fill', 'gh pr view 12']) assert.equal(shell(dir, c).code, 0, c);
+});

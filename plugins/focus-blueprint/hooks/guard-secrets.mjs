@@ -45,7 +45,7 @@ if (isEnv) {
   }
 }
 
-const hits = scanText(text);
+const hits = scanText(text, { file: rel });
 if (hits.length && !ignored()) {
   const h = hits[0];
   deny(`Blocked by Focus Blueprint: the text for ${rel} contains a ${h.name} (line ${h.line} of the new text), and git does not ignore this file, so the value would reach the repository history. ${WHERE}`);

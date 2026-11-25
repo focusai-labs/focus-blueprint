@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>fake prototype</title>
+<style>
+  :root { color-scheme: light dark; --bg: #f4f2fa; --fg: #1c1a27; --card: #fff; --acc: #5b3fd6; }
+  @media (prefers-color-scheme: dark) { :root { --bg: #16151d; --fg: #ecebf3; --card: #22212c; --acc: #a898ff; } }
+  body { margin: 0; font: 16px/1.5 system-ui, sans-serif; background: var(--bg); color: var(--fg); }
+  .bar { display: flex; gap: 12px; align-items: center; padding: 8px 12px; background: var(--card); border-bottom: 1px solid #8884; }
+  .bar b { color: var(--acc); }
+  .stage { display: flex; justify-content: center; padding: 12px; }
+  .frame { width: 100%; background: var(--card); border: 1px solid #8884; border-radius: 12px; padding: 20px; min-height: 360px; }
+  body[data-device="phone"] .frame { width: 390px; max-width: 100%; border-radius: 28px; }
+  h1 { margin: 0 0 8px; font-size: 24px; }
+</style>
+</head>
+<body data-device="computer">
+<div class="bar"><b id="banner">אב טיפוס עם נתוני דמה</b><span id="where"></span></div>
+<div class="stage"><div class="frame"><h1 id="title"></h1><p id="text"></p><p><a href="#/mockup/home.html" data-go="mockup/home.html">הבית</a> · <a href="#/mockup/report.html" data-go="mockup/report.html">הדוח</a></p></div></div>
+<script type="application/json" id="bp-screens">{"docs":{"mockup/home.html":"<main>home v1</main>","mockup/report.html":"<main>report v1</main>","mockup/settings.html":"<main>settings v1</main>"}}</script>
+<script>
+(() => {
+  const screens = [
+    { file: 'mockup/home.html', name: 'דף הבית', persona: 'owner', built: true },
+    { file: 'mockup/report.html', name: 'דוח חודשי', persona: 'owner', built: true },
+    { file: 'mockup/settings.html', name: 'הגדרות', persona: 'admin', built: true },
+    { file: 'mockup/later.html', name: 'מסך עתידי', persona: 'admin', built: false },
+  ];
+  const embedded = window.parent !== window;
+  let file = screens[0].file; let state = null;
+  const draw = () => {
+    const s = screens.find((x) => x.file === file);
+    document.getElementById('title').textContent = s ? s.name : file;
+    document.getElementById('text').textContent = 'תוכן של מסך ' + (s ? s.name : file) + (state ? ' (' + state + ')' : '');
+    document.getElementById('where').textContent = file;
+  };
+  const route = () => { draw(); if (embedded) parent.postMessage({ bp: 'route', file, state }, '*'); };
+  addEventListener('message', (e) => {
+    const m = e.data; if (!m || typeof m !== 'object') return;
+    if (m.bp === 'nav' && typeof m.file === 'string') { file = m.file; state = m.state || null; draw(); if (embedded) parent.postMessage({ bp: 'route', file, state }, '*'); }
+    if (m.bp === 'device') document.body.dataset.device = m.value;
+  });
+  document.addEventListener('click', (e) => { const a = e.target.closest('[data-go]'); if (a) { e.preventDefault(); file = a.dataset.go; state = null; route(); } });
+  draw();
+  if (embedded) { parent.postMessage({ bp: 'ready', screens }, '*'); parent.postMessage({ bp: 'route', file, state }, '*'); }
+})();
+</script>
+</body>
+</html>

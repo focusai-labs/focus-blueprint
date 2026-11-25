@@ -1290,11 +1290,11 @@
         const exists = s.screenFiles || {};
         return {
           title: t('board.screensList'),
-          body: h('ul', { class: 'd-list' }, map.screens.map((sc) => h('li', {},
+          body: [s.prototype ? h('a', { class: 'link', href: 'prototype', 'data-key': 'prototype-link' }, t('prototype.boardLink')) : null, h('ul', { class: 'd-list' }, map.screens.map((sc) => h('li', {},
             h('div', { class: 'd-main' }, h('span', { class: 'd-name' }, sc.name || sc.file),
               sc.persona ? h('span', { class: 'd-sub' }, personaName(d, sc.persona)) : null,
               sc.journeyStage ? h('span', { class: 'd-sub' }, sc.journeyStage) : null),
-            sc.file && exists[sc.file] !== false ? h('a', { class: 'link ext', href: fileHref(sc.file), target: '_blank', rel: 'noopener' }, t('board.open'), icon('ext')) : null))),
+            sc.file && exists[sc.file] !== false ? h('a', { class: 'link ext', href: fileHref(sc.file), target: '_blank', rel: 'noopener' }, t('board.open'), icon('ext')) : null)))],
         };
       }
       if (spec.kind === 'list' && spec.id === 'capabilities' && map.capabilities.length) {

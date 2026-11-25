@@ -156,6 +156,8 @@ export function progress(projectDir, name) {
   const doc = readAnswers(projectDir, name);
   const round = Object.keys(ROUND_FILES).find((r) => ROUND_FILES[r] === name);
   const answered = Object.values(doc.answers || {}).filter(isAnswered).length;
+  // the prototype review keeps its screens apart from the question answers
+  if (name === 'prototype') return { answered: Object.values(doc.screens || {}).filter((x) => x && x.status && x.status !== 'open').length, total: null, done: doc.done === true };
   if (!round) return { answered, total: null, done: doc.done === true };
   const qs = questionsFor(projectDir, round);
   const total = qs ? qs.length : null;

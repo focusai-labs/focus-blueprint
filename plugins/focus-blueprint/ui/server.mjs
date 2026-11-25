@@ -9,6 +9,7 @@ import { spawn } from 'node:child_process';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { migrateMap } from '../scripts/blueprint-model/map-model.mjs';
+import { finishPrototypeRound, prototypeState, savePrototypeNote, snapshotFile, MAX_ROUND } from './prototype.mjs';
 import { answersFile, directionScreenDocument, directionsSummary, loadBank, loadDirections, nameOfRound, questionsFor, readAnswers, readJsonStrict, ROUND_FILES, screensFor, unconfirmedIds, writeJsonAtomic, dataPath } from './lib.mjs';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
@@ -57,8 +58,9 @@ export function openBrowser(url) {
  * Start the server. Resolves with the address once it is listening.
  * once: stop shortly after the first saved answer.
  */
-const PAGES = new Set(['brain-dump', 'questionnaire', 'directions', 'board', 'process']);
-const STATIC = { 'ui.css': 'text/css; charset=utf-8', 'ui.js': 'text/javascript; charset=utf-8', 'directions.js': 'text/javascript; charset=utf-8', 'directions.css': 'text/css; charset=utf-8', 'strings.he.json': 'application/json; charset=utf-8' };
+const PAGES = new Set(['brain-dump', 'questionnaire', 'directions', 'board', 'process', 'prototype']);
+const STATIC = { 'ui.css': 'text/css; charset=utf-8', 'ui.js': 'text/javascript; charset=utf-8', 'directions.js': 'text/javascript; charset=utf-8', 'directions.css': 'text/css; charset=utf-8', 'prototype.js': 'text/javascript; charset=utf-8', 'prototype.css': 'text/css; charset=utf-8', 'strings.he.json': 'application/json; charset=utf-8' };
+const PROTOTYPE_SEGS = ['mockup', 'prototype.html'];
 const NAME = /^[a-z0-9-]{1,40}$/;
 const QID = /^[A-Za-z0-9_.֐-׿-]{1,100}$/;
 
@@ -217,6 +219,7 @@ function boardState(projectDir) {
     pendingQuestions: pendingQuestions(state, map),
     personas: personaNames(projectDir),
     screenFiles,
+    prototype: Boolean(safeAssetFile(projectDir, ['mockup', 'prototype.html'])),
     git: gitInfo(projectDir),
   };
 }
@@ -404,6 +407,16 @@ export async function startUi({ projectDir, once = false, idleMinutes = 30 } = {
           if (!doc) return send(res, 404, { error: 'not found' });
           return send(res, 200, doc, 'text/html; charset=utf-8');
         }
+        if (route === 'api/prototype') return send(res, 200, prototypeState(projectDir, safeAssetFile(projectDir, PROTOTYPE_SEGS)?.file || null));
+        if (route === 'api/prototype-round') {
+          const raw = query.get('n');
+          const n = /^\d{1,4}$/.test(raw || '') ? Number(raw) : 0;
+          if (n < 1 || n > MAX_ROUND) return send(res, 400, { error: 'bad round' });
+          const file = snapshotFile(projectDir, n);
+          if (!fs.existsSync(file)) return send(res, 404, { error: 'not found' });
+          res.writeHead(200, { 'Content-Type': ASSET_TYPES['.html'], 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff', 'Referrer-Policy': 'no-referrer', 'Content-Security-Policy': "sandbox allow-scripts; default-src * data: blob: 'unsafe-inline' 'unsafe-eval'" });
+          return res.end(fs.readFileSync(file));
+        }
         if (parts[1] === 'files' && parts.length > 2) {
           const hit = safeAssetFile(projectDir, parts.slice(2));
           if (!hit) return send(res, 404, { error: 'not found' });
@@ -416,7 +429,7 @@ export async function startUi({ projectDir, once = false, idleMinutes = 30 } = {
         }
       }
 
-      if (req.method === 'POST' && (route === 'api/answer' || route === 'api/done')) {
+      if (req.method === 'POST' && (route === 'api/answer' || route === 'api/done' || route === 'api/prototype-note' || route === 'api/prototype-done')) {
         // A JSON content type cannot be sent across sites without a preflight,
         // and this server answers none.
         if (!String(req.headers['content-type'] || '').startsWith('application/json')) {
@@ -429,9 +442,14 @@ export async function startUi({ projectDir, once = false, idleMinutes = 30 } = {
           return send(res, 400, { error: 'bad request' });
         }
         if (!data || typeof data !== 'object' || Array.isArray(data)) return send(res, 400, { error: 'bad request' });
-        const result = route === 'api/answer' ? saveAnswer(projectDir, data) : markDone(projectDir, data);
+        let result;
+        if (route === 'api/prototype-note' || route === 'api/prototype-done') {
+          const proto = safeAssetFile(projectDir, PROTOTYPE_SEGS)?.file || null;
+          result = route === 'api/prototype-note' ? savePrototypeNote(projectDir, data, proto) : finishPrototypeRound(projectDir, proto);
+        } else result = route === 'api/answer' ? saveAnswer(projectDir, data) : markDone(projectDir, data);
         send(res, result.status, result.body);
-        if (once && result.status === 200) setTimeout(close, 1000);
+        // a note is only one step of the review: the server stays until the round is finished
+        if (once && result.status === 200 && route !== 'api/prototype-note') setTimeout(close, 1000);
         return;
       }
     } catch (e) {

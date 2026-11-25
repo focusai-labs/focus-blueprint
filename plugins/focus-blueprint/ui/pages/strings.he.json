@@ -25,6 +25,19 @@
     "day": "מצב יום",
     "stage": "שלב {n} · {name}"
   },
+  "task": {
+    "backBrainDump": "חזרה לתיאור הרעיון",
+    "continueBrainDump": "להמשיך בתיאור הרעיון",
+    "backQuestionnaire": "חזרה לשאלון, {round}",
+    "continueQuestionnaire": "להמשיך בשאלון, {round}",
+    "backDirections": "חזרה לשלושת הכיוונים",
+    "continueDirections": "להמשיך בבחירת הכיוון",
+    "roundContext": "ההקשר",
+    "roundA": "סבב א",
+    "roundB": "סבב ב",
+    "roundC": "סבב ג",
+    "roundD": "סבב ד"
+  },
   "tabs": {
     "overview": "סקירה",
     "rulings": "הכרעות",

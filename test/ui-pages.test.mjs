@@ -118,3 +118,21 @@ test('a project with nothing pending gets an empty list', async () => {
     assert.deepEqual(st.personas, {});
   } finally { ui.close(); await ui.closed; }
 });
+
+test('the way back to the waiting page: strings, the bar and the board card', () => {
+  assert.deepEqual(strings.task, {
+    backBrainDump: 'חזרה לתיאור הרעיון', continueBrainDump: 'להמשיך בתיאור הרעיון',
+    backQuestionnaire: 'חזרה לשאלון, {round}', continueQuestionnaire: 'להמשיך בשאלון, {round}',
+    backDirections: 'חזרה לשלושת הכיוונים', continueDirections: 'להמשיך בבחירת הכיוון',
+    roundContext: 'ההקשר', roundA: 'סבב א', roundB: 'סבב ב', roundC: 'סבב ג', roundD: 'סבב ד',
+  });
+  assert.match(js, /taskEl = h\('a', \{ class: 'task-link'/, 'the bar builds the item');
+  assert.match(js, /link\.page !== page/, 'only while the student is on another page');
+  assert.match(js, /a', \{ class: 'btn primary task-continue'/, 'the board card has the primary button');
+  assert.match(js, /const taskBtn = tl \?/);
+});
+
+test('no possibly-null child is appended raw', () => {
+  assert.doesNotMatch(js, /out\.append\(tilesNode\(d\), prototypeCard\(d\)/);
+  assert.match(js, /out\.append\(\.\.\.\[tilesNode\(d\), prototypeCard\(d\), lastStopNode\(\)\]\.filter\(Boolean\)\)/);
+});

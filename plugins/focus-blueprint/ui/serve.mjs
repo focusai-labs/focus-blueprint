@@ -23,7 +23,7 @@ if (page && !['brain-dump', 'questionnaire', 'directions', 'board', 'process'].i
   process.exit(1);
 }
 
-const ui = await startUi({ projectDir, once });
+const ui = await startUi({ projectDir, once, page, round, screens });
 let target = ui.url;
 if (page) {
   const q = new URLSearchParams();

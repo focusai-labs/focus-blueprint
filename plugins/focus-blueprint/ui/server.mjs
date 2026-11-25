@@ -343,7 +343,17 @@ function markDone(projectDir, data) {
   return { status: 200, body: { ok: true } };
 }
 
-export async function startUi({ projectDir, once = false, idleMinutes = 30 } = {}) {
+/** The page a stage started the server for and is waiting on, or null for the board, the process map and no page. */
+export function taskFor(projectDir, { page, round, screens } = {}) {
+  let name = null; let r = null;
+  if (page === 'brain-dump') name = 'brain-dump';
+  else if (page === 'directions') name = 'directions';
+  else if (page === 'questionnaire') { r = round || 'a'; name = nameOfRound(r); }
+  if (!name) return null;
+  return { page, round: r, screens: screens || null, done: readAnswers(projectDir, name).done === true };
+}
+
+export async function startUi({ projectDir, once = false, idleMinutes = 30, page = null, round = null, screens = null } = {}) {
   const token = crypto.randomBytes(16).toString('hex');
   const uiDir = path.join(projectDir, '.blueprint', 'ui');
   const answersDir = path.join(uiDir, 'answers');
@@ -423,7 +433,7 @@ export async function startUi({ projectDir, once = false, idleMinutes = 30 } = {
           res.writeHead(200, { 'Content-Type': hit.type, 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff', 'Content-Security-Policy': 'sandbox allow-scripts allow-forms; default-src * data: blob: \'unsafe-inline\' \'unsafe-eval\'', 'Referrer-Policy': 'no-referrer' });
           return res.end(fs.readFileSync(hit.file));
         }
-        if (route === 'api/state') return send(res, 200, boardState(projectDir));
+        if (route === 'api/state') return send(res, 200, { ...boardState(projectDir), task: taskFor(projectDir, { page, round, screens }) });
         if (route === 'api/directions') return send(res, 200, directionsSummary(projectDir));
         if (route === 'api/direction-screen') {
           const n = Number(query.get('n'));

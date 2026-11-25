@@ -493,11 +493,27 @@ button.case-text:hover:not(:disabled) { color: var(--accent); }
 @keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
 @keyframes ring { from { box-shadow: 0 0 0 0 rgba(91, 63, 214, .45); } to { box-shadow: 0 0 0 10px rgba(91, 63, 214, 0); } }
 
+/* the way back to the page a stage is waiting on */
+.appbar .task-link, a.task-continue {
+  display: inline-flex; align-items: center; justify-content: center; min-height: 36px; padding: 0 14px; border-radius: 10px;
+  background: var(--accent-solid); border: 1px solid var(--accent-solid); color: var(--on-accent); font-size: 15px; font-weight: 600;
+  text-decoration: none; white-space: nowrap; max-width: 34ch; overflow: hidden; text-overflow: ellipsis;
+}
+a.task-continue { min-height: 44px; padding: 0 20px; margin-top: 12px; max-width: none; }
+.appbar .task-link:hover, a.task-continue:hover { filter: brightness(1.08); }
+.appbar .task-link[hidden] { display: none; }
+.menu-panel a.task-link { background: var(--accent-solid); color: var(--on-accent); max-width: none; margin-bottom: 4px; }
+.menu-panel a.task-link:hover { background: var(--accent-solid); filter: brightness(1.08); }
+
 /* ---------------------------------------------------------------- phone */
 @media (max-width: 639.98px) {
   .appbar { padding: 0 12px; gap: 8px; }
   .appbar .brand-name, .appbar .brand-sep, .appnav, .appbar .end > .stage-chip { display: none; }
   .appbar .project { max-width: 40vw; }
+  .appbar.has-task .project, .appbar.has-task .brand { display: none; }
+  .appbar .task-link { min-height: 44px; max-width: 52vw; padding: 0 10px; font-size: 14px; }
+  .appbar .end { flex: 1; min-width: 0; }
+  .appbar.has-task .end { justify-content: flex-end; }
   .appbar .end { gap: 4px; }
   .menu-btn { display: inline-flex; align-items: center; gap: 6px; height: 44px; padding: 0 10px; border-radius: 10px; color: var(--fg); font-weight: 500; }
   button.menu-btn:hover:not(:disabled) { background: var(--tint); }

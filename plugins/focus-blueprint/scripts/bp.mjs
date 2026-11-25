@@ -6,7 +6,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
-import { findProject, profileDir } from '../hooks/lib.mjs';
+import { findProject, profileDir, termsAccepted } from '../hooks/lib.mjs';
 import { installGitHook } from './install-git-hook.mjs';
 import { syncProjectFiles } from './project-files.mjs';
 import { impact, migrateMapInPlace, filesHash, NODE_TYPES } from './blueprint-model/map-model.mjs';
@@ -287,13 +287,14 @@ export const commands = {
     if (!['default', 'final-project'].includes(mode)) fail('--mode must be default or final-project');
     const dir = flags.project ? path.resolve(flags.project) : process.cwd();
     ctx.dir = dir;
+    if (!termsAccepted()) fail('עוד לא אישרתם את תנאי השימוש. מקלידים /blueprint, קוראים את התנאים ומאשרים, ורק אחר כך פותחים פרויקט.');
     if (fs.existsSync(path.join(dir, '.blueprint', 'state.json'))) fail('already initialised: .blueprint/state.json exists');
     const tpl = path.join(PLUGIN, 'templates');
     const state = {
-      schema: 2, project: flags.name, createdAt: today(), updatedAt: nowIso(), stage: 1, status: 'not_started', mode,
+      schema: 2, project: flags.name, createdAt: today(), updatedAt: nowIso(), stage: 1, status: 'in_progress', mode,
       context: null, track: null, live: false, connections: {},
       where: { repo: '', supabaseRef: '', vercelProject: '', n8nBase: '' },
-      stages: {}, pending: [], superpowers: { installed: false, version: null }, lastDriftCheck: null,
+      stages: { 1: { status: 'in_progress', startedAt: nowIso(), branch: stageBranch(1) } }, pending: [], superpowers: { installed: false, version: null }, lastDriftCheck: null,
     };
     writeJsonAtomic(path.join(dir, '.blueprint', 'map.json'), migrateMapInPlace({ schema: 2 }));
     writeJsonAtomic(path.join(dir, '.blueprint', 'changes.json'), []);

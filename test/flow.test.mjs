@@ -81,3 +81,29 @@ test('the blueprint skill explains why each stage runs in a new conversation, in
   assert.ok(t.includes('ומסבירים את הסיבה במילים פשוטות ובלי מונחים באנגלית.'));
   assert.ok(!t.includes('Context Pollution') && !t.includes('Elephant'));
 });
+
+test('bp init records stage 1 as started, like stage start 1', () => {
+  const dir = setup();
+  const st = JSON.parse(fs.readFileSync(path.join(dir, '.blueprint', 'state.json'), 'utf8'));
+  assert.equal(st.stage, 1); assert.equal(st.status, 'in_progress');
+  assert.equal(st.stages['1'].status, 'in_progress'); assert.equal(st.stages['1'].branch, 'stage-01'); assert.ok(st.stages['1'].startedAt);
+});
+
+test('bp init refuses until the current terms are accepted', () => {
+  const dir = tmpProject();
+  const home = path.join(dir, 'empty-home');
+  const r = bp(dir, ['init', '--name', 'x'], { FOCUS_BLUEPRINT_HOME: home });
+  assert.equal(r.code, 1);
+  assert.ok(r.err.includes('עוד לא אישרתם את תנאי השימוש. מקלידים /blueprint, קוראים את התנאים ומאשרים, ורק אחר כך פותחים פרויקט.'));
+  assert.ok(!fs.existsSync(path.join(dir, '.blueprint')));
+  fs.mkdirSync(home, { recursive: true });
+  fs.writeFileSync(path.join(home, 'profile.json'), JSON.stringify({ terms: { version: '2000-01-01' } }));
+  assert.equal(bp(dir, ['init', '--name', 'x'], { FOCUS_BLUEPRINT_HOME: home }).code, 1, 'an old version is not accepted');
+});
+
+test('the terms version has one source: terms.json equals the גרסה line of TERMS.md', () => {
+  const v = JSON.parse(fs.readFileSync(path.join(PLUGIN, 'data', 'terms', 'terms.json'), 'utf8')).version;
+  const md = fs.readFileSync(path.join(PLUGIN, 'TERMS.md'), 'utf8');
+  assert.equal(md.match(/^גרסה:\s*(\S+)/m)[1], v);
+  assert.ok(!fs.readFileSync(path.join(PLUGIN, 'hooks', 'lib.mjs'), 'utf8').includes(`'${v}'`), 'lib.mjs holds no copy of the version');
+});

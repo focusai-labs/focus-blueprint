@@ -6,10 +6,14 @@ import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 
-export const TERMS_VERSION = '2026-11-16';
 export const PROTECTED_BRANCHES = ['main', 'master'];
 
 const here = path.dirname(fileURLToPath(import.meta.url));
+
+/** The one source of the terms version is data/terms/terms.json. */
+export const TERMS_VERSION = (() => {
+  try { return JSON.parse(fs.readFileSync(path.join(here, '..', 'data', 'terms', 'terms.json'), 'utf8')).version || null; } catch { return null; }
+})();
 
 /** Read the hook's JSON input from stdin. A missing or broken input is an empty object. */
 export async function readInput() {
@@ -67,7 +71,7 @@ export function profileDir() {
 
 export function termsAccepted() {
   const profile = readJson(path.join(profileDir(), 'profile.json'));
-  return Boolean(profile && profile.terms && profile.terms.version === TERMS_VERSION);
+  return Boolean(TERMS_VERSION && profile && profile.terms && profile.terms.version === TERMS_VERSION);
 }
 
 /** Print the hook's JSON output. Nothing else may go to stdout. */

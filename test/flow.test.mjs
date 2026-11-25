@@ -75,3 +75,9 @@ test('every stage close line passes on the next-stage line instead of sending to
   const bpSkill = fs.readFileSync(path.join(PLUGIN, 'skills', 'blueprint', 'SKILL.md'), 'utf8');
   assert.ok(bpSkill.includes('- כשהשלב הנוכחי כבר נסגר, אומרים לסטודנט לפתוח שיחה חדשה'));
 });
+
+test('the blueprint skill explains why each stage runs in a new conversation, in plain words', () => {
+  const t = fs.readFileSync(path.join(PLUGIN, 'skills', 'blueprint', 'SKILL.md'), 'utf8');
+  assert.ok(t.includes('ומסבירים את הסיבה במילים פשוטות ובלי מונחים באנגלית.'));
+  assert.ok(!t.includes('Context Pollution') && !t.includes('Elephant'));
+});

@@ -141,7 +141,6 @@ test('the C3 and C5 hooks name the templates at their agreed paths', () => {
 
 test('the Elephant-Goldfish terms sit where the research places them', () => {
   const where = {
-    blueprint: ['Context Pollution', 'Elephant'],
     'stage-02-brain-dump': ['Weeds Syndrome'],
     'stage-04-prd': ['Artifact-First Delivery'],
     'stage-05-screens-map': ['Goldfish', 'Comprehension Test', 'Paraphrase First'],

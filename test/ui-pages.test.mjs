@@ -118,3 +118,36 @@ test('a project with nothing pending gets an empty list', async () => {
     assert.deepEqual(st.personas, {});
   } finally { ui.close(); await ui.closed; }
 });
+
+test('the way back to the waiting page: strings, the bar and the board card', () => {
+  assert.deepEqual(strings.task, {
+    backBrainDump: 'חזרה לתיאור הרעיון', continueBrainDump: 'להמשיך בתיאור הרעיון',
+    backQuestionnaire: 'חזרה לשאלון, {round}', continueQuestionnaire: 'להמשיך בשאלון, {round}',
+    backDirections: 'חזרה לשלושת הכיוונים', continueDirections: 'להמשיך בבחירת הכיוון',
+    roundContext: 'ההקשר', roundA: 'סבב א', roundB: 'סבב ב', roundC: 'סבב ג', roundD: 'סבב ד',
+  });
+  assert.match(js, /taskEl = h\('a', \{ class: 'task-link'/, 'the bar builds the item');
+  assert.match(js, /link\.page !== page/, 'only while the student is on another page');
+  assert.match(js, /a', \{ class: 'btn primary task-continue'/, 'the board card has the primary button');
+  assert.match(js, /const taskBtn = tl \?/);
+});
+
+test('no possibly-null child is appended raw', () => {
+  assert.doesNotMatch(js, /out\.append\(tilesNode\(d\), prototypeCard\(d\)/);
+  assert.match(js, /out\.append\(\.\.\.\[tilesNode\(d\), prototypeCard\(d\), lastStopNode\(\)\]\.filter\(Boolean\)\)/);
+});
+
+test('questionnaire end screen: owner strings for missing answers, and the count excludes "עוד לא יודעים"', () => {
+  assert.equal(strings.questionnaire.missingTitle, 'עוד לא עניתם על {n} שאלות');
+  assert.equal(strings.questionnaire.missingOne, 'עוד לא עניתם על שאלה אחת');
+  assert.equal(strings.questionnaire.missingHint, 'אפשר לחזור לכל אחת מהן, או לסמן בה ״עוד לא יודעים״.');
+  assert.equal(strings.questionnaire.missingGo, 'לשאלה הזו');
+  const end = js.slice(js.indexOf('function renderEnd()'), js.indexOf("if (data.done) { root.append"));
+  assert.match(end, /answerStatus\(q\.answer\) === 'empty'/);
+  assert.match(end, /finishAllAnswered/);
+  // the all-answered text only when nothing is missing
+  assert.match(end, /!missing\.length && !pre\.length/);
+  // the finish button follows the server: hidden while a guess is unconfirmed (markDone answers 409), never hidden for a missing answer
+  assert.match(end, /const canFinish = pre\.length === 0;/);
+  assert.match(fs.readFileSync(path.join(PLUGIN, 'ui', 'server.mjs'), 'utf8'), /unconfirmed prefill/);
+});

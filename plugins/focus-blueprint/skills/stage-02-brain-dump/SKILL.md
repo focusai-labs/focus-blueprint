@@ -23,7 +23,7 @@ disable-model-invocation: true
 
 ## מה עושים
 
-1. מריצים `bp stage start 2` ופותחים את הדף עם `node "${CLAUDE_PLUGIN_ROOT}/ui/serve.mjs" --page brain-dump`. אומרים לסטודנט בשורה אחת שהתשובה לשאלה הראשונה תכוון את כל השאר.
+1. מריצים `bp stage start 2` ופותחים את הדף עם `node "${CLAUDE_PLUGIN_ROOT}/ui/serve.mjs" --page brain-dump --detach`. אומרים לסטודנט בשורה אחת שהתשובה לשאלה הראשונה תכוון את כל השאר.
 2. מחכים עם `node "${CLAUDE_PLUGIN_ROOT}/ui/wait.mjs" --name brain-dump --until done --timeout 280`. אם הזמן נגמר לפני שהסטודנט סיים, מריצים שוב ולא לוחצים עליו לסיים.
 3. אם השרת לא עולה, שואלים את השאלות בשיחה. קודם שואלים רק למה דווקא הרעיון הזה ולמה עכשיו, ורק אחרי התשובה מבקשים מהסטודנט לכתוב בחופשיות.
 4. קוראים מ-`.blueprint/ui/answers/brain-dump.json` את התשובה לשאלה למה ואת הטקסט החופשי.

@@ -309,9 +309,27 @@
     if (drawer.isOpen()) { e.preventDefault(); drawer.close(); }
   });
 
+  // ---------------------------------------------------------------- the page a stage is waiting on
+  const TASK_KEYS = {
+    'brain-dump': { back: 'task.backBrainDump', cont: 'task.continueBrainDump' },
+    questionnaire: { back: 'task.backQuestionnaire', cont: 'task.continueQuestionnaire' },
+    directions: { back: 'task.backDirections', cont: 'task.continueDirections' },
+  };
+  const ROUND_KEYS = { context: 'task.roundContext', a: 'task.roundA', b: 'task.roundB', c: 'task.roundC', d: 'task.roundD' };
+  /** { href, label (back), cont (continue) } for a task that is open, else null. */
+  function taskLink(task) {
+    if (!task || task.done || !Object.hasOwn(TASK_KEYS, task.page)) return null;
+    const k = TASK_KEYS[task.page];
+    const q = new URLSearchParams();
+    if (task.round) q.set('round', task.round);
+    if (task.screens) q.set('screens', task.screens);
+    const round = task.round && Object.hasOwn(ROUND_KEYS, task.round) ? t(ROUND_KEYS[task.round]) : '';
+    return { page: task.page, href: task.page + (q.size ? `?${q}` : ''), label: t(k.back, { round }), cont: t(k.cont, { round }) };
+  }
+
   // ---------------------------------------------------------------- the app bar, on every page
   const bar = (() => {
-    let el = null; let projectEl = null; let sepEl = null; let chipEl = null; let menuBtn = null; let page = '';
+    let el = null; let projectEl = null; let sepEl = null; let chipEl = null; let menuBtn = null; let page = ''; let taskEl = null; let task = null;
     const navLinks = () => [
       h('a', { href: 'board', 'aria-current': page === 'board' ? 'page' : null }, t('nav.board')),
       h('a', { href: 'process', 'aria-current': page === 'process' ? 'page' : null }, t('nav.process')),
@@ -326,7 +344,8 @@
     function openMenu() {
       if (popover.isOpenFor(menuBtn)) { popover.close(); return; }
       const chip = chipEl && !chipEl.hidden ? h('a', { class: 'stage-chip', href: chipEl.getAttribute('href') }, chipEl.textContent) : null;
-      popover.open(menuBtn, [navLinks(), chip], { className: 'menu-panel', role: null, label: t('nav.menu'), focusFirst: true });
+      const back = task && !taskEl.hidden ? h('a', { class: 'task-link', href: task.href }, task.label) : null;
+      popover.open(menuBtn, [back, navLinks(), chip], { className: 'menu-panel', role: null, label: t('nav.menu'), focusFirst: true });
     }
     function build(pageName) {
       page = pageName;
@@ -339,6 +358,8 @@
       projectEl = h('span', { class: 'project', hidden: true });
       sepEl = h('span', { class: 'brand-sep', 'aria-hidden': 'true', hidden: true });
       chipEl = h('a', { class: 'stage-chip', href: 'board#overview', hidden: true });
+      taskEl = h('a', { class: 'task-link', 'data-key': 'task-back', href: '#', hidden: true });
+      task = null;
       const theme = h('button', { type: 'button', class: 'bare icon-btn', 'data-key': 'theme', onclick: (e) => {
         const next = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
         applyTheme(next); saveTheme(next); paintTheme(e.currentTarget);
@@ -348,7 +369,7 @@
       el.append(
         h('div', { class: 'brand' }, h('span', { class: 'brand-name ltr', lang: 'en' }, 'Focus Blueprint'), sepEl, projectEl),
         h('nav', { class: 'appnav', 'aria-label': t('nav.menu') }, navLinks()),
-        h('div', { class: 'end' }, save, chipEl, menuBtn, theme));
+        h('div', { class: 'end' }, save, taskEl, chipEl, menuBtn, theme));
       const onScroll = () => el.classList.toggle('is-scrolled', window.scrollY > 2);
       window.addEventListener('scroll', onScroll, { passive: true });
       onScroll();
@@ -364,6 +385,11 @@
         chipEl.textContent = def ? t('nav.stage', { n: st.stage, name: def.name }) : t('board.stageN', { n: st.stage });
         chipEl.hidden = false;
       } else chipEl.hidden = true;
+      const link = taskLink(s && s.task);
+      task = link && link.page !== page ? link : null;
+      taskEl.hidden = !task;
+      el.classList.toggle('has-task', Boolean(task));
+      if (task) { taskEl.setAttribute('href', task.href); taskEl.textContent = task.label; }
     }
     return { build, update };
   })();
@@ -797,24 +823,37 @@
       clear(root);
       current = null;
       const pre = list.filter((q) => isPrefill(q.answer));
+      const missing = list.filter((q) => answerStatus(q.answer) === 'empty');
       if (list.length === 0) { root.append(h('p', {}, t('questionnaire.noQuestions'))); return; }
-      root.append(h('h2', {}, t('questionnaire.finishTitle')));
       const backToLast = () => slide(-1, () => show(list.length - 1));
+      const goTo = (q) => slide(-1, () => show(list.indexOf(q)));
+      const jumpList = (qs, withButton) => {
+        const ul = h('ul', { class: 'plain' });
+        qs.forEach((q) => ul.append(withButton
+          ? h('li', { class: 'row spread jump-row' }, h('span', {}, q.text), h('button', { type: 'button', class: 'quiet', onclick: () => goTo(q) }, t('questionnaire.missingGo')))
+          : h('li', {}, h('button', { type: 'button', class: 'quiet', onclick: () => goTo(q) }, q.text))));
+        return ul;
+      };
+      root.append(h('h2', {}, missing.length
+        ? (missing.length === 1 ? t('questionnaire.missingOne') : t('questionnaire.missingTitle', { n: missing.length }))
+        : t('questionnaire.finishTitle')));
+      if (missing.length) {
+        root.append(h('p', { class: 'muted' }, t('questionnaire.missingHint')));
+        root.append(jumpList(missing, true));
+      }
       if (pre.length) {
         root.append(h('p', {}, t('questionnaire.unconfirmedTitle')));
-        const ul = h('ul', { class: 'plain' });
-        pre.forEach((q) => ul.append(h('li', {}, h('button', { type: 'button', class: 'quiet', onclick: () => slide(-1, () => show(list.indexOf(q))) }, q.text))));
-        root.append(ul);
-      } else {
-        root.append(h('p', { class: 'muted' }, t('questionnaire.finishAllAnswered')));
-        root.append(h('div', { class: 'row spread' },
-          h('button', { type: 'button', class: 'quiet', onclick: backToLast }, t('common.back')),
-          h('button', { type: 'button', class: 'primary', id: 'round-done', onclick: async () => {
-            try { await api('api/done', { name: data.name }); clear(root); root.append(h('p', { class: 'note' }, t('common.backToClaude'))); }
-            catch (e) { if (e.status === 409) { await refetch(); renderEnd(); } else setState('failed'); }
-          } }, t('questionnaire.roundDone'))));
+        root.append(jumpList(pre, false));
       }
-      if (pre.length) root.append(h('div', { class: 'row' }, h('button', { type: 'button', class: 'quiet', onclick: backToLast }, t('common.back'))));
+      if (!missing.length && !pre.length) root.append(h('p', { class: 'muted' }, t('questionnaire.finishAllAnswered')));
+      const doneBtn = h('button', { type: 'button', class: 'primary', id: 'round-done', onclick: async () => {
+        try { await api('api/done', { name: data.name }); clear(root); root.append(h('p', { class: 'note' }, t('common.backToClaude'))); }
+        catch (e) { if (e.status === 409) { await refetch(); renderEnd(); } else setState('failed'); }
+      } }, t('questionnaire.roundDone'));
+      // The server refuses to close a round while a guess is unconfirmed (409), so the button shows only when none is left.
+      // A missing answer never blocks it, so the student is not trapped.
+      const canFinish = pre.length === 0;
+      root.append(h('div', { class: 'row spread' }, h('button', { type: 'button', class: 'quiet', onclick: backToLast }, t('common.back')), canFinish ? doneBtn : null));
     }
 
     if (data.done) { root.append(h('p', { class: 'note' }, t('common.backToClaude'))); }
@@ -854,7 +893,7 @@
       const chapters = [];
       defs.forEach((d) => { let c = chapters.find((x) => x.name === d.chapter); if (!c) { c = { name: d.chapter, stages: [] }; chapters.push(c); } c.stages.push(d); });
       const rulings = arr(s && s.rulings);
-      return { st, map, defs, chapters, rulings, unreported: rulings.filter((r) => !r.reported), closes: (s && s.closes) || {}, proto: (s && s.prototypeInfo) || null, protoNotes: arr(s && s.prototypeNotes) };
+      return { st, map, defs, chapters, rulings, unreported: rulings.filter((r) => !r.reported), closes: (s && s.closes) || {}, proto: (s && s.prototypeInfo) || null, protoNotes: arr(s && s.prototypeNotes), task: (s && s.task) || null };
     }
     const closeOf = (d, n) => d.closes[n] || d.closes[String(n)] || null;
     function stageStatus(d, n) {
@@ -1105,14 +1144,17 @@
       const waiting = waitingRows(d);
       if (d.st.stage != null) {
         const def = d.defs.find((x) => x.n === d.st.stage);
+        const tl = taskLink(d.task);
+        const taskBtn = tl ? h('a', { class: 'btn primary task-continue', 'data-key': 'task-continue', href: tl.href }, tl.cont) : null;
         const ch = def ? d.chapters.findIndex((c) => c.name === def.chapter) : -1;
         out.append(h('section', { class: `card ov-stage${waiting.length ? ' with-waiting' : ''}` },
           h('p', { class: 'kicker' }, t('board.currentStage')),
           h('div', { class: 'stage-line' }, h('h2', {}, def ? t('nav.stage', { n: d.st.stage, name: def.name }) : t('board.stageN', { n: d.st.stage })), statusBadge(d.st.status || 'in_progress')),
-          ch >= 0 ? h('p', { class: 'muted' }, t('board.chapterOf', { n: ch + 1, name: def.chapter })) : null));
+          ch >= 0 ? h('p', { class: 'muted' }, t('board.chapterOf', { n: ch + 1, name: def.chapter })) : null,
+          taskBtn));
       }
       if (waiting.length) out.append(h('section', { class: 'card ov-waiting', 'aria-labelledby': 'waiting-title' }, h('h2', { class: 'card-title', id: 'waiting-title' }, t('board.waiting')), h('ul', { class: 'rows' }, waiting.map((w) => h('li', {}, w)))));
-      out.append(tilesNode(d), prototypeCard(d), lastStopNode());
+      out.append(...[tilesNode(d), prototypeCard(d), lastStopNode()].filter(Boolean));
       return out;
     }
 

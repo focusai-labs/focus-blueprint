@@ -225,3 +225,24 @@ test('serve.mjs --page prints the page address', async () => {
     assert.equal(r.status, 200);
   } finally { child.kill(); }
 });
+
+test('api/state carries the task the server was started for', async () => {
+  const dir = project();
+  const stateOf = async (opts) => {
+    const ui = await startUi({ projectDir: dir, ...opts });
+    try { return await (await fetch(`${ui.url}api/state`)).json(); } finally { ui.close(); await ui.closed; }
+  };
+  assert.equal((await stateOf({})).task, null);
+  assert.equal((await stateOf({ page: 'board' })).task, null);
+  assert.equal((await stateOf({ page: 'process' })).task, null);
+  assert.deepEqual((await stateOf({ page: 'brain-dump' })).task, { page: 'brain-dump', round: null, screens: null, done: false });
+  assert.deepEqual((await stateOf({ page: 'questionnaire', round: 'b', screens: 'x,y' })).task, { page: 'questionnaire', round: 'b', screens: 'x,y', done: false });
+  assert.equal((await stateOf({ page: 'questionnaire' })).task.round, 'a');
+  assert.deepEqual((await stateOf({ page: 'directions' })).task, { page: 'directions', round: null, screens: null, done: false });
+  // done turns true once the answers are marked done
+  const file = path.join(dir, '.blueprint', 'ui', 'answers', 'brain-dump.json');
+  fs.mkdirSync(path.dirname(file), { recursive: true });
+  fs.writeFileSync(file, JSON.stringify({ name: 'brain-dump', answers: {}, done: true }));
+  assert.equal((await stateOf({ page: 'brain-dump' })).task.done, true);
+  assert.equal((await stateOf({ page: 'questionnaire', round: 'a' })).task.done, false);
+});

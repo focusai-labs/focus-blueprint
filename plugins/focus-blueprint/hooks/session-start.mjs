@@ -87,6 +87,14 @@ const unscopedLine = unscoped.length
   ? `Supabase MCP: ${unscoped.join(', ')} is a Supabase connection that is tied to another project, has no project_ref, or can write. This project works only with a read-only connection scoped to its own project (project_ref and read_only=true, or --project-ref and --read-only). Tell the student to disable the unscoped connection here through /mcp, and never call its tools.`
   : '';
 
+let claudeMdLine = '';
+try {
+  const cm = fs.readFileSync(path.join(dir, 'CLAUDE.md'), 'utf8');
+  if (!cm.includes('@AGENTS.md')) claudeMdLine = 'בפרויקט יש CLAUDE.md שלא מייבא את AGENTS.md, ולכן הכללים של הכלי לא נטענים. כדאי להוסיף בו שורה אחת: @AGENTS.md';
+} catch {
+  // No CLAUDE.md: Claude Code reads AGENTS.md itself.
+}
+
 const context = [
   `Focus Blueprint project "${state.project}". Project root: ${dir}.`,
   `Current stage: ${stageText}. Status: ${state.status || 'unknown'}.`,
@@ -96,6 +104,7 @@ const context = [
   hookLine,
   staleLine,
   unscopedLine,
+  claudeMdLine,
   driftLine,
   rulingsLine,
   ...haltedItems(project).map(haltedLine),

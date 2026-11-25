@@ -129,12 +129,12 @@ test('the placeholders and the toasts are in the shell text, with the contract s
   const d = bundle(buildPrototype(fixture()));
   const S = d.strings;
   assert.equal(S.missingTitle, 'המסך הזה עוד לא נבנה');
-  assert.equal(S.missingText, '{name} מופיע במפה, אבל עוד אין לו מסך באב הטיפוס.');
+  assert.equal(S.missingText, 'המסך ״{name}״ רשום במפה, אבל עוד לא נבנה.');
   assert.equal(S.unknownTitle, 'הקישור לא מוביל למסך שבמפה');
-  assert.equal(S.unknownText, 'הכפתור מוביל אל {file}, ואין מסך כזה במפה.');
+  assert.equal(S.unknownText, 'הלחיצה מובילה לקובץ {file}, ואין מסך כזה במפה.');
   assert.equal(S.back, 'חזרה למסך הקודם');
   assert.equal(S.demo, 'הכפתור הזה מסומן כדמה, ובאב הטיפוס הוא לא עושה כלום.');
-  assert.equal(S.external, 'באב הטיפוס קישורים החוצה לא נפתחים.');
+  assert.equal(S.external, 'באב הטיפוס לא נפתחים קישורים לאתרים אחרים.');
   assert.equal(S.banner, 'אב טיפוס עם נתוני דמה');
   const shell = fs.readFileSync(path.join(PLUGIN, 'scripts/prototype/shell.js'), 'utf8');
   for (const k of ['missingTitle', 'unknownTitle', 'missingText', 'unknownText', 'S.demo', 'S.external']) assert.ok(shell.includes(k), k);

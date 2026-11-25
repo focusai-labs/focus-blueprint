@@ -226,6 +226,18 @@
     $('bp-ph-back').textContent = S.back;
     if (TEST) { $('bp-map-btn').hidden = true; $('bp-device').hidden = true; }
     if (EMBED) $('bp-device').hidden = true;
+    var fsBtn = $('bp-fs-btn'); var rootEl = document.documentElement;
+    var fsOn = function () { return !!(document.fullscreenElement || document.webkitFullscreenElement); };
+    if (!EMBED && (document.fullscreenEnabled || document.webkitFullscreenEnabled)) {
+      var paintFs = function () { var on = fsOn(); fsBtn.textContent = on ? S.exitFullscreen : S.fullscreen; fsBtn.setAttribute('aria-pressed', on ? 'true' : 'false'); };
+      fsBtn.hidden = false; paintFs();
+      fsBtn.addEventListener('click', function () {
+        if (fsOn()) { var ex = document.exitFullscreen || document.webkitExitFullscreen; if (ex) ex.call(document); return; }
+        var rq = rootEl.requestFullscreen || rootEl.webkitRequestFullscreen;
+        if (rq) { var pr = rq.call(rootEl); if (pr && pr.catch) pr.catch(function () {}); }
+      });
+      document.addEventListener('fullscreenchange', paintFs); document.addEventListener('webkitfullscreenchange', paintFs);
+    }
     buildMap();
     setDevice(window.innerWidth >= 900 ? 'computer' : 'phone');
     $('bp-phone').addEventListener('click', function () { setDevice('phone'); });

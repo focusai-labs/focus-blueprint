@@ -269,3 +269,8 @@ test('bp prototype scan: secrets and personal data per screen, base64 is not sca
   assert.deepEqual(r.json.personal.map((x) => [x.screen, x.kind]).sort(), [['mockup/index.html', 'email'], ['mockup/list.html', 'email'], ['mockup/list.html', 'id'], ['mockup/list.html', 'phone']].sort());
   assert.throws(() => scanPrototype('<html></html>'), /not a prototype file/);
 });
+
+test('the map check leaves the built prototype files alone', () => {
+  const src = fs.readFileSync(path.join(PLUGIN, 'scripts', 'check-map.mjs'), 'utf8');
+  assert.match(src, /prototype\(-test\)\?\\\.html/);
+});

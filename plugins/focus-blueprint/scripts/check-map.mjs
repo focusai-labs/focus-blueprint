@@ -126,7 +126,7 @@ const rules = [
       for (const e of fs.readdirSync(d, { withFileTypes: true })) {
         const r = `${rel}/${e.name}`;
         if (e.isDirectory()) walk(r);
-        else if (/\.html$/i.test(e.name) && !e.name.startsWith('_') && !known.has(r)) err('2', r, `הקובץ ${r} נמצא בתיקיית mockup, אבל הוא לא רשום במפה כמסך.`);
+        else if (/\.html$/i.test(e.name) && !e.name.startsWith('_') && !/^prototype(-test)?\.html$/i.test(e.name) && !known.has(r)) err('2', r, `הקובץ ${r} נמצא בתיקיית mockup, אבל הוא לא רשום במפה כמסך.`);
       }
     };
     walk('mockup');

@@ -77,4 +77,4 @@ disable-model-invocation: true
 3. סוגרים את השלב עם `bp stage done 13 --status <done|done_with_concerns|blocked|needs_context> --note "<מה פתוח>" --proof "<הפלט>"`. כששורה ברשימה נסגרה למרות פער ידוע, הסטטוס הוא `done_with_concerns`, וכותבים את הפער בהערה.
 4. עושים commit בענף `stage-13` עם הודעה בעברית, פותחים PR וממזגים אחרי שהבדיקה עוברת.
 5. כותבים את `.blueprint/last-session.md`.
-6. אומרים לסטודנט במשפט אחד, בלי לייפות, איך השלב נסגר. אחר כך מעבירים לסטודנט, מילה במילה, את השורה על השלב הבא שהפקודה `bp stage done` הדפיסה.
+6. אומרים לסטודנט במשפט אחד, בלי לייפות, איך השלב נסגר. אחר כך עוברים לשלב הבא לפי `${CLAUDE_PLUGIN_ROOT}/skills/blueprint/references/next-stage.md`.

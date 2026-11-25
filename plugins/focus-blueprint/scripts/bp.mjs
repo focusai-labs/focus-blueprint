@@ -68,11 +68,25 @@ function stageOpening(n) {
   ].join('\n');
 }
 
-/** The line that closes a stage: which stage comes next and the command that opens it. */
-function stageNext(n) {
-  if (n >= 15) return 'זה היה השלב האחרון, וכל 15 השלבים הושלמו.';
+/** Where the next stage is worked on: here (same chapter) or in a new conversation, and the line that says so. */
+function stageNext(n, compactedAt = null, startedAt = null) {
+  if (n >= 15) return { next: 'זה היה השלב האחרון, וכל 15 השלבים הושלמו.' };
+  const cur = stageList().find((x) => x.n === n);
   const nx = stageList().find((x) => x.n === n + 1);
-  return `השלב הבא הוא שלב ${nx.n}, ${nx.name}. פותחים שיחה חדשה ומקלידים /focus-blueprint:${nx.skill}`;
+  const compacted = compactedAt && (!startedAt || Date.parse(compactedAt) > Date.parse(startedAt));
+  const head = `השלב הבא הוא שלב ${nx.n}, ${nx.name}`;
+  const open = `פותחים שיחה חדשה ומקלידים /focus-blueprint:${nx.skill}`;
+  if (nx.n === 12) return { continueHere: false, next: `${head}. כל יכולת נבנית בשיחה חדשה משלה, ולכן ${open}` };
+  if (compacted) return { continueHere: false, next: `${head}. השיחה הזאת כבר נדחסה, ולכן ${open}` };
+  if (cur && cur.chapter !== nx.chapter) return { continueHere: false, next: `${head}, והוא פותח את הפרק "${nx.chapter}". כדי שיתחיל עם הקשר נקי, ${open}` };
+  return { continueHere: true, next: `${head}, באותו פרק, ולכן אפשר להמשיך אליו כאן, באותה שיחה.` };
+}
+
+/** The instructions of a stage skill as plain text: frontmatter removed, the plugin root filled in. */
+function stageBody(nx) {
+  const raw = fs.readFileSync(path.join(PLUGIN, 'skills', nx.skill, 'SKILL.md'), 'utf8').replace(/\r\n/g, '\n');
+  const body = raw.startsWith('---\n') ? raw.replace(/^---\n[\s\S]*?\n---\n?/, '') : raw;
+  return body.replace(/^\n+/, '').split('${CLAUDE_PLUGIN_ROOT}').join(PLUGIN);
 }
 
 class Fail extends Error {}
@@ -350,6 +364,17 @@ export const commands = {
 
   stage(args, ctx) {
     const [sub, nRaw, ...rest] = args;
+    if (sub === 'next') {
+      const s0 = ctx.state();
+      const cur = Number(s0.stage);
+      const cs = s0.stages && s0.stages[cur];
+      const closed = cs && ['done', 'done_with_concerns', 'skipped'].includes(cs.status);
+      const never = !cs || cs.status === undefined || cs.status === 'not_started';
+      if (!closed && !never) fail('השלב הנוכחי עוד לא נסגר, ולכן אי אפשר להתחיל את השלב הבא. קודם סוגרים אותו.');
+      const target = closed ? cur + 1 : cur;
+      const nx = stageList().find((x) => x.n === target) || fail(closed ? 'זה היה השלב האחרון, אין שלב הבא.' : `stage ${target} is not in stages.json`);
+      return new RawText(`ממשיכים לשלב ${nx.n}, ${nx.name}, באותה שיחה. מכאן עובדים לפי ההוראות של השלב, כמו אחרי /focus-blueprint:${nx.skill}.\n\n${stageBody(nx)}`);
+    }
     const n = Number(nRaw);
     if (!Number.isInteger(n) || n < 1 || n > 15) fail('stage number must be 1-15');
     if (sub === 'intro') return new RawText(stageOpening(n));
@@ -375,16 +400,17 @@ export const commands = {
       const p = proof ? (proof.length > 600 ? proof.slice(0, 600) + '...' : proof) : '';
       const at = nowIso();
       const st = (s.stages[n] ||= { startedAt: at, branch: stageBranch(n) });
+      const startedAt = st.startedAt;
       st.close = { status, note: note || '', proof: p, at };
       if (status === 'done' || status === 'done_with_concerns') {
         st.status = 'done'; st.doneAt = at;
         if (n < 15) { s.stage = n + 1; s.status = 'not_started'; } else { s.stage = n; s.status = 'done'; }
       } else { st.status = status; s.stage = n; s.status = status; }
       const out = { ...ctx.saveState() };
-      if (st.status === 'done') out.next = stageNext(n);
+      if (st.status === 'done') Object.assign(out, stageNext(n, s.session && s.session.compactedAt, startedAt));
       return out;
     }
-    return fail('usage: stage intro N | stage start N | stage done N --status ...');
+    return fail('usage: stage intro N | stage start N | stage done N --status ... | stage next');
   },
 
   round(args, ctx) {

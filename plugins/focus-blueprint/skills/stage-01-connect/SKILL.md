@@ -60,4 +60,4 @@ disable-model-invocation: true
 3. סוגרים את השלב עם `bp stage done 1 --status <done|done_with_concerns|blocked|needs_context> --note "<הספק, החסם או המידע שחסר>" --proof "<הפלט>"`. כשהכלל של GitHub לא נוצר בגלל התוכנית, הסטטוס הוא `done_with_concerns`, והפער כתוב בהערה.
 4. בשלב הזה אין PR. ה-commit הראשון נכנס ישר ל-main, וזה המקרה היחיד שבו זה מותר.
 5. כותבים את `.blueprint/last-session.md`, עד 30 שורות: מה נעשה, מה פתוח ומה הצעד הבא.
-6. אומרים לסטודנט במשפט אחד, בלי לייפות, איך השלב נסגר, עם הסטטוס ועם הפלט של ההוכחה. אחר כך מעבירים לסטודנט, מילה במילה, את השורה על השלב הבא שהפקודה `bp stage done` הדפיסה.
+6. אומרים לסטודנט במשפט אחד, בלי לייפות, איך השלב נסגר, עם הסטטוס ועם הפלט של ההוכחה. אחר כך עוברים לשלב הבא לפי `${CLAUDE_PLUGIN_ROOT}/skills/blueprint/references/next-stage.md`.

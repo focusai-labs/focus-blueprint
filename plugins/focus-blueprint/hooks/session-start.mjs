@@ -12,6 +12,22 @@ const project = findProject(input);
 if (!project) process.exit(0);
 
 const { dir, state } = project;
+
+// Claude Code compacted this conversation: mark it, so the next stage close sends the student to a fresh one.
+if (input.source === 'compact') {
+  try {
+    const file = path.join(dir, '.blueprint', 'state.json');
+    const fresh = readJson(file);
+    if (fresh && typeof fresh === 'object') {
+      fresh.session = { ...(fresh.session && typeof fresh.session === 'object' ? fresh.session : {}), compactedAt: new Date().toISOString() };
+      const tmp = `${file}.${process.pid}.tmp`;
+      fs.writeFileSync(tmp, JSON.stringify(fresh, null, 2) + '\n');
+      fs.renameSync(tmp, file);
+    }
+  } catch {
+    // Silent: the mark is only a hint.
+  }
+}
 const total = stages().length;
 const stage = stageInfo(state.stage);
 const next = stageInfo(state.stage + 1);

@@ -56,7 +56,8 @@ test('stage done names the next stage and its command exactly', () => {
   const dir = setup();
   bp(dir, ['stage', 'start', '1']);
   const r = bp(dir, ['stage', 'done', '1', '--status', 'done', '--proof', 'ok']).json;
-  assert.equal(r.next, 'השלב הבא הוא שלב 2, תיאור הרעיון. פותחים שיחה חדשה ומקלידים /focus-blueprint:stage-02-brain-dump');
+  assert.equal(r.next, 'השלב הבא הוא שלב 2, תיאור הרעיון, באותו פרק, ולכן אפשר להמשיך אליו כאן, באותה שיחה.');
+  assert.equal(r.continueHere, true);
 });
 
 test('stage done: no next line when the stage is blocked; a last line after stage 15', () => {
@@ -67,18 +68,20 @@ test('stage done: no next line when the stage is blocked; a last line after stag
   assert.equal(bp(dir2, ['stage', 'done', '15', '--status', 'done', '--proof', 'ok']).json.next, 'זה היה השלב האחרון, וכל 15 השלבים הושלמו.');
 });
 
-test('every stage close line passes on the next-stage line instead of sending to /blueprint', () => {
+test('every stage close line points to the shared next-stage instructions', () => {
   for (const s of stages) {
     const t = fs.readFileSync(path.join(PLUGIN, 'skills', s.skill, 'SKILL.md'), 'utf8');
-    assert.ok(t.includes('אחר כך מעבירים לסטודנט, מילה במילה, את השורה על השלב הבא שהפקודה `bp stage done` הדפיסה.'), s.skill);
+    if (s.n === 15) assert.ok(t.includes('אחר כך מעבירים לסטודנט, מילה במילה, את השורה על השלב הבא שהפקודה `bp stage done` הדפיסה.'), s.skill);
+    else assert.ok(t.includes('אחר כך עוברים לשלב הבא לפי `${CLAUDE_PLUGIN_ROOT}/skills/blueprint/references/next-stage.md`.'), s.skill);
   }
   const bpSkill = fs.readFileSync(path.join(PLUGIN, 'skills', 'blueprint', 'SKILL.md'), 'utf8');
-  assert.ok(bpSkill.includes('- כשהשלב הנוכחי כבר נסגר, אומרים לסטודנט לפתוח שיחה חדשה'));
+  assert.ok(bpSkill.includes('- כשהשלב הנוכחי כבר נסגר, שואלים את הסטודנט עם AskUserQuestion אם להתחיל כאן את השלב הבא, בשם שלו.'));
 });
 
-test('the blueprint skill explains why each stage runs in a new conversation, in plain words', () => {
+test('the blueprint skill explains when a new conversation is needed, in plain words', () => {
   const t = fs.readFileSync(path.join(PLUGIN, 'skills', 'blueprint', 'SKILL.md'), 'utf8');
-  assert.ok(t.includes('ומסבירים את הסיבה במילים פשוטות ובלי מונחים באנגלית.'));
+  assert.ok(t.includes('- מזכירים בשורה אחת שבתוך פרק ממשיכים באותה שיחה, ושיחה חדשה פותחים במעבר לפרק חדש, בכל יכולת בשלב 12 ואחרי שהשיחה נדחסה.'));
+  assert.ok(t.includes('שלב מתחיל רק אחרי שהסטודנט אמר כן, כדי שהוא יחליט מתי שלב מתחיל.'));
   assert.ok(!t.includes('Context Pollution') && !t.includes('Elephant'));
 });
 

@@ -21,7 +21,7 @@ disable-model-invocation: true
 
 ## מה עושים
 
-1. מריצים `bp stage start 11`.
+1. מריצים `bp stage start 11`. מעבירים לסטודנט, מילה במילה, את הפתיחה שהפקודה הדפיסה.
 2. מבררים מאיפה יגיעו הטכניקות של הבנייה, עם `bp route debugging` ו-`bp route verification`. כש-superpowers מותקנת בגרסה שנבדקה, משתמשים ב-skills שלה, ואם לא, ב-`/focus-blueprint:debug` וב-`/focus-blueprint:verify`.
 3. מעבירים את המסכים לסביבה של המסלול. לאפליקציה עם משתמשים משתמשים בתבנית with-supabase. למערכת שרצה על n8n בונים ממשק פשוט, ולאתר סטטי מעלים את ה-mockup עצמו. לפני כל פקודה של ספק עוברים דרך `/focus-blueprint:docs-verify`.
 4. מוסיפים התחברות וניווט, ועדיין עובדים עם נתוני דמה. כל מסך צריך להיראות כמו ב-mockup.

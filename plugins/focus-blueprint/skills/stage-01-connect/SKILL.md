@@ -21,6 +21,7 @@ disable-model-invocation: true
 
 ## מה עושים
 
+0. מריצים `bp stage intro 1`, ומעבירים לסטודנט, מילה במילה, את הפתיחה שהפקודה הדפיסה.
 1. מריצים את `install-check.mjs` ומציגים שורה לכל בדיקה: Node, Git, Playwright MCP ו-superpowers. כשחסר Node או Git, מראים איך מתקינים אותם לפי התיעוד הרשמי, דרך `/focus-blueprint:docs-verify`, ומחכים עד שההתקנה מסתיימת.
    - בודקים גם את הגרסה של Claude Code, כי בגרסה ישנה מ-2.1.277 חלק מהכללים והבדיקות של הכלי לא עובדים כמו שצריך. ב-VS Code הגרסה של Claude Code היא הגרסה של התוסף Claude Code, ולכן מבקשים מהסטודנט לפתוח את חלון התוספים (Cmd+Shift+X ב-Mac, Ctrl+Shift+X ב-Windows) ולכתוב איזו גרסה מופיעה ליד התוסף. מי שעובד בטרמינל מריץ `claude --version`. הגרסה של הפקודה `claude` בטרמינל לא תמיד זהה לגרסה של החלון ב-VS Code, כי התוסף מביא עותק משלו.
    - כשהגרסה נמוכה מ-2.1.277, הסטודנט מעדכן לפני שממשיכים. ב-VS Code מעדכנים את התוסף בחלון התוספים, ובטרמינל לפי https://code.claude.com/docs/en/setup, שקוראים דרך `/focus-blueprint:docs-verify`. אחרי העדכון פותחים שיחה חדשה.

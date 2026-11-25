@@ -24,7 +24,7 @@ disable-model-invocation: true
 
 ## מה עושים
 
-1. מריצים `bp stage start 3`.
+1. מריצים `bp stage start 3`. מעבירים לסטודנט, מילה במילה, את הפתיחה שהפקודה הדפיסה.
 2. ממלאים מראש את מה שאפשר. עוברים על השאלות של `context` ושל `a`, ולכל שאלה שהרעיון כבר עונה עליה ושאין לה `prefillable: false`, מריצים `bp prefill <context|a> <qid> value='<json>' quote="<המילים של הסטודנט>"`. הציטוט חייב להיות מתוך `spec/idea.md`, מילה במילה. כשלא בטוחים, לא ממלאים. אומרים לסטודנט בשתי שורות כמה שאלות מולאו, ושבהן הוא רק צריך לאשר או לשנות.
 3. פותחים את הדף של הסבב "בשביל מי בונים" עם `node "${CLAUDE_PLUGIN_ROOT}/ui/serve.mjs" --page questionnaire --round context --detach`, ומחכים עם `node "${CLAUDE_PLUGIN_ROOT}/ui/wait.mjs" --name context --until done --timeout 280`. אם הזמן נגמר, מריצים שוב.
 4. אם התשובה לשאלה מי ישתמש במערכת היא "הרבה עסקים", ממליצים על עותק נפרד לכל לקוח, כי הפרדה בין עסקים בתוך מערכת אחת היא נושא שלם בפני עצמו. רושמים את הבחירה עם `bp log add kind=track text="<הבחירה והנימוק>" decision=now stage=3`.

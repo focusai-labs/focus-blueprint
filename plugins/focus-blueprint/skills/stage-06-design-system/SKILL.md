@@ -21,7 +21,7 @@ disable-model-invocation: true
 
 ## מה עושים
 
-1. מריצים `bp stage start 6`.
+1. מריצים `bp stage start 6`. מעבירים לסטודנט, מילה במילה, את הפתיחה שהפקודה הדפיסה.
 2. שואלים אם יש לוגו, צבעים, גופנים או תמונות של המותג, ומבקשים לשים אותם בתיקייה `design/assets`.
 3. פותחים את הסבב השני של השאלון עם `node "${CLAUDE_PLUGIN_ROOT}/ui/serve.mjs" --page questionnaire --round b --detach`, ומחכים עם `node "${CLAUDE_PLUGIN_ROOT}/ui/wait.mjs" --name round-b --until done --timeout 280`.
 4. בוחרים את המסכים המרכזיים מתוך מפת המסכים: לכל פרסונה עיקרית, המסך שהיא משתמשת בו הכי הרבה. בדרך כלל אלה שניים או שלושה מסכים.

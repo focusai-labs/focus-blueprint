@@ -29,3 +29,19 @@ test('serve.mjs still refuses a page it does not know', () => {
   assert.equal(r.status, 1);
   assert.match(r.stderr, /unknown page "nope"/);
 });
+
+test('serve.mjs --detach prints the address and returns while the server keeps answering', async () => {
+  const dir = tmpProject();
+  bp(dir, ['init', '--name', 'x']);
+  const t0 = Date.now();
+  const r = spawnSync(process.execPath, [SERVE, '--project', dir, '--page', 'process', '--no-open', '--detach'], { encoding: 'utf8', timeout: 30000 });
+  assert.equal(r.status, 0, r.stderr);
+  const line = r.stdout.trim();
+  assert.match(line, /^URL http:\/\/127\.0\.0\.1:\d+\/[0-9a-f]{32}\/process$/);
+  assert.ok(Date.now() - t0 < 20000);
+  const res = await fetch(line.slice(4));
+  assert.equal(res.status, 200);
+  assert.match(await res.text(), /data-page="process"/);
+  // Stop the detached server (it would otherwise close itself after its idle time); best effort, POSIX only.
+  spawnSync('pkill', ['-f', `serve.mjs --project ${dir}`]);
+});

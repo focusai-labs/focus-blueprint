@@ -23,7 +23,7 @@ disable-model-invocation: true
 
 1. מריצים `bp stage start 6`.
 2. שואלים אם יש לוגו, צבעים, גופנים או תמונות של המותג, ומבקשים לשים אותם בתיקייה `design/assets`.
-3. פותחים את הסבב השני של השאלון עם `node "${CLAUDE_PLUGIN_ROOT}/ui/serve.mjs" --page questionnaire --round b`, ומחכים עם `node "${CLAUDE_PLUGIN_ROOT}/ui/wait.mjs" --name round-b --until done --timeout 280`.
+3. פותחים את הסבב השני של השאלון עם `node "${CLAUDE_PLUGIN_ROOT}/ui/serve.mjs" --page questionnaire --round b --detach`, ומחכים עם `node "${CLAUDE_PLUGIN_ROOT}/ui/wait.mjs" --name round-b --until done --timeout 280`.
 4. בוחרים את המסכים המרכזיים מתוך מפת המסכים: לכל פרסונה עיקרית, המסך שהיא משתמשת בו הכי הרבה. בדרך כלל אלה שניים או שלושה מסכים.
 5. בונים שלושה כיוונים, בקבצים `mockup/_direction-1.html`, `mockup/_direction-2.html` ו-`mockup/_direction-3.html`. הדף שמשווה ביניהם קורא את הקבצים לפי המבנה הזה:
    - בכל קובץ יש `<h1 class="dir-name">` עם שם קצר בעברית שאומר מה הרעיון של הכיוון, ו-`<p class="dir-move">` עם משפט אחד שמסביר מה הכיוון עושה.
@@ -32,7 +32,7 @@ disable-model-invocation: true
    - הסגנונות נמצאים בתגי `<style>` בראש הקובץ, והנתיבים לתמונות ולגופנים יחסיים לתיקייה `mockup`.
    - בשלושת הכיוונים יש אותו תוכן אמיתי מתוך מפת המסכים, עם נכסי המותג ועם התשובות של הסבב השני: הניווט, הצפיפות, המבנה, מסך ההתחברות, מצב יום או לילה והטון.
    - הכיוונים שונים באמת זה מזה, בגופנים, בשימוש בצבע ובמה שמוביל את המסך. למשל, בכיוון אחד התמונה באה קודם, ובאחר המסלול של היום. לא משתמשים בשמות של טרנדים ולא בדוגמאות כלליות.
-6. פותחים את ההשוואה עם `node "${CLAUDE_PLUGIN_ROOT}/ui/serve.mjs" --page directions`, ומחכים עם `node "${CLAUDE_PLUGIN_ROOT}/ui/wait.mjs" --name directions --until done --timeout 280`. הסטודנט בוחר כיוון לכל מסך, ויכול לכתוב מה לשנות. התשובות נשמרות בקובץ `.blueprint/ui/answers/directions.json`. רושמים את הבחירה עם `bp log add kind=wording text="<הכיוון שנבחר לכל מסך ולמה>" decision=now stage=6`.
+6. פותחים את ההשוואה עם `node "${CLAUDE_PLUGIN_ROOT}/ui/serve.mjs" --page directions --detach`, ומחכים עם `node "${CLAUDE_PLUGIN_ROOT}/ui/wait.mjs" --name directions --until done --timeout 280`. הסטודנט בוחר כיוון לכל מסך, ויכול לכתוב מה לשנות. התשובות נשמרות בקובץ `.blueprint/ui/answers/directions.json`. רושמים את הבחירה עם `bp log add kind=wording text="<הכיוון שנבחר לכל מסך ולמה>" decision=now stage=6`.
 7. כשהסטודנט בחר כיוונים שונים למסכים שונים, מאחדים אותם לקובץ אחד, `mockup/_direction-chosen.html`, עם סט אחד של טוקנים שמתאים לכל המסכים.
 8. כותבים את `design/design-system.md`:
    - הטוקנים: צבעים, גופנים, מרווחים, פינות וצללים.

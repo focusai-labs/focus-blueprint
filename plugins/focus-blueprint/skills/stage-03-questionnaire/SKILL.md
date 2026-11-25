@@ -26,7 +26,7 @@ disable-model-invocation: true
 
 1. מריצים `bp stage start 3`.
 2. ממלאים מראש את מה שאפשר. עוברים על השאלות של `context` ושל `a`, ולכל שאלה שהרעיון כבר עונה עליה ושאין לה `prefillable: false`, מריצים `bp prefill <context|a> <qid> value='<json>' quote="<המילים של הסטודנט>"`. הציטוט חייב להיות מתוך `spec/idea.md`, מילה במילה. כשלא בטוחים, לא ממלאים. אומרים לסטודנט בשתי שורות כמה שאלות מולאו, ושבהן הוא רק צריך לאשר או לשנות.
-3. פותחים את הדף של הסבב "בשביל מי בונים" עם `node "${CLAUDE_PLUGIN_ROOT}/ui/serve.mjs" --page questionnaire --round context`, ומחכים עם `node "${CLAUDE_PLUGIN_ROOT}/ui/wait.mjs" --name context --until done --timeout 280`. אם הזמן נגמר, מריצים שוב.
+3. פותחים את הדף של הסבב "בשביל מי בונים" עם `node "${CLAUDE_PLUGIN_ROOT}/ui/serve.mjs" --page questionnaire --round context --detach`, ומחכים עם `node "${CLAUDE_PLUGIN_ROOT}/ui/wait.mjs" --name context --until done --timeout 280`. אם הזמן נגמר, מריצים שוב.
 4. אם התשובה לשאלה מי ישתמש במערכת היא "הרבה עסקים", ממליצים על עותק נפרד לכל לקוח, כי הפרדה בין עסקים בתוך מערכת אחת היא נושא שלם בפני עצמו. רושמים את הבחירה עם `bp log add kind=track text="<הבחירה והנימוק>" decision=now stage=3`.
 5. עושים אותו דבר בסבב הראשון, עם `--round a` ואחר כך `wait.mjs --name round-a`. הדף לא נותן לסיים את הסבב כל עוד יש תשובה שמולאה מראש ועוד לא אושרה.
 6. בכל שאלה שבה הסטודנט לחץ "תחליט אתה", Claude בוחר, מנמק ורושם את הבחירה כהכרעה עם `bp ruling add decision="<מה נבחר>" why="<למה>" price="<מה עולה לשנות אחר כך>" stage=3`.
@@ -49,7 +49,7 @@ disable-model-invocation: true
     - לכל תפקיד מריצים `bp role add <id> --name "<שם>" --kind anon|user|staff|admin|service`.
     - לכל תהליך מרכזי, כלומר רצף שחוזר על עצמו, כמו הזמנה או איסוף מסמכים, מריצים `bp process add <id> --name "<שם>"`, ולכל שלב בו `bp process stage add <process> --json '{"id":"<id>","name":"<שם>"}'`.
     - מהתרחישים בונים את הצעדים, צעד אחרי צעד, עם `bp process step add <process> --json '{"id":"s1","stage":"<שלב>","actor":"role:<id>","kind":"human","text":"<מה קורה>","next":["s2"],"src":"client","source":"<מאיפה זה בא>"}'`. מי שמבצע צעד יכול להיות תפקיד (`role:<id>`), `screen`, `server`, `automation`, `ai` או שירות חיצוני (`external:<שם>`). צעד שהסטודנט תיאר מקבל `"src":"client"`, צעד שאנחנו מציעים מקבל `ours`, וצעד שאף אחד לא אמר מקבל `assumed`.
-12. מראים לסטודנט את שני הקבצים ואת הצעדים, ומתקנים לפי מה שהוא אומר. את הצעדים הוא רואה במפת התהליך, שנפתחת עם `node "${CLAUDE_PLUGIN_ROOT}/ui/serve.mjs" --page process`. בשיחה כותבים רק את הנתיבים ומה צריך ממנו, והמסמכים עצמם נשארים בקבצים (Artifact-First Delivery).
+12. מראים לסטודנט את שני הקבצים ואת הצעדים, ומתקנים לפי מה שהוא אומר. את הצעדים הוא רואה במפת התהליך, שנפתחת עם `node "${CLAUDE_PLUGIN_ROOT}/ui/serve.mjs" --page process --detach`. בשיחה כותבים רק את הנתיבים ומה צריך ממנו, והמסמכים עצמם נשארים בקבצים (Artifact-First Delivery).
 13. כשההקשר הוא לקוח או ארגון, כלומר `context.payer` הוא `client` או `employer`, כותבים את `docs/reflect.md` מהתבנית `${CLAUDE_PLUGIN_ROOT}/templates/docs/reflect-<client|org>.md` ומריצים `bp render --file docs/reflect.md`. המסמך מראה למי שמאשר מה הבנו, והסטודנט שולח אותו בעצמו. התשובות של מי שמאשר נכנסות לשלב 4. כשבונים לעצמכם, לא כותבים מסמך כזה, ומה שהיה נכנס אליו נכתב ב-PRD בשלב 4.
 
 ## מה חייב להיות נכון בסוף (ההוכחה)

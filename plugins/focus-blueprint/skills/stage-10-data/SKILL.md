@@ -24,7 +24,7 @@ disable-model-invocation: true
 1. מריצים `bp stage start 10`.
 2. במסלול של אפליקציה עם משתמשים, כש-`bp state get connections.supabase` לא מראה `ok: true`, מחברים קודם את Supabase לפי `${CLAUDE_PLUGIN_ROOT}/skills/stage-01-connect/references/supabase-connect.md`, שבו כתוב איך מובילים את הסטודנט בלוח הבקרה, פעולה אחרי פעולה. החיבור כולל את המיגרציה הראשונה, עם הטריגר שמפעיל RLS על כל טבלה חדשה. אחר כך ממשיכים בענף `stage-10`.
 3. כותבים את `db/schema.md`, עם תרשים טבלאות בבלוק Mermaid וטבלת הרשאות שאומרת מי קורא ומי כותב בכל טבלה. לכל טבלה יש עמודה "מי עוצר כאן נתון שגוי", עם שלוש השכבות: הטופס, השרת ומסד הנתונים, עם אילוץ ועם RLS.
-4. שואלים את הסבב הרביעי מול התרשים, עם `node "${CLAUDE_PLUGIN_ROOT}/ui/serve.mjs" --page questionnaire --round d`, ומתקנים את התרשים לפי התשובות.
+4. שואלים את הסבב הרביעי מול התרשים, עם `node "${CLAUDE_PLUGIN_ROOT}/ui/serve.mjs" --page questionnaire --round d --detach`, ומתקנים את התרשים לפי התשובות.
 5. מקימים את מה שהמסלול צריך לשלב 10, לפי הצעדים שלו. את התוכנית של כל שירות קובעים לפי מה שהפרויקט צריך, כמו שנרשם במפה ב-`plan` וב-`planReason`. כשנשארים בתוכנית חינמית, מוסיפים את הבקרות שבשדה `onFree` של הצעד, ורושמים את הפער ואת הסיכון שלו עם `bp ruling add`. לפני כל פקודה קוראים את התיעוד דרך `/focus-blueprint:docs-verify`. פרויקט חדש או מעבר לתוכנית בתשלום עולים כסף, ולכן שואלים את הסטודנט לפני.
 6. כל שינוי בסכמה מתחיל בקובץ שנוצר עם `supabase migration new <שם>` בתיקייה `supabase/migrations`, וה-hooks חוסמים כל שינוי במסד שעוקף אותו. אחרי שהקובץ כתוב:
    - לפני ההשקה הפרויקט המקושר הוא מסד הפיתוח. מריצים `supabase db push --remote --dry-run`, וכשהרשימה נכונה, `supabase db push --remote --yes`.

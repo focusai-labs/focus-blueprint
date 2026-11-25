@@ -78,13 +78,13 @@ test('stage done: same chapter continues here', () => {
 test('stage done: a new chapter asks for a new conversation', () => {
   const r = close(atStage(5), 5);
   assert.equal(r.continueHere, false);
-  assert.equal(r.next, `השלב הבא הוא שלב 6, ${at(6).name}, והוא פותח את הפרק "${at(6).chapter}". כדי שיתחיל עם הקשר נקי, פותחים שיחה חדשה ומקלידים /focus-blueprint:${at(6).skill}`);
+  assert.equal(r.next, `השלב הבא הוא שלב 6, ${at(6).name}, והוא פותח את הפרק "${at(6).chapter}". כדי שיתחיל עם הקשר נקי, פותחים שיחה חדשה ומקלידים \`/focus-blueprint:${at(6).skill}\``);
 });
 
 test('stage done: stage 12 always gets its own conversation', () => {
   const r = close(atStage(11), 11);
   assert.equal(r.continueHere, false);
-  assert.equal(r.next, `השלב הבא הוא שלב 12, ${at(12).name}. כל יכולת נבנית בשיחה חדשה משלה, ולכן פותחים שיחה חדשה ומקלידים /focus-blueprint:${at(12).skill}`);
+  assert.equal(r.next, `השלב הבא הוא שלב 12, ${at(12).name}. כל יכולת נבנית בשיחה חדשה משלה, ולכן פותחים שיחה חדשה ומקלידים \`/focus-blueprint:${at(12).skill}\``);
 });
 
 test('stage done: after a compaction the next stage is a new conversation', () => {
@@ -93,7 +93,7 @@ test('stage done: after a compaction the next stage is a new conversation', () =
   fs.writeFileSync(stateFile(dir), JSON.stringify(s));
   const r = close(dir, 2);
   assert.equal(r.continueHere, false);
-  assert.equal(r.next, `השלב הבא הוא שלב 3, ${at(3).name}. השיחה הזאת כבר נדחסה, ולכן פותחים שיחה חדשה ומקלידים /focus-blueprint:${at(3).skill}`);
+  assert.equal(r.next, `השלב הבא הוא שלב 3, ${at(3).name}. השיחה הזאת כבר נדחסה, ולכן פותחים שיחה חדשה ומקלידים \`/focus-blueprint:${at(3).skill}\``);
 });
 
 test('stage done: a compaction before the stage started does not count', () => {
@@ -115,7 +115,7 @@ test('stage next prints the header and the next skill body with the plugin root 
   const r = bp(dir, ['stage', 'next']);
   assert.equal(r.code, 0);
   const lines = r.out.split('\n');
-  assert.equal(lines[0], `ממשיכים לשלב 3, ${at(3).name}, באותה שיחה. מכאן עובדים לפי ההוראות של השלב, כמו אחרי /focus-blueprint:${at(3).skill}.`);
+  assert.equal(lines[0], `ממשיכים לשלב 3, ${at(3).name}, באותה שיחה. מכאן עובדים לפי ההוראות של השלב, כמו אחרי \`/focus-blueprint:${at(3).skill}\`.`);
   assert.ok(!r.out.includes('${CLAUDE_PLUGIN_ROOT}'));
   assert.ok(!r.out.includes('disable-model-invocation'));
   assert.ok(r.out.includes(PLUGIN));
@@ -138,4 +138,24 @@ test('stage next refuses while the current stage is open', () => {
 
 test('the shared next-stage instructions exist and every stage skill stays small', () => {
   assert.ok(fs.existsSync(path.join(PLUGIN, 'skills', 'blueprint', 'references', 'next-stage.md')));
+});
+
+test('slash commands in Hebrew lines are inline code, so they do not flip in a right-to-left line', () => {
+  const dir = tmpProject({ git: false });
+  const models = new Set();
+  for (let n = 1; n <= 15; n++) {
+    const out = bp(dir, ['stage', 'intro', String(n)]).out;
+    const m = out.match(/\/model \w+/);
+    assert.ok(m, `stage ${n} names a model command`);
+    assert.ok(out.includes(`\`${m[0]}\``), `stage ${n}: ${m[0]} is in backticks`);
+    models.add(m[0]);
+  }
+  assert.ok(models.size >= 2, [...models].join());
+});
+
+test('the handover accounts template offers both ongoing support and the end of the work', () => {
+  const s = fs.readFileSync(path.join(PLUGIN, 'templates', 'docs', 'handover-client-accounts.md'), 'utf8');
+  for (const h of ['## הגישה של מי שבנה את המערכת', '### כשהליווי נמשך', '### כשהעבודה נגמרת']) assert.ok(s.includes(h), h);
+  for (const p of ['{{retained_access}}', '{{retained_reason}}', '{{retained_until}}']) assert.ok(s.includes(p), p);
+  assert.ok(!s.includes('## אישור שהגישה הוסרה'));
 });

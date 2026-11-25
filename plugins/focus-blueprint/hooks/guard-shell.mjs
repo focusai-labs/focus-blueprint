@@ -1,3 +1,7 @@
+// C15: this hook runs with "onFailure": "block" in hooks.json, so a crash, a missing script or a timeout
+// stops the action instead of letting it through (the default is to let it go ahead).
+// Source: https://code.claude.com/docs/en/hooks#block-the-action-when-a-hook-fails ("Requires Claude Code
+// v2.1.295 or later"). The docs do not say what an older version does with the unknown field.
 // PreToolUse on Bash and PowerShell: no commit or merge straight onto main,
 // no push of a secret file, no force push to or deletion of a protected branch.
 // git pull and git rebase on main stay allowed: pulling main after a pull request
@@ -6,8 +10,8 @@
 // commits Claude makes, which is how the people this tool is for work.
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
-import { readInput, findProjectForGuard, block, PROTECTED_BRANCHES, supabaseTarget } from './lib.mjs';
-import { checkCommand, MAIN_PUSH_MSG } from './shell-rules.mjs';
+import { readInput, findProjectForGuard, block, emit, PROTECTED_BRANCHES, supabaseTarget } from './lib.mjs';
+import { checkCommand, needsApproval, ASK_MSG, MAIN_PUSH_MSG } from './shell-rules.mjs';
 
 const input = await readInput();
 const project = findProjectForGuard(input);
@@ -128,4 +132,9 @@ for (const g of findAllGit('push')) {
         'Work on a branch and merge through a pull request; history of main is never rewritten.'
     );
   }
+}
+
+// C6: nothing above blocked it; outward actions still wait for the student's yes.
+if (needsApproval(command)) {
+  emit({ hookSpecificOutput: { hookEventName: 'PreToolUse', permissionDecision: 'ask', permissionDecisionReason: ASK_MSG } });
 }

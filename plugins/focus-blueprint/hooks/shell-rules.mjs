@@ -2,6 +2,8 @@
 // checkCommand returns an English reason when the command must be denied, else null.
 // Nothing here touches the disk; the caller passes in what it read from the map.
 
+import { isCheckerFile, isCheckerDir, CHECKER_MSG } from './checker-files.mjs';
+
 /** Split a command line into segments of tokens. Quotes are removed, separators are ; & | ( ) ` and newlines. */
 export function tokenize(command) {
   const segments = [];
@@ -62,6 +64,33 @@ const hasShortN = (t) => {
 
 const DELETERS = new Set(['rm', 'rmdir', 'unlink', 'mv', 'chmod', 'chown', 'del', 'erase', 'rd', 'ri', 'mi', 'rni', 'ren', 'rename', 'rename-item', 'remove-item', 'move-item', 'set-itemproperty', 'truncate', 'shred']);
 const touchesHooks = (t) => /(^|[\/\\"'=])\.githooks([\/\\]|$)/.test(String(t).replace(/\\/g, '/').replace(/^['"]/, '')) || /\.githooks/.test(t);
+
+
+const CHK_WRITERS = new Set(['rm', 'rmdir', 'unlink', 'mv', 'chmod', 'chown', 'truncate', 'shred', 'tee', 'del', 'erase', 'ri', 'rd', 'mi', 'rni', 'ren', 'rename', 'rename-item', 'remove-item', 'move-item', 'set-content', 'add-content', 'out-file', 'clear-content', 'set-itemproperty']);
+const REDIRECT_TO_CHECKER = />>?\s*['"]?([^\s'";&|)<>]+)/g;
+
+/** A shell write onto the check's own files (C3). Returns true when the segment is one. */
+function writesCheckerFile(seg, raw) {
+  let k = 0;
+  while (k < seg.length && (isAssign(seg[k]) || ['sudo', 'command', 'env', 'time', 'nohup', 'xargs'].includes(base(seg[k])))) k++;
+  if (k >= seg.length) return false;
+  const prog = base(seg[k]);
+  const args = seg.slice(k + 1).filter((a) => !(a.startsWith('-') && a.length > 1 && !/[\/\\]/.test(a)));
+  const any = (list) => list.some((a) => isCheckerFile(a));
+  if (CHK_WRITERS.has(prog)) {
+    if (any(args)) return true;
+    if ((prog === 'rm' || prog === 'mv' || prog === 'rmdir' || prog === 'remove-item' || prog === 'move-item') && args.some(isCheckerDir)) return true;
+  }
+  if (prog === 'cp' || prog === 'copy' || prog === 'copy-item' || prog === 'install' || prog === 'ln') {
+    // cp copies onto the last argument; reading a checker file as the source stays allowed.
+    if (args.length && isCheckerFile(args[args.length - 1])) return true;
+    const t = seg.findIndex((a) => a === '-t' || a === '--target-directory');
+    if (t >= 0 && seg[t + 1] && isCheckerFile(seg[t + 1])) return true;
+  }
+  if (prog === 'sed' && seg.slice(k + 1).some((a) => /^-[A-Za-z]*i/.test(a) || a.startsWith('--in-place')) && any(args)) return true;
+  if ((prog === 'perl' || prog === 'ruby') && seg.slice(k + 1).some((a) => /^-[A-Za-z]*i/.test(a)) && any(args)) return true;
+  return false;
+}
 
 const VALUE_FLAGS = new Set(['--workdir', '--profile', '--network-id', '--dns-resolver', '-o', '--output', '--create-ticket', '--db-url', '--project-ref', '--project-id']);
 
@@ -136,14 +165,22 @@ export function checkCommand(command, prod = {}) {
     return 'Blocked by Focus Blueprint: the files in .githooks/ are the commit gate and are not overwritten from the shell. Ask the owner.';
   }
 
+  for (const m of raw.matchAll(REDIRECT_TO_CHECKER)) {
+    if (isCheckerFile(m[1])) return CHECKER_MSG;
+  }
+
   for (const seg of tokenize(raw)) {
+    if (writesCheckerFile(seg, raw)) return CHECKER_MSG;
     const g = parseGit(seg);
     if (g) {
+      if (g.sub === 'update-index' && g.args.some((a) => /^--(no-)?(assume-unchanged|skip-worktree)$/.test(a)) && g.args.some((a) => !a.startsWith('-') && (isCheckerFile(a) || isCheckerDir(a)))) {
+        return CHECKER_MSG;
+      }
       if (g.cfg.some((c) => /^core\.hookspath/i.test(c))) {
-        return 'Blocked by Focus Blueprint: core.hooksPath is not changed with git -c. The commit gate lives in .githooks/ and stays on.';
+        return CHECKER_MSG;
       }
       if (g.sub === 'config' && g.args.some((a) => /core\.hookspath/i.test(a))) {
-        return 'Blocked by Focus Blueprint: core.hooksPath is not touched. It points git at the commit gate in .githooks/. To restore it run: bp githook install.';
+        return CHECKER_MSG;
       }
       const dry = g.args.includes('--dry-run');
       if (g.sub === 'commit' && g.args.some((a) => NO_VERIFY(a) || hasShortN(a))) {
@@ -171,4 +208,67 @@ export function checkCommand(command, prod = {}) {
     if (sb) return sb;
   }
   return null;
+}
+
+// C6: outward actions ask the student first (PreToolUse permissionDecision "ask"). Only these; plain
+// git push, gh pr create and gh pr merge stay frictionless.
+export const ASK_MSG = 'הפקודה הזו מעלה משהו לאוויר, משנה הרשאות או מוחקת מידע, ולכן היא מחכה לאישור שלכם.';
+const DESTRUCTIVE_SQL = /\bdelete\s+from\b|\bdrop\s|\btruncate\b|\balter\s/i;
+const LOCAL_HOST = /^(localhost|127(\.\d+){3}|::1|\[::1\]|host\.docker\.internal)$/i;
+
+/** Host of a postgres URL, or null when the text is not one. */
+function urlHost(t) {
+  const m = /^postgres(?:ql)?:\/\/(?:[^@\/]*@)?(\[[^\]]+\]|[^:\/?#]+)/i.exec(t);
+  return m ? m[1] : null;
+}
+
+/** True when a psql or supabase db query segment points at something that is not the local machine. */
+function nonLocalDatabase(seg, k) {
+  const args = seg.slice(k + 1);
+  const hosts = [];
+  let unknown = false;
+  for (let i = 0; i < args.length; i++) {
+    const a = args[i];
+    if (a === '-h' || a === '--host') { hosts.push(args[++i] || ''); continue; }
+    if (a.startsWith('--host=')) { hosts.push(a.slice(7)); continue; }
+    if (/^-h./.test(a) && !a.startsWith('--')) { hosts.push(a.slice(2)); continue; }
+    if (a === '--linked' || a === '--remote' || a === '--project-ref' || a.startsWith('--project-ref=')) { unknown = true; continue; }
+    const eq = a.startsWith('--db-url=') ? a.slice(9) : a.startsWith('--dbname=') ? a.slice(9) : null;
+    const val = eq !== null ? eq : (a === '--db-url' || a === '--dbname' || a === '-d') ? args[++i] || '' : a;
+    const h = urlHost(val);
+    if (h) hosts.push(h);
+    else if (/\$/.test(val) && !/^-/.test(val) && !DESTRUCTIVE_SQL.test(val)) unknown = true; // "$DATABASE_URL": cannot be read here
+  }
+  return unknown || hosts.some((h) => !LOCAL_HOST.test(h));
+}
+
+/** Does this command need the student's yes? Never true for a command that checkCommand blocks. */
+export function needsApproval(command) {
+  for (const seg of tokenize(String(command || ''))) {
+    let k = 0;
+    while (k < seg.length && (isAssign(seg[k]) || ['sudo', 'command', 'env', 'time', 'nohup'].includes(base(seg[k])))) k++;
+    if (k >= seg.length) continue;
+    const prog = base(seg[k]);
+    const rest = seg.slice(k + 1);
+    const words = rest.filter((t) => !t.startsWith('-'));
+    const hasFlag = (re) => rest.some((t) => re.test(t));
+    if (prog === 'gh') {
+      if (words[0] === 'repo' && (words[1] === 'create' || words[1] === 'delete')) return true;
+      if (words[0] === 'repo' && words[1] === 'edit' && hasFlag(/^--visibility(=|$)/)) return true;
+      if (words[0] === 'secret' && words[1] === 'set') return true;
+      if (words[0] === 'release' && words[1] === 'create') return true;
+    } else if (prog === 'vercel') {
+      if (hasFlag(/^--prod(uction)?$/) && (words.length === 0 || words[0] === 'deploy')) return true;
+      if (words[0] === 'promote') return true;
+      if (words[0] === 'alias' && words[1] === 'set') return true;
+      if (words[0] === 'domains' && words[1] === 'add') return true;
+    } else if (prog === 'netlify') {
+      if (words[0] === 'deploy' && hasFlag(/^--prod(uction)?$|^-p$/)) return true;
+    } else if (prog === 'npm') {
+      if (words[0] === 'publish') return true;
+    } else if (prog === 'psql' || (prog === 'supabase' && words[0] === 'db' && words[1] === 'query')) {
+      if (DESTRUCTIVE_SQL.test(rest.join(' ')) && nonLocalDatabase(seg, k)) return true;
+    }
+  }
+  return false;
 }

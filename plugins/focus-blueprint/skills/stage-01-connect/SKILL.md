@@ -11,7 +11,7 @@ disable-model-invocation: true
 
 ## למה השלב הזה קיים
 
-מה שהכי מהר תוקע פרויקט הוא חיבור שחסר באמצע הדרך. לכן בשלב הזה בודקים את החיבורים שכל פרויקט צריך, ורושמים מה עוד כבר מחובר. לא מחברים ולא מקימים שום דבר שעוד לא הוחלט עליו. את Supabase, Vercel ו-n8n מחברים רק אחרי שבוחרים מסלול בשלב 4. את החיבור ל-Supabase מפעיל שלב 10 כשפותחים את הפרויקט, לפי הקובץ `${CLAUDE_PLUGIN_ROOT}/skills/stage-01-connect/references/supabase-connect.md`.
+מה שהכי מהר תוקע פרויקט הוא חיבור שחסר באמצע הדרך. לכן בשלב הזה בודקים את החיבורים שכל פרויקט צריך, ורושמים מה עוד כבר מחובר. את Supabase, Vercel ו-n8n מחברים רק אחרי שבוחרים מסלול בשלב 4. את החיבור ל-Supabase מפעיל שלב 10 כשפותחים את הפרויקט, לפי הקובץ `${CLAUDE_PLUGIN_ROOT}/skills/stage-01-connect/references/supabase-connect.md`.
 
 ## מה קוראים לפני שמתחילים
 
@@ -25,6 +25,7 @@ disable-model-invocation: true
 1. מריצים את `install-check.mjs` ומציגים שורה לכל בדיקה: Node, Git, Playwright MCP ו-superpowers. כשחסר Node או Git, מראים איך מתקינים אותם לפי התיעוד הרשמי, דרך `/focus-blueprint:docs-verify`, ומחכים עד שההתקנה מסתיימת.
    - בודקים גם את הגרסה של Claude Code, כי בגרסה ישנה מ-2.1.277 חלק מהכללים והבדיקות של הכלי לא עובדים כמו שצריך. ב-VS Code הגרסה של Claude Code היא הגרסה של התוסף Claude Code, ולכן מבקשים מהסטודנט לפתוח את חלון התוספים (Cmd+Shift+X ב-Mac, Ctrl+Shift+X ב-Windows) ולכתוב איזו גרסה מופיעה ליד התוסף. מי שעובד בטרמינל מריץ `claude --version`. הגרסה של הפקודה `claude` בטרמינל לא תמיד זהה לגרסה של החלון ב-VS Code, כי התוסף מביא עותק משלו.
    - כשהגרסה נמוכה מ-2.1.277, הסטודנט מעדכן לפני שממשיכים. ב-VS Code מעדכנים את התוסף בחלון התוספים, ובטרמינל לפי https://code.claude.com/docs/en/setup, שקוראים דרך `/focus-blueprint:docs-verify`. אחרי העדכון פותחים שיחה חדשה.
+   - כשהבדיקה של Playwright MCP או של superpowers מחזירה null, זה אומר שהבדיקה לא הצליחה לרוץ, ולא שהם חסרים. בודקים שוב בדרך אחרת, את Playwright עם `claude mcp list` ואת superpowers עם `claude plugin list`. כשגם זה לא עובד, למשל ב-VS Code בלי Claude Code בטרמינל, מבקשים מהסטודנט לפתוח את `/mcp` ואת `/plugins` בחלון של Claude Code ולכתוב מה מופיע שם.
 2. בודקים את החיבור ל-GitHub עם `gh auth status`. אם הסטודנט לא מחובר, הוא מריץ בעצמו `gh auth login`, כי זו פעולה בחשבון שלו, ואחר כך בודקים שוב.
 3. כש-Playwright MCP לא רשום, מראים את פקודת ההתקנה מהתיעוד הרשמי שלו, דרך `docs-verify`. אומרים לסטודנט שאחרי התקנה של MCP צריך לפתוח שיחה חדשה, כי הכלים נטענים רק בתחילת שיחה.
 4. רושמים מה עוד מחובר, בלי לחבר שום דבר חדש: Supabase, Vercel, n8n, Cloudinary ו-fal. לכל אחד מהם מריצים `bp connections set <name> ok=<true|false> note="<מה נמצא>"`, וגם ל-`github` ול-`playwright`.

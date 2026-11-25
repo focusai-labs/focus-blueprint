@@ -9,14 +9,14 @@ import { spawn } from 'node:child_process';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { migrateMap } from '../scripts/blueprint-model/map-model.mjs';
-import { finishPrototypeRound, prototypeState, savePrototypeNote, snapshotFile, MAX_ROUND } from './prototype.mjs';
+import { addNote, listNotes, mapScreenFiles } from '../scripts/prototype-notes.mjs';
 import { answersFile, directionScreenDocument, directionsSummary, loadBank, loadDirections, nameOfRound, questionsFor, readAnswers, readJsonStrict, ROUND_FILES, screensFor, unconfirmedIds, writeJsonAtomic, dataPath } from './lib.mjs';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const MAX_BODY = 1024 * 1024;
 
-function send(res, status, body, type = 'application/json; charset=utf-8') {
-  res.writeHead(status, { 'Content-Type': type, 'Cache-Control': 'no-store' });
+function send(res, status, body, type = 'application/json; charset=utf-8', extra = {}) {
+  res.writeHead(status, { 'Content-Type': type || 'application/json; charset=utf-8', 'Cache-Control': 'no-store', ...extra });
   res.end(typeof body === 'string' ? body : JSON.stringify(body));
 }
 
@@ -58,9 +58,11 @@ export function openBrowser(url) {
  * Start the server. Resolves with the address once it is listening.
  * once: stop shortly after the first saved answer.
  */
-const PAGES = new Set(['brain-dump', 'questionnaire', 'directions', 'board', 'process', 'prototype']);
-const STATIC = { 'ui.css': 'text/css; charset=utf-8', 'ui.js': 'text/javascript; charset=utf-8', 'directions.js': 'text/javascript; charset=utf-8', 'directions.css': 'text/css; charset=utf-8', 'prototype.js': 'text/javascript; charset=utf-8', 'prototype.css': 'text/css; charset=utf-8', 'strings.he.json': 'application/json; charset=utf-8' };
+const PAGES = new Set(['brain-dump', 'questionnaire', 'directions', 'board', 'process']);
+const STATIC = { 'ui.css': 'text/css; charset=utf-8', 'ui.js': 'text/javascript; charset=utf-8', 'directions.js': 'text/javascript; charset=utf-8', 'directions.css': 'text/css; charset=utf-8', 'strings.he.json': 'application/json; charset=utf-8' };
 const PROTOTYPE_SEGS = ['mockup', 'prototype.html'];
+// The prototype sits in a sandboxed page with no origin of its own, so its notes routes answer cross-origin (the token in the path is the key).
+const CORS = { 'Access-Control-Allow-Origin': '*' };
 const NAME = /^[a-z0-9-]{1,40}$/;
 const QID = /^[A-Za-z0-9_.֐-׿-]{1,100}$/;
 
@@ -194,6 +196,27 @@ function personaNames(projectDir) {
   return out;
 }
 
+/** What the board shows of the prototype: when it was built, whether a built screen changed since, how many screens are built. */
+function prototypeFacts(projectDir, map) {
+  const hit = safeAssetFile(projectDir, PROTOTYPE_SEGS);
+  if (!hit) return null;
+  const builtAt = fs.statSync(hit.file).mtimeMs;
+  let total = 0;
+  let built = 0;
+  let stale = false;
+  for (const s of Array.isArray(map?.screens) ? map.screens : []) {
+    if (!s || typeof s.file !== 'string') continue;
+    total++;
+    const f = safeAssetFile(projectDir, s.file.split('/').map(encodeURIComponent));
+    if (!f || !/\.html?$/i.test(s.file)) continue;
+    built++;
+    if (fs.statSync(f.file).mtimeMs > builtAt) stale = true;
+  }
+  const names = {};
+  for (const s of Array.isArray(map?.screens) ? map.screens : []) if (s && typeof s.file === 'string') names[s.file] = String(s.name || s.file);
+  return { builtAt: new Date(builtAt).toISOString(), stale, built, total, names };
+}
+
 function boardState(projectDir) {
   const p = (...rel) => path.join(projectDir, ...rel);
   const state = readJsonStrict(p('.blueprint', 'state.json'), null);
@@ -219,7 +242,9 @@ function boardState(projectDir) {
     pendingQuestions: pendingQuestions(state, map),
     personas: personaNames(projectDir),
     screenFiles,
-    prototype: Boolean(safeAssetFile(projectDir, ['mockup', 'prototype.html'])),
+    prototype: Boolean(safeAssetFile(projectDir, PROTOTYPE_SEGS)),
+    prototypeInfo: prototypeFacts(projectDir, map),
+    prototypeNotes: listNotes(projectDir),
     git: gitInfo(projectDir),
   };
 }
@@ -407,15 +432,10 @@ export async function startUi({ projectDir, once = false, idleMinutes = 30 } = {
           if (!doc) return send(res, 404, { error: 'not found' });
           return send(res, 200, doc, 'text/html; charset=utf-8');
         }
-        if (route === 'api/prototype') return send(res, 200, prototypeState(projectDir, safeAssetFile(projectDir, PROTOTYPE_SEGS)?.file || null));
-        if (route === 'api/prototype-round') {
-          const raw = query.get('n');
-          const n = /^\d{1,4}$/.test(raw || '') ? Number(raw) : 0;
-          if (n < 1 || n > MAX_ROUND) return send(res, 400, { error: 'bad round' });
-          const file = snapshotFile(projectDir, n);
-          if (!fs.existsSync(file)) return send(res, 404, { error: 'not found' });
-          res.writeHead(200, { 'Content-Type': ASSET_TYPES['.html'], 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff', 'Referrer-Policy': 'no-referrer', 'Content-Security-Policy': "sandbox allow-scripts; default-src * data: blob: 'unsafe-inline' 'unsafe-eval'" });
-          return res.end(fs.readFileSync(file));
+        if (route === 'api/prototype-notes') {
+          const screen = query.get('screen');
+          if (screen && !mapScreenFiles(projectDir).includes(screen)) return send(res, 400, { error: 'unknown screen' }, undefined, CORS);
+          return send(res, 200, { notes: listNotes(projectDir, { screen: screen || null }) }, undefined, CORS);
         }
         if (parts[1] === 'files' && parts.length > 2) {
           const hit = safeAssetFile(projectDir, parts.slice(2));
@@ -429,7 +449,18 @@ export async function startUi({ projectDir, once = false, idleMinutes = 30 } = {
         }
       }
 
-      if (req.method === 'POST' && (route === 'api/answer' || route === 'api/done' || route === 'api/prototype-note' || route === 'api/prototype-done')) {
+      if (req.method === 'POST' && route === 'api/prototype-notes') {
+        // text/plain is a simple request, so the sandboxed prototype can send it without a preflight.
+        const ctype = String(req.headers['content-type'] || '');
+        if (!ctype.startsWith('application/json') && !ctype.startsWith('text/plain')) return send(res, 415, { error: 'json only' }, undefined, CORS);
+        let data;
+        try { data = JSON.parse(await readBody(req)); } catch { return send(res, 400, { error: 'bad request' }, undefined, CORS); }
+        if (!data || typeof data !== 'object' || Array.isArray(data)) return send(res, 400, { error: 'bad request' }, undefined, CORS);
+        const result = addNote(projectDir, { screen: data.screen, text: data.text, source: 'local' });
+        return send(res, result.status, result.body, undefined, CORS);
+      }
+
+      if (req.method === 'POST' && (route === 'api/answer' || route === 'api/done')) {
         // A JSON content type cannot be sent across sites without a preflight,
         // and this server answers none.
         if (!String(req.headers['content-type'] || '').startsWith('application/json')) {
@@ -442,14 +473,9 @@ export async function startUi({ projectDir, once = false, idleMinutes = 30 } = {
           return send(res, 400, { error: 'bad request' });
         }
         if (!data || typeof data !== 'object' || Array.isArray(data)) return send(res, 400, { error: 'bad request' });
-        let result;
-        if (route === 'api/prototype-note' || route === 'api/prototype-done') {
-          const proto = safeAssetFile(projectDir, PROTOTYPE_SEGS)?.file || null;
-          result = route === 'api/prototype-note' ? savePrototypeNote(projectDir, data, proto) : finishPrototypeRound(projectDir, proto);
-        } else result = route === 'api/answer' ? saveAnswer(projectDir, data) : markDone(projectDir, data);
+        const result = route === 'api/answer' ? saveAnswer(projectDir, data) : markDone(projectDir, data);
         send(res, result.status, result.body);
-        // a note is only one step of the review: the server stays until the round is finished
-        if (once && result.status === 200 && route !== 'api/prototype-note') setTimeout(close, 1000);
+        if (once && result.status === 200) setTimeout(close, 1000);
         return;
       }
     } catch (e) {

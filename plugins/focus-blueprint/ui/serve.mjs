@@ -1,5 +1,5 @@
 // Command line entry of the local page server.
-//   node serve.mjs --project <folder> [--page brain-dump|questionnaire|directions|board|process|prototype]
+//   node serve.mjs --project <folder> [--page brain-dump|questionnaire|directions|board|process]
 //                  [--round context|a|b|c|d] [--screens a,b] [--once] [--no-open]
 // Prints one line, "URL <address>", and keeps running until it is idle or stopped.
 import path from 'node:path';
@@ -18,7 +18,7 @@ const page = value('--page');
 const round = value('--round');
 const screens = value('--screens');
 
-if (page && !['brain-dump', 'questionnaire', 'directions', 'board', 'process', 'prototype'].includes(page)) {
+if (page && !['brain-dump', 'questionnaire', 'directions', 'board', 'process'].includes(page)) {
   console.error(`serve: unknown page "${page}"`);
   process.exit(1);
 }

@@ -8,17 +8,27 @@
 <style>{{CSS}}</style>
 </head>
 <body>
-<header class="bp-bar" id="bp-bar">
-  <strong class="bp-project" id="bp-project"></strong>
-  <span class="bp-banner" id="bp-banner"></span>
-  <span class="bp-spacer"></span>
-  <div class="bp-device" id="bp-device" role="group">
+<div class="bp-pill" id="bp-pill" role="toolbar" dir="rtl">
+  <span class="bp-label" id="bp-label"></span>
+  <span class="bp-badge" id="bp-badge"></span>
+  <button type="button" id="bp-map-btn"></button>
+  <button type="button" id="bp-note-btn" hidden></button>
+  <span class="bp-device" id="bp-device" role="group">
     <button type="button" id="bp-phone" aria-pressed="false"></button>
     <button type="button" id="bp-computer" aria-pressed="false"></button>
-  </div>
-  <button type="button" class="bp-mapbtn" id="bp-map-btn"></button>
-  <button type="button" class="bp-fsbtn" id="bp-fs-btn" aria-pressed="false" hidden></button>
-</header>
+  </span>
+  <button type="button" id="bp-fs-btn" aria-pressed="false" hidden></button>
+</div>
+<section class="bp-notes" id="bp-notes" role="dialog" aria-labelledby="bp-notes-title" dir="rtl" hidden>
+  <h2 id="bp-notes-title"></h2>
+  <label for="bp-notes-text" id="bp-notes-label"></label>
+  <textarea id="bp-notes-text" rows="3" maxlength="2000"></textarea>
+  <div class="bp-notes-actions"><button type="button" id="bp-notes-save"></button><button type="button" id="bp-notes-copy" hidden></button><button type="button" id="bp-notes-close"></button></div>
+  <p class="bp-notes-status" id="bp-notes-status" role="status" aria-live="polite"></p>
+  <h3 id="bp-notes-earlier-title"></h3>
+  <ul id="bp-notes-list"></ul>
+</section>
+<div class="bp-cover" id="bp-cover" hidden></div>
 <main class="bp-stage" id="bp-stage" data-device="computer">
   <div class="bp-frame-wrap" id="bp-frame-wrap"><iframe id="bp-frame"></iframe></div>
   <section class="bp-placeholder" id="bp-placeholder" hidden>

@@ -854,7 +854,7 @@
       const chapters = [];
       defs.forEach((d) => { let c = chapters.find((x) => x.name === d.chapter); if (!c) { c = { name: d.chapter, stages: [] }; chapters.push(c); } c.stages.push(d); });
       const rulings = arr(s && s.rulings);
-      return { st, map, defs, chapters, rulings, unreported: rulings.filter((r) => !r.reported), closes: (s && s.closes) || {} };
+      return { st, map, defs, chapters, rulings, unreported: rulings.filter((r) => !r.reported), closes: (s && s.closes) || {}, proto: (s && s.prototypeInfo) || null, protoNotes: arr(s && s.prototypeNotes) };
     }
     const closeOf = (d, n) => d.closes[n] || d.closes[String(n)] || null;
     function stageStatus(d, n) {
@@ -1078,6 +1078,28 @@
       };
       return card;
     }
+    function prototypeCard(d) {
+      const pr = d.proto;
+      if (!pr) return null;
+      const url = d.st.where && typeof d.st.where.prototypeUrl === 'string' && /^https?:\/\//i.test(d.st.where.prototypeUrl) ? d.st.where.prototypeUrl : '';
+      const when = new Date(pr.builtAt);
+      const stamp = Number.isNaN(when.getTime()) ? '' : when.toLocaleString('he-IL', { dateStyle: 'short', timeStyle: 'short' });
+      const bySc = new Map();
+      for (const n of d.protoNotes) { if (!bySc.has(n.screen)) bySc.set(n.screen, []); bySc.get(n.screen).push(n); }
+      const notes = bySc.size
+        ? h('div', { class: 'd-sec' }, h('h3', {}, t('prototype.notes')), [...bySc.entries()].map(([file, list]) => h('div', {}, h('h4', {}, (pr.names && pr.names[file]) || file),
+          h('ul', { class: 'rows' }, list.map((n) => h('li', { 'data-key': `proto-note-${n.id}` }, h('span', {}, n.text), ' ',
+            h('span', { class: `chip${n.status === 'done' ? ' is-done' : ' is-concern'}` }, t(n.status === 'done' ? 'prototype.done' : 'prototype.open')), ' ',
+            h('span', { class: 'chip' }, t(n.source === 'artifact' ? 'prototype.fromArtifact' : 'prototype.fromLocal'))))))))
+        : h('p', { class: 'empty' }, t('prototype.none'));
+      return h('section', { class: 'card ov-prototype', 'aria-labelledby': 'proto-title' }, h('h2', { class: 'card-title', id: 'proto-title' }, t('prototype.title')),
+        h('p', { 'data-key': 'proto-line' }, pr.stale ? t('prototype.stale') : t('prototype.ready', { time: stamp })),
+        h('p', { class: 'muted' }, t('prototype.counter', { built: pr.built, total: pr.total })),
+        h('div', { class: 'row', style: 'gap:12px' },
+          url ? h('a', { class: 'link ext', href: url, target: '_blank', rel: 'noopener', 'data-key': 'proto-artifact' }, t('prototype.openArtifact'), icon('ext')) : null,
+          h('a', { class: 'link ext', href: 'files/mockup/prototype.html', target: '_blank', rel: 'noopener', 'data-key': 'proto-local' }, t('prototype.openLocal'), icon('ext'))),
+        notes);
+    }
     function overviewPanel(d) {
       const out = h('div', { class: 'overview' });
       const waiting = waitingRows(d);
@@ -1090,7 +1112,7 @@
           ch >= 0 ? h('p', { class: 'muted' }, t('board.chapterOf', { n: ch + 1, name: def.chapter })) : null));
       }
       if (waiting.length) out.append(h('section', { class: 'card ov-waiting', 'aria-labelledby': 'waiting-title' }, h('h2', { class: 'card-title', id: 'waiting-title' }, t('board.waiting')), h('ul', { class: 'rows' }, waiting.map((w) => h('li', {}, w)))));
-      out.append(tilesNode(d), lastStopNode());
+      out.append(tilesNode(d), prototypeCard(d), lastStopNode());
       return out;
     }
 
@@ -1290,7 +1312,7 @@
         const exists = s.screenFiles || {};
         return {
           title: t('board.screensList'),
-          body: [s.prototype ? h('a', { class: 'link', href: 'prototype', 'data-key': 'prototype-link' }, t('prototype.boardLink')) : null, h('ul', { class: 'd-list' }, map.screens.map((sc) => h('li', {},
+          body: [h('ul', { class: 'd-list' }, map.screens.map((sc) => h('li', {},
             h('div', { class: 'd-main' }, h('span', { class: 'd-name' }, sc.name || sc.file),
               sc.persona ? h('span', { class: 'd-sub' }, personaName(d, sc.persona)) : null,
               sc.journeyStage ? h('span', { class: 'd-sub' }, sc.journeyStage) : null),

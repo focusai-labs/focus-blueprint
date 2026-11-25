@@ -135,12 +135,12 @@ test('the placeholders and the toasts are in the shell text, with the contract s
   assert.equal(S.back, 'חזרה למסך הקודם');
   assert.equal(S.demo, 'הכפתור הזה מסומן כדמה, ובאב הטיפוס הוא לא עושה כלום.');
   assert.equal(S.external, 'באב הטיפוס לא נפתחים קישורים לאתרים אחרים.');
-  assert.equal(S.banner, 'אב טיפוס עם נתוני דמה');
+  for (const [k, v] of Object.entries({ label: 'אב טיפוס', note: 'הערה', notesTitle: 'הערות על הדף הזה', noteLabel: 'מה לשנות כאן', save: 'שמירה', saved: 'ההערה נשמרה', earlierNotes: 'הערות קודמות על הדף', copyAll: 'העתקת כל ההערות', copied: 'ההערות הועתקו', pageMap: 'מפת הדפים', fullscreen: 'מסך מלא' })) assert.equal(S[k], v, k);
   const shell = fs.readFileSync(path.join(PLUGIN, 'scripts/prototype/shell.js'), 'utf8');
   for (const k of ['missingTitle', 'unknownTitle', 'missingText', 'unknownText', 'S.demo', 'S.external']) assert.ok(shell.includes(k), k);
   assert.ok(!/[֐-׿]/.test(shell), 'no Hebrew text hard-coded in the shell js');
   assert.ok(!/[֐-׿]/.test(fs.readFileSync(path.join(PLUGIN, 'scripts/prototype/shell.html'), 'utf8')));
-  assert.equal(bundle(buildPrototype(fixture(), { strings: { banner: 'X' } })).strings.banner, 'X');
+  assert.equal(bundle(buildPrototype(fixture(), { strings: { label: 'X' } })).strings.label, 'X');
 });
 
 test('external assets are dropped and reported, Google Fonts stays', () => {
@@ -205,8 +205,23 @@ test('test mode: baked in with { test: true }, and ?test=1 is read by the shell'
   assert.equal(bundle(t).test, true);
   const shell = fs.readFileSync(path.join(PLUGIN, 'scripts/prototype/shell.js'), 'utf8');
   assert.match(shell, /\[\?&\]test=1/);
-  assert.match(shell, /if \(TEST\) \{ \$\('bp-map-btn'\)\.hidden = true; \$\('bp-device'\)\.hidden = true; \}/);
-  assert.ok(!/TEST[^;]*bp-banner/.test(shell), 'the banner stays');
+  assert.match(shell, /if \(TEST\) \{ \$\('bp-map-btn'\)\.hidden = true; \$\('bp-note-btn'\)\.hidden = true; \$\('bp-device'\)\.hidden = true; \}/);
+  assert.ok(!/TEST[^;]*bp-label/.test(shell), 'the label stays');
+});
+
+test('the pill: no top bar, a fixed pill at the bottom left with label, badge, map, note, device and full screen in order', () => {
+  const html = buildPrototype(fixture()).html;
+  assert.ok(!html.includes('bp-bar') && !html.includes('<header'));
+  const pill = /<div class="bp-pill"[\s\S]*?<\/div>\s*<section/.exec(html)[0];
+  const order = ['bp-label', 'bp-badge', 'bp-map-btn', 'bp-note-btn', 'bp-device', 'bp-fs-btn'].map((id) => pill.indexOf(`id="${id}"`));
+  assert.ok(order.every((n, i) => n > -1 && (i === 0 || n > order[i - 1])), order.join());
+  const css = fs.readFileSync(path.join(PLUGIN, 'scripts/prototype/shell.css'), 'utf8');
+  assert.match(css, /\.bp-pill \{[^}]*position: fixed; left: 14px; bottom: 14px;[^}]*background: #1d1631; color: #fff; border-radius: 999px|\.bp-pill \{[^}]*position: fixed; left: 14px; bottom: 14px;[^}]*border-radius: 999px[^}]*background: #1d1631/);
+  assert.match(css, /@media \(max-width: 600px\) \{ #bp-device, #bp-fs-btn \{ display: none; \} \}/);
+  const shell = fs.readFileSync(path.join(PLUGIN, 'scripts/prototype/shell.js'), 'utf8');
+  assert.match(shell, /window\.claude\.use\('comments'\)/);
+  assert.match(shell, /customAnchors/);
+  assert.match(shell, /\/files\/mockup\//);
 });
 
 test('bp prototype build writes the file atomically and prints the summary; --test writes the other file', () => {

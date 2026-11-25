@@ -14,12 +14,13 @@ import { questionsFor, ROUND_FILES } from '../ui/lib.mjs';
 import { saveAnswer } from '../ui/server.mjs';
 import { renderDoc } from './render-doc.mjs';
 import { buildPrototype, scanPrototype } from './prototype.mjs';
+import { addNote, doneNote, listNotes } from './prototype-notes.mjs';
 import { replaceBlocks, stampDocument, extractBlocks } from './blueprint-model/render-blocks.mjs';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const PLUGIN = path.resolve(here, '..');
 const CAP = 3;
-const BOOL_FLAGS = new Set(['unreported', 'baseline', 'client', 'test']);
+const BOOL_FLAGS = new Set(['unreported', 'baseline', 'client', 'test', 'open']);
 
 const ROLE_KINDS = ['anon', 'user', 'staff', 'admin', 'service'];
 /** The branch a stage works on: stage-02, two digits, like the skill folders. */
@@ -908,7 +909,19 @@ export const commands = {
   // (--test: mockup/prototype-test.html, without the page map and the device toggle, for a test with a real person).
   prototype(args, ctx) {
     const [sub] = args;
-    if (!['build', 'scan'].includes(sub)) fail('usage: prototype build [--test] | prototype scan [--test]');
+    if (sub === 'notes') {
+      // notes [--open] | notes add --screen <map file> --text "<text>" [--source artifact|local] [--ref <id>] | notes done <id> [--how "<what changed>"]
+      const root = ctx.resolve();
+      const unwrap = (r) => (r.status === 200 ? r.body : fail(`prototype notes: ${r.body.error}`));
+      if (args[1] === 'add') return unwrap(addNote(root, { screen: ctx.flags.screen, text: ctx.flags.text, source: ctx.flags.source || 'local', ref: ctx.flags.ref || null }));
+      if (args[1] === 'done') {
+        if (!args[2]) fail('usage: prototype notes done <id> [--how "<what changed>"]');
+        return unwrap(doneNote(root, args[2], ctx.flags.how || null));
+      }
+      if (args[1]) fail('usage: prototype notes [--open] | prototype notes add --screen <file> --text "<text>" | prototype notes done <id>');
+      return { notes: listNotes(root, { openOnly: ctx.flags.open === true }) };
+    }
+    if (!['build', 'scan'].includes(sub)) fail('usage: prototype build [--test] | prototype scan [--test] | prototype notes');
     const root = ctx.resolve();
     const test = ctx.flags.test === true;
     const rel = test ? 'mockup/prototype-test.html' : 'mockup/prototype.html';

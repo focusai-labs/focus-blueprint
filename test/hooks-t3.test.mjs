@@ -329,3 +329,40 @@ test('review: not_run is accepted and never counts as a pass', () => {
   assert.equal(rec('pass', 'pass').code, 0);
   assert.equal(bp(dir, ['map', 'set', 'capability', 'up', 'status=real']).code, 0);
 });
+
+// ---------- C1: deny by default for remote supabase commands ----------
+const REMOTE_HE = 'שינוי במסד הנתונים האמיתי נעשה רק דרך מיגרציה שעוברת PR. הפקודה הזו פונה למסד המרוחק, ולכן היא נחסמה.';
+const C1_REMOTE = [
+  'supabase migration up --remote', 'supabase migration up --linked', 'supabase migration up --db-url postgres://x', 'supabase migration up --project-ref abcdefghijklmnopqrst',
+  'supabase migration up --project-ref=abcdefghijklmnopqrst', 'supabase migration squash --linked', 'supabase db query --linked "select 1"', 'supabase db query --db-url postgres://x "drop table t"',
+  'npx supabase migration down --linked', 'supabase db seed --linked',
+];
+const C1_ALWAYS = ['supabase functions deploy hello', 'supabase functions deploy --project-ref abcdefghijklmnopqrst', 'supabase secrets set KEY=v', 'supabase secrets unset KEY', 'supabase branches delete dev', 'supabase projects delete abcdefghijklmnopqrst'];
+const C1_READ = [
+  'supabase migration list --remote', 'supabase migration list --linked', 'supabase db advisors --remote --type security', 'supabase db pull --remote', 'supabase projects list',
+  'supabase link --project-ref abcdefghijklmnopqrst', 'supabase gen types --linked', 'supabase db dump --linked', 'supabase secrets list --project-ref abcdefghijklmnopqrst',
+];
+test('C1, live project: remote supabase commands are denied by default, with the Hebrew message', () => {
+  for (const c of [...C1_REMOTE, ...C1_ALWAYS]) assert.equal(checkCommand(c, PROD), REMOTE_HE, c);
+});
+test('C1, live project: read-only remote commands and local commands stay allowed', () => {
+  for (const c of [...C1_READ, 'supabase migration up', 'supabase migration up --local', 'supabase db query --local "select 1"', 'supabase migration squash', 'supabase functions serve', 'supabase functions new hello', 'supabase secrets list']) {
+    assert.equal(checkCommand(c, PROD), null, c);
+  }
+  assert.equal(checkCommand('supabase migration up --remote=dev-branch', PROD), null, 'a dev target is not production');
+});
+test('C1, before launch: remote commands pass, the always-blocked ones do not', () => {
+  const pre = { ...PROD, live: false };
+  for (const c of [...C1_REMOTE, ...C1_READ]) assert.equal(checkCommand(c, pre), null, c);
+  for (const c of C1_ALWAYS) assert.equal(checkCommand(c, pre), REMOTE_HE, c);
+});
+test('C1: db push and db reset keep their own messages', () => {
+  assert.match(checkCommand('supabase db push --remote', PROD), /supabase db push to the production/);
+  assert.match(checkCommand('supabase db reset --remote', PROD), /db reset/);
+});
+test('C1: the guard hook blocks it with exit 2 in a live project and stays quiet before launch', () => {
+  const live = proj({ live: true });
+  const r = shell(live, 'supabase migration up --linked');
+  assert.equal(r.code, 2); assert.equal(r.err, REMOTE_HE);
+  assert.equal(shell(proj({ live: false }), 'supabase migration up --linked').code, 0);
+});

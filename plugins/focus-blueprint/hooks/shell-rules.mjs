@@ -63,25 +63,17 @@ const hasShortN = (t) => {
 const DELETERS = new Set(['rm', 'rmdir', 'unlink', 'mv', 'chmod', 'chown', 'del', 'erase', 'rd', 'ri', 'mi', 'rni', 'ren', 'rename', 'rename-item', 'remove-item', 'move-item', 'set-itemproperty', 'truncate', 'shred']);
 const touchesHooks = (t) => /(^|[\/\\"'=])\.githooks([\/\\]|$)/.test(String(t).replace(/\\/g, '/').replace(/^['"]/, '')) || /\.githooks/.test(t);
 
-const VALUE_FLAGS = new Set(['--workdir', '--profile', '--network-id', '--dns-resolver', '-o', '--output', '--create-ticket']);
+const VALUE_FLAGS = new Set(['--workdir', '--profile', '--network-id', '--dns-resolver', '-o', '--output', '--create-ticket', '--db-url', '--project-ref', '--project-id']);
 
-function supabaseCheck(seg, prod) {
-  const si = seg.findIndex((t) => base(t) === 'supabase');
-  if (si < 0) return null;
-  const args = seg.slice(si + 1);
-  const words = [];
-  for (let i = 0; i < args.length; i++) {
-    if (VALUE_FLAGS.has(args[i])) { i++; continue; }
-    if (!args[i].startsWith('-')) words.push(args[i]);
-  }
-  const flags = args.filter((a) => a.startsWith('-'));
-  if (flags.includes('--dry-run')) return null;
-  const isPush = words[0] === 'db' && words[1] === 'push';
-  const isReset = words[0] === 'db' && words[1] === 'reset';
-  const isRepair = words[0] === 'migration' && words[1] === 'repair';
-  if (!isPush && !isReset && !isRepair) return null;
+const REMOTE_MSG = 'שינוי במסד הנתונים האמיתי נעשה רק דרך מיגרציה שעוברת PR. הפקודה הזו פונה למסד המרוחק, ולכן היא נחסמה.';
+// Always blocked, with or without a remote flag: they change the hosted project itself.
+const ALWAYS_BLOCKED = [['functions', 'deploy'], ['secrets', 'set'], ['secrets', 'unset'], ['branches', 'delete'], ['projects', 'delete']];
+// Read-only or local-state subcommands the skills use; they stay allowed against a remote target in a live project.
+const READ_ONLY = [['migration', 'list'], ['db', 'advisors'], ['db', 'pull'], ['db', 'diff'], ['db', 'lint'], ['db', 'dump'], ['inspect'], ['gen', 'types'], ['projects', 'list'], ['link'], ['functions', 'list'], ['functions', 'download'], ['secrets', 'list'], ['branches', 'list'], ['branches', 'get']];
+const startsWith = (words, prefix) => prefix.every((w, i) => words[i] === w);
 
-  // Target: 'local', 'dev', 'prod'
+/** Target of the remote flags: 'local' (none), 'dev' or 'prod'. */
+function remoteTarget(flags, prod) {
   let target = 'local';
   const bump = (t) => { if (t === 'prod' || (t === 'dev' && target === 'local')) target = t; };
   for (const f of flags) {
@@ -95,6 +87,31 @@ function supabaseCheck(seg, prod) {
       else bump('dev');
     }
   }
+  return target;
+}
+
+function supabaseCheck(seg, prod) {
+  const si = seg.findIndex((t) => base(t) === 'supabase');
+  if (si < 0) return null;
+  const args = seg.slice(si + 1);
+  const words = [];
+  for (let i = 0; i < args.length; i++) {
+    if (VALUE_FLAGS.has(args[i])) { i++; continue; }
+    if (!args[i].startsWith('-')) words.push(args[i]);
+  }
+  const flags = args.filter((a) => a.startsWith('-'));
+  if (ALWAYS_BLOCKED.some((p) => startsWith(words, p))) return REMOTE_MSG;
+  if (flags.includes('--dry-run')) return null;
+  const isPush = words[0] === 'db' && words[1] === 'push';
+  const isReset = words[0] === 'db' && words[1] === 'reset';
+  const isRepair = words[0] === 'migration' && words[1] === 'repair';
+  if (!isPush && !isReset && !isRepair) {
+    // Deny by default: any other subcommand that targets the remote database is blocked in a live project.
+    if (!prod.live || READ_ONLY.some((p) => startsWith(words, p))) return null;
+    return remoteTarget(flags, prod) === 'prod' ? REMOTE_MSG : null;
+  }
+
+  const target = remoteTarget(flags, prod);
   if (target === 'local') return null;
   if (isReset) return 'Blocked by Focus Blueprint: supabase db reset against a hosted database is not run. It erases the data. Test the migration on the local stack (supabase db reset without --remote) or on a branch, and let the merge deploy it.';
   if (isRepair) return 'Blocked by Focus Blueprint: supabase migration repair against a hosted database is not run. It rewrites the migration history that the GitHub integration relies on. Ask the owner.';

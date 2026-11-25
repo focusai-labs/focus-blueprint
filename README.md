@@ -12,6 +12,8 @@
 | השם של ה-marketplace | `focus-ai` |
 | התוסף | `focus-blueprint@focus-ai` |
 
+לפני ההתקנה בודקים שיש במחשב Node.js בגרסה 22 ומעלה, עם הפקודה `node --version` בטרמינל. כל השומרים של הכלי רצים ב-Node, ובלעדיו הם לא חוסמים כלום. את Node מתקינים מ-https://nodejs.org/en/download.
+
 מתקינים מהטרמינל:
 
 ```
@@ -30,7 +32,7 @@ claude plugin install focus-blueprint@focus-ai
 
 אחרי עדכון של התוסף מריצים `bp update` פעם אחת בכל פרויקט, כדי שהבודק שבתוך הפרויקט יתעדכן לגרסה החדשה.
 
-כדי להתחיל, פותחים תיקייה ריקה ב-Claude Code וכותבים `/blueprint`. בפעם הראשונה הכלי מציג את תנאי השימוש, מתוך `plugins/focus-blueprint/TERMS.md`, ומבקש אישור. בשלב 1 הכלי בודק שיש במחשב Node.js בגרסה 22 ומעלה, Git ו-GitHub CLI מחובר.
+כדי להתחיל, פותחים תיקייה ריקה ב-Claude Code וכותבים `/blueprint`. בפעם הראשונה הכלי מציג את תנאי השימוש, מתוך `plugins/focus-blueprint/TERMS.md`, ומבקש אישור. הפקודה `/blueprint` בודקת קודם שיש Node, ובשלב 1 הכלי בודק גם את Git ואת החיבור של GitHub CLI.
 
 ## מה מנחה ומה חוסם
 
@@ -57,3 +59,7 @@ claude plugin install focus-blueprint@focus-ai
 - בתיקייה `plugins/focus-blueprint` נמצא התוסף עצמו, עם הסקילים, ה-hooks, הסקריפטים, הנתונים והתבניות.
 - בתיקייה `test` נמצאות הבדיקות, ומריצים אותן עם `node --test 'test/**/*.test.mjs'`.
 - הקובץ `.claude-plugin/marketplace.json` מגדיר את ה-marketplace.
+
+## מה הכלי שומר מחוץ לפרויקט
+
+הכלי כותב קובץ אחד בלבד מחוץ לתיקיית הפרויקט, `~/.focus-blueprint/profile.json` שבתיקיית הבית. בקובץ הזה נשמר האישור של תנאי השימוש, כדי שלא ישאלו עליו שוב בכל פרויקט חדש.

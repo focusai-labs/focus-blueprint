@@ -1,3 +1,7 @@
+// C15: this hook runs with "onFailure": "block" in hooks.json, so a crash, a missing script or a timeout
+// stops the action instead of letting it through (the default is to let it go ahead).
+// Source: https://code.claude.com/docs/en/hooks#block-the-action-when-a-hook-fails ("Requires Claude Code
+// v2.1.295 or later"). The docs do not say what an older version does with the unknown field.
 // PreToolUse on Bash and PowerShell: no commit or merge straight onto main,
 // no push of a secret file, no force push to or deletion of a protected branch.
 // git pull and git rebase on main stay allowed: pulling main after a pull request

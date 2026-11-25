@@ -1,3 +1,7 @@
+// C15: this hook runs with "onFailure": "block" in hooks.json, so a crash, a missing script or a timeout
+// stops the action instead of letting it through (the default is to let it go ahead).
+// Source: https://code.claude.com/docs/en/hooks#block-the-action-when-a-hook-fails ("Requires Claude Code
+// v2.1.295 or later"). The docs do not say what an older version does with the unknown field.
 // PreToolUse on Write, Edit and MultiEdit: a secret does not go into a file that git tracks or would track.
 // Only the new text is scanned. Secrets in files that git ignores are allowed. Read only.
 import path from 'node:path';

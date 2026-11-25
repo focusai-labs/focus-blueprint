@@ -54,7 +54,8 @@
             "args": [
               "${CLAUDE_PLUGIN_ROOT}/hooks/guard-shell.mjs"
             ],
-            "timeout": 15
+            "timeout": 15,
+            "onFailure": "block"
           }
         ]
       },
@@ -67,7 +68,8 @@
             "args": [
               "${CLAUDE_PLUGIN_ROOT}/hooks/guard-migration.mjs"
             ],
-            "timeout": 15
+            "timeout": 15,
+            "onFailure": "block"
           }
         ]
       },
@@ -80,7 +82,8 @@
             "args": [
               "${CLAUDE_PLUGIN_ROOT}/hooks/guard-checker.mjs"
             ],
-            "timeout": 15
+            "timeout": 15,
+            "onFailure": "block"
           }
         ]
       },
@@ -93,7 +96,8 @@
             "args": [
               "${CLAUDE_PLUGIN_ROOT}/hooks/guard-secrets.mjs"
             ],
-            "timeout": 15
+            "timeout": 15,
+            "onFailure": "block"
           }
         ]
       }

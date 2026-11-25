@@ -85,3 +85,14 @@ test('shell: reading, running and normal work stay free', () => {
   ];
   for (const c of ok) assert.equal(sh(dir, c).code, 0, c);
 });
+
+test('C15: only the blocking guards fail closed (onFailure block, Claude Code v2.1.295 or later)', async () => {
+  const fs = await import('node:fs');
+  const path = await import('node:path');
+  const { PLUGIN } = await import('./helpers.mjs');
+  const cfg = JSON.parse(fs.readFileSync(path.join(PLUGIN, 'hooks', 'hooks.json'), 'utf8'));
+  const seen = {};
+  for (const groups of Object.values(cfg.hooks)) for (const g of groups) for (const h of g.hooks) seen[path.basename(h.args[0])] = h.onFailure;
+  for (const n of ['guard-shell.mjs', 'guard-migration.mjs', 'guard-secrets.mjs', 'guard-checker.mjs']) assert.equal(seen[n], 'block', n);
+  for (const n of ['session-start.mjs', 'prompt-context.mjs', 'post-edit.mjs', 'stop-summary.mjs', 'stop-gate.mjs']) assert.equal(seen[n], undefined, n);
+});

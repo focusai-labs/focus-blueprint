@@ -13,3 +13,11 @@ test('F10: next is disabled and aria-disabled while a prefilled answer is unconf
   assert.match(js, /disabled: pre, 'aria-disabled': pre \? 'true' : null/);
   assert.match(js, /t\('questionnaire\.confirmFirst'\)/);
 });
+
+test('F12: the counter has a status note that shows only when the total changed', () => {
+  assert.equal(strings.questionnaire.countChanged, 'מספר השאלות השתנה לפי התשובות שלכם.');
+  const html = fs.readFileSync(path.join(pages, 'questionnaire.html'), 'utf8');
+  assert.match(html, /id="count-note"[^>]*role="status"/);
+  assert.match(js, /if \(was && list\.length !== was\) noteCountChange\(\)/);
+  assert.match(js, /setTimeout\(\(\) => \{ el\.textContent = ''; \}, 4000\)/);
+});

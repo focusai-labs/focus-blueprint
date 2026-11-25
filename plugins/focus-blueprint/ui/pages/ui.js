@@ -594,10 +594,21 @@
       requestAnimationFrame(fitSheet);
     }
 
+    // The round's total moved because of an answer: say so next to the counter for a few seconds.
+    let countTimer = 0;
+    function noteCountChange() {
+      const el = $('#count-note');
+      if (!el) return;
+      el.textContent = t('questionnaire.countChanged');
+      clearTimeout(countTimer);
+      countTimer = setTimeout(() => { el.textContent = ''; }, 4000);
+    }
     async function refetch() {
       const fresh = await api(`api/questions?${qs}`);
       const cur = list[idx] && list[idx].id;
+      const was = list.length;
       list = fresh.questions;
+      if (was && list.length !== was) noteCountChange();
       const at = list.findIndex((q) => q.id === cur);
       if (at >= 0) idx = at;
       return fresh;

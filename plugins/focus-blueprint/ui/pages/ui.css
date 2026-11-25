@@ -387,6 +387,8 @@ button.acc-head:hover:not(:disabled) { background: var(--tint); }
 
 /* ---------------------------------------------------------------- questionnaire */
 .q-head { display: flex; flex-direction: column; gap: 8px; }
+.q-count { display: flex; flex-wrap: wrap; align-items: center; column-gap: 14px; }
+.count-note:empty { display: none; }
 .confirm-first { align-self: center; }
 .qlist-btn { display: inline-flex; align-items: center; gap: 6px; align-self: flex-start; min-height: 36px; padding: 2px 10px; margin-inline-start: -10px; border-radius: 8px; color: var(--muted); font-size: 15px; font-weight: 500; }
 button.qlist-btn:hover:not(:disabled) { background: var(--tint); color: var(--fg); }

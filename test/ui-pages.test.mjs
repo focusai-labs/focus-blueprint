@@ -145,7 +145,9 @@ test('questionnaire end screen: owner strings for missing answers, and the count
   const end = js.slice(js.indexOf('function renderEnd()'), js.indexOf("if (data.done) { root.append"));
   assert.match(end, /answerStatus\(q\.answer\) === 'empty'/);
   assert.match(end, /finishAllAnswered/);
-  // the all-answered text only when nothing is missing, and the finish button stays when something is
+  // the all-answered text only when nothing is missing
   assert.match(end, /!missing\.length && !pre\.length/);
-  assert.match(end, /missing\.length > 0 \|\| pre\.length === 0/);
+  // the finish button follows the server: hidden while a guess is unconfirmed (markDone answers 409), never hidden for a missing answer
+  assert.match(end, /const canFinish = pre\.length === 0;/);
+  assert.match(fs.readFileSync(path.join(PLUGIN, 'ui', 'server.mjs'), 'utf8'), /unconfirmed prefill/);
 });

@@ -830,7 +830,7 @@
       const jumpList = (qs, withButton) => {
         const ul = h('ul', { class: 'plain' });
         qs.forEach((q) => ul.append(withButton
-          ? h('li', { class: 'row spread' }, h('span', {}, q.text), h('button', { type: 'button', class: 'quiet', onclick: () => goTo(q) }, t('questionnaire.missingGo')))
+          ? h('li', { class: 'row spread jump-row' }, h('span', {}, q.text), h('button', { type: 'button', class: 'quiet', onclick: () => goTo(q) }, t('questionnaire.missingGo')))
           : h('li', {}, h('button', { type: 'button', class: 'quiet', onclick: () => goTo(q) }, q.text))));
         return ul;
       };
@@ -850,8 +850,9 @@
         try { await api('api/done', { name: data.name }); clear(root); root.append(h('p', { class: 'note' }, t('common.backToClaude'))); }
         catch (e) { if (e.status === 409) { await refetch(); renderEnd(); } else setState('failed'); }
       } }, t('questionnaire.roundDone'));
-      // With unconfirmed guesses and nothing missing the round cannot close yet; a missing answer never traps the student.
-      const canFinish = missing.length > 0 || pre.length === 0;
+      // The server refuses to close a round while a guess is unconfirmed (409), so the button shows only when none is left.
+      // A missing answer never blocks it, so the student is not trapped.
+      const canFinish = pre.length === 0;
       root.append(h('div', { class: 'row spread' }, h('button', { type: 'button', class: 'quiet', onclick: backToLast }, t('common.back')), canFinish ? doneBtn : null));
     }
 

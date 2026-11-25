@@ -142,6 +142,9 @@ button.icon-btn:hover:not(:disabled) { background: var(--tint); color: var(--fg)
 .progress > i { display: block; height: 100%; background: var(--accent-solid); }
 .pairs-row { display: grid; grid-template-columns: 1fr; gap: 8px; padding: 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
 ul.plain { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.jump-row { flex-wrap: nowrap; }
+.jump-row > span { flex: 1; min-width: 0; }
+.jump-row > button { flex: none; }
 .empty { color: var(--muted); font-size: 15px; }
 
 /* ---------------------------------------------------------------- app bar */

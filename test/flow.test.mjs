@@ -51,3 +51,27 @@ test('every stage skill tells Claude to pass the opening on word for word', () =
     assert.ok(t.includes('מעבירים לסטודנט, מילה במילה, את הפתיחה שהפקודה הדפיסה.'), s.skill);
   }
 });
+
+test('stage done names the next stage and its command exactly', () => {
+  const dir = setup();
+  bp(dir, ['stage', 'start', '1']);
+  const r = bp(dir, ['stage', 'done', '1', '--status', 'done', '--proof', 'ok']).json;
+  assert.equal(r.next, 'השלב הבא הוא שלב 2, תיאור הרעיון. פותחים שיחה חדשה ומקלידים /focus-blueprint:stage-02-brain-dump');
+});
+
+test('stage done: no next line when the stage is blocked; a last line after stage 15', () => {
+  const dir = setup();
+  const r = bp(dir, ['stage', 'done', '1', '--status', 'blocked', '--note', 'n']).json;
+  assert.equal(r.next, undefined);
+  const dir2 = tmpProject({ state: { schema: 2, project: 'p', stage: 15, status: 'in_progress', stages: {} } });
+  assert.equal(bp(dir2, ['stage', 'done', '15', '--status', 'done', '--proof', 'ok']).json.next, 'זה היה השלב האחרון, וכל 15 השלבים הושלמו.');
+});
+
+test('every stage close line passes on the next-stage line instead of sending to /blueprint', () => {
+  for (const s of stages) {
+    const t = fs.readFileSync(path.join(PLUGIN, 'skills', s.skill, 'SKILL.md'), 'utf8');
+    assert.ok(t.includes('אחר כך מעבירים לסטודנט, מילה במילה, את השורה על השלב הבא שהפקודה `bp stage done` הדפיסה.'), s.skill);
+  }
+  const bpSkill = fs.readFileSync(path.join(PLUGIN, 'skills', 'blueprint', 'SKILL.md'), 'utf8');
+  assert.ok(bpSkill.includes('- כשהשלב הנוכחי כבר נסגר, אומרים לסטודנט לפתוח שיחה חדשה'));
+});

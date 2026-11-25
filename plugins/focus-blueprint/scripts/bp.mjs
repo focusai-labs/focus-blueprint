@@ -67,6 +67,13 @@ function stageOpening(n) {
   ].join('\n');
 }
 
+/** The line that closes a stage: which stage comes next and the command that opens it. */
+function stageNext(n) {
+  if (n >= 15) return 'זה היה השלב האחרון, וכל 15 השלבים הושלמו.';
+  const nx = stageList().find((x) => x.n === n + 1);
+  return `השלב הבא הוא שלב ${nx.n}, ${nx.name}. פותחים שיחה חדשה ומקלידים /focus-blueprint:${nx.skill}`;
+}
+
 class Fail extends Error {}
 const fail = (msg) => { throw new Fail(msg); };
 
@@ -370,7 +377,9 @@ export const commands = {
         st.status = 'done'; st.doneAt = at;
         if (n < 15) { s.stage = n + 1; s.status = 'not_started'; } else { s.stage = n; s.status = 'done'; }
       } else { st.status = status; s.stage = n; s.status = status; }
-      return ctx.saveState();
+      const out = { ...ctx.saveState() };
+      if (st.status === 'done') out.next = stageNext(n);
+      return out;
     }
     return fail('usage: stage intro N | stage start N | stage done N --status ...');
   },

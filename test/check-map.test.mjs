@@ -312,3 +312,30 @@ test('rule 3: exact create table match', () => {
   assert.ok(has(run(sql('create table documents_archive (id int);')), 3));
   assert.ok(has(run(sql('alter table documents add column x int;')), 3));
 });
+
+test('--rule runs one rule only, at any stage, and exits non-zero on its errors', () => {
+  const dir = tmpProject();
+  assert.equal(bp(dir, ['init', '--name', 'x']).code, 0);
+  const copy = path.join(dir, 'scripts', 'blueprint-check.mjs');
+  const st = JSON.parse(fs.readFileSync(path.join(dir, '.blueprint', 'state.json'), 'utf8'));
+  st.stage = 2;
+  fs.writeFileSync(path.join(dir, '.blueprint', 'state.json'), JSON.stringify(st));
+  fs.mkdirSync(path.join(dir, 'spec'), { recursive: true });
+  fs.writeFileSync(path.join(dir, 'spec', 'idea.md'), '# idea\n');
+  const run = (args) => spawnSync(process.execPath, [copy, ...args], { cwd: dir, encoding: 'utf8' });
+  const one = run(['--rule', '13']);
+  assert.equal(one.status, 1, one.stdout + one.stderr);
+  const j = JSON.parse(one.stdout);
+  assert.ok(j.errors.length > 0);
+  assert.ok(j.errors.every((e) => e.rule === '13'));
+  fs.writeFileSync(path.join(dir, 'spec', 'idea.md'), '# idea\n<!-- idea:words -->\nמילים\n<!-- idea:summary -->\nסיכום\n');
+  const ok = run(['--rule', '13']);
+  assert.ok(JSON.parse(ok.stdout).errors.every((e) => e.rule === '13'));
+  const unknown = run(['--rule', 'nope']);
+  assert.equal(unknown.status, 1);
+  assert.equal(JSON.parse(unknown.stdout).errors[0].rule, 'nope');
+  assert.equal(run(['--rule']).status, 2);
+  // Without --rule at stage 2 the same project does not run rule 13 at all.
+  fs.rmSync(path.join(dir, 'spec', 'idea.md'));
+  assert.ok(!JSON.parse(run([]).stdout).errors.some((e) => e.rule === '13'));
+});

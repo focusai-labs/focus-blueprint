@@ -536,10 +536,16 @@ export function checkMap(projectDir, opts = {}) {
   let changes = [];
   try { const c = JSON.parse(fs.readFileSync(ctx.p('.blueprint/changes.json'), 'utf8')); if (Array.isArray(c)) changes = c; } catch { /* optional */ }
   const dimensions = loadDimensions(dir, opts);
-  const stage = Number(state && state.stage) || 0;
+  // opts.rule runs only that rule and ignores the project's stage (a stage gate counts as open), so a stage can prove one rule on demand.
+  const only = opts.rule === undefined || opts.rule === null ? null : String(opts.rule);
+  const stage = only ? 99 : Number(state && state.stage) || 0;
   const err = (rule, item, message) => errors.push({ rule, item, message });
   const warn = (rule, item, message) => warnings.push({ rule, item, message });
-  for (const r of rules) r.run({ map, ctx, stage, state, changes, dimensions, opts, errors, err, warn });
+  if (only && !rules.some((r) => r.id === only)) {
+    errors.push({ rule: only, item: '--rule', message: `Unknown rule id: ${only}` });
+    return { ok: false, errors, warnings };
+  }
+  for (const r of rules.filter((x) => !only || x.id === only)) r.run({ map, ctx, stage, state, changes, dimensions, opts, errors, err, warn });
   return { ok: errors.length === 0, errors, warnings };
 }
 
@@ -547,8 +553,11 @@ const isMain = (() => { try { return fs.realpathSync(process.argv[1]) === fs.rea
 if (isMain) {
   const a = process.argv.slice(2);
   const i = a.indexOf('--project');
-  const dir = i >= 0 ? a[i + 1] : a.find((x) => !x.startsWith('--')) || process.cwd();
-  const report = checkMap(dir, { preCommit: a.includes('--pre-commit') });
+  const ri = a.indexOf('--rule');
+  const rule = ri >= 0 ? a[ri + 1] : null;
+  if (ri >= 0 && !rule) { process.stderr.write('--rule needs a rule id, for example --rule 13\n'); process.exit(2); }
+  const dir = i >= 0 ? a[i + 1] : a.find((x, n) => !x.startsWith('--') && (ri < 0 || n !== ri + 1)) || process.cwd();
+  const report = checkMap(dir, { preCommit: a.includes('--pre-commit'), rule });
   if (a.includes('--pre-commit')) {
     if (!report.ok) process.stderr.write(`${SUMMARY_HE(report.errors)}\n`);
     process.exit(report.ok ? 0 : 1);

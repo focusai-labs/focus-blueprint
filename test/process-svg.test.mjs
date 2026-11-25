@@ -36,7 +36,7 @@ test('the first stage is on the right', () => {
 test('source bubbles carry the source text; sources:false removes them', () => {
   const svg = processSvg(map, ID);
   assert.equal((svg.match(/class="bp-bub"/g) || []).length, 6); // s6 has src but no text, still a bubble: 6 steps with src
-  assert.match(svg, /data-tip="הלקוח: שיחת האפיון, 06\.08"/);
+  assert.match(svg, /data-tip="הלקוח אמר: שיחת האפיון, 06\.08"/);
   const bare = processSvg(map, ID, { sources: false });
   assert.doesNotMatch(bare, /bp-bub"/);
   assert.doesNotMatch(bare, /שיחת האפיון/);

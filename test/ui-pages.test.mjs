@@ -49,9 +49,10 @@ test('every page carries the app bar; task pages keep their save status in it', 
   for (const name of ['board', 'process', 'questionnaire', 'brain-dump']) {
     const page = html(name);
     assert.match(page, /<header class="appbar" id="appbar">/, name);
-    assert.match(page, /family=Heebo/, `${name} loads Heebo`);
+    assert.doesNotMatch(page, /googleapis|gstatic/, `${name} loads no outside font`);
     assert.match(page, /<script src="ui\.js" defer><\/script>/, name);
-    assert.match(page, /localStorage\.getItem\('bp-theme'\)/, `${name} applies night mode before paint`);
+    assert.match(page, /<script src="theme\.js"><\/script>/, `${name} applies night mode before paint`);
+    assert.match(fs.readFileSync(path.join(pages, 'theme.js'), 'utf8'), /localStorage\.getItem\('bp-theme'\)/);
     assert.ok(page.indexOf('id="appbar"') < page.indexOf('<main'), `${name}: the bar comes first`);
   }
   for (const name of ['questionnaire', 'brain-dump']) {
@@ -129,7 +130,7 @@ test('the way back to the waiting page: strings, the bar and the board card', ()
   assert.match(js, /taskEl = h\('a', \{ class: 'task-link'/, 'the bar builds the item');
   assert.match(js, /link\.page !== page/, 'only while the student is on another page');
   assert.match(js, /a', \{ class: 'btn primary task-continue'/, 'the board card has the primary button');
-  assert.match(js, /const taskBtn = tl \?/);
+  assert.match(js, /const tl = taskLink\(d\.task\);\n        if \(tl\) card\.append/, 'the continue item sits inside the next step card');
 });
 
 test('no possibly-null child is appended raw', () => {
@@ -150,4 +151,11 @@ test('questionnaire end screen: owner strings for missing answers, and the count
   // the finish button follows the server: hidden while a guess is unconfirmed (markDone answers 409), never hidden for a missing answer
   assert.match(end, /const canFinish = pre\.length === 0;/);
   assert.match(fs.readFileSync(path.join(PLUGIN, 'ui', 'server.mjs'), 'utf8'), /unconfirmed prefill/);
+});
+
+test('Heebo is bundled and served locally, with its license', async () => {
+  const css = fs.readFileSync(path.join(pages, 'ui.css'), 'utf8');
+  assert.match(css, /@font-face \{ font-family: Heebo;[^}]*font-display: swap;[^}]*fonts\/Heebo-var\.woff2/);
+  assert.ok(fs.statSync(path.join(pages, 'fonts', 'Heebo-var.woff2')).size > 10000);
+  assert.match(fs.readFileSync(path.join(pages, 'fonts', 'OFL.txt'), 'utf8'), /SIL OPEN FONT LICENSE/i);
 });

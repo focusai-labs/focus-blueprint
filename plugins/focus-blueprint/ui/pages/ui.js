@@ -75,6 +75,7 @@
     chevD: '<path d="M5.5 8l4.5 4.5L14.5 8"/>',
     moon: '<path d="M15.6 12.4A6.2 6.2 0 0 1 7.6 4.4a6.2 6.2 0 1 0 8 8z"/>',
     sun: '<circle cx="10" cy="10" r="3.3"/><path d="M10 2.6v1.6M10 15.8v1.6M2.6 10h1.6M15.8 10h1.6M4.8 4.8l1.1 1.1M14.1 14.1l1.1 1.1M4.8 15.2l1.1-1.1M14.1 5.9l1.1-1.1"/>',
+    copy: '<rect x="7" y="7" width="9" height="9" rx="2"/><path d="M13 7V5a1.5 1.5 0 0 0-1.5-1.5H5A1.5 1.5 0 0 0 3.5 5v6.5A1.5 1.5 0 0 0 5 13h2"/>',
     menu: '<path d="M3.5 6h13M3.5 10h13M3.5 14h13"/>',
     ext: '<path d="M11.5 4.5h4v4M15.5 4.5l-6 6M13.5 12v3.5h-9v-9H8"/>',
     alert: '<circle cx="10" cy="10" r="7"/><path d="M10 6.4v4.2M10 13.5v.1"/>',
@@ -440,8 +441,11 @@
     const whySaver = autosaver(sendWhy, setState);
     const dumpSaver = autosaver((v) => api('api/answer', { name: 'brain-dump', answer: v }), setState);
 
+    const shortNote = h('p', { class: 'muted small', id: 'short-note', 'data-key': 'short-note' }, t('brainDump.shortNote'));
+    dump.after(shortNote);
+    dump.setAttribute('aria-describedby', 'short-note');
     const words = () => (dump.value.trim() ? dump.value.trim().split(/\s+/).length : 0);
-    const refresh = () => { count.textContent = t('brainDump.wordCount', { n: words() }); done.disabled = words() === 0; };
+    const refresh = () => { count.textContent = t('brainDump.wordCount', { n: words() }); done.disabled = words() === 0; shortNote.hidden = words() >= 15; };
     const unlock = () => { stepWhy.hidden = true; stepDump.hidden = false; dump.disabled = false; dump.focus(); refresh(); };
 
     why.value = (saved.answers && saved.answers.why && saved.answers.why.value) || '';
@@ -879,7 +883,7 @@
       tab: TABS.includes(location.hash.slice(1)) ? location.hash.slice(1) : 'overview',
       rulingStage: 'all', onlyNew: false, changeFilter: 'all',
       openCloses: new Set(), seenCloses: new Set(), openChanges: new Set(),
-      summaryOpen: false, popStage: null, drawer: null,
+      popStage: null, drawer: null,
     };
     let s = null; let lastJson = ''; let first = true;
     let els = { tabs: {}, panels: {}, ink: null, wrap: null, list: null };
@@ -1089,32 +1093,48 @@
       const card = h('section', { class: 'card', 'aria-labelledby': 'last-title' }, h('h2', { class: 'card-title', id: 'last-title' }, t('board.lastStop')));
       const text = String((s && s.lastSession) || '').trim();
       if (!text) { card.append(h('p', { class: 'empty' }, t('common.empty'))); return card; }
-      const box = h('div', { class: 'clamp-box is-clamped', id: 'last-md' }, renderMd(text));
-      const label = h('span', {}, t('board.readMore'));
-      const btn = h('button', { type: 'button', class: 'bare linkish more-btn', 'aria-expanded': 'false', 'aria-controls': 'last-md', 'data-key': 'md-toggle', hidden: true }, label, icon('chevD'));
-      const paint = (open) => { btn.setAttribute('aria-expanded', open ? 'true' : 'false'); label.textContent = open ? t('board.readLess') : t('board.readMore'); };
-      btn.addEventListener('click', () => {
-        ui.summaryOpen = !ui.summaryOpen;
-        paint(ui.summaryOpen);
-        if (!motionOK()) { box.classList.toggle('is-clamped', !ui.summaryOpen); return; }
-        const from = box.offsetHeight;
-        box.classList.toggle('is-clamped', !ui.summaryOpen);
-        const to = ui.summaryOpen ? box.scrollHeight : box.offsetHeight;
-        box.style.maxHeight = `${from}px`;
-        void box.offsetHeight;
-        box.classList.add('is-animating');
-        box.style.maxHeight = `${to}px`;
-        settle(box, 220).then(() => { box.style.maxHeight = ''; box.classList.remove('is-animating'); });
-      });
-      card.append(box, btn);
-      afterShow.overview = () => {
-        if (!box.isConnected) return;
-        box.classList.add('is-clamped');
-        const long = box.scrollHeight > box.clientHeight + 8;
-        btn.hidden = !long;
-        box.classList.toggle('is-clamped', long && !ui.summaryOpen);
-        paint(ui.summaryOpen);
-      };
+      card.append(h('details', { class: 'last-session', 'data-key': 'last-session' }, h('summary', {}, t('board.lastSummary')), h('div', { class: 'last-md' }, renderMd(text))));
+      return card;
+    }
+    /** The one card at the top of the overview: what to do next, with the command to copy. */
+    function nextStepCard(d) {
+      const stage = d.st.stage;
+      const done = d.st.status === 'done' || d.st.status === 'done_with_concerns';
+      let line; let def = null;
+      if (stage == null) return null;
+      if (done) {
+        def = d.defs.find((x) => x.n === stage + 1) || null;
+        line = def ? t('board.nextStep.next', { n: def.n, name: def.name }) : (stage >= 15 ? t('board.nextStep.complete') : null);
+      } else {
+        def = d.defs.find((x) => x.n === stage) || null;
+        line = def ? t('board.nextStep.continue', { n: def.n, name: def.name }) : null;
+      }
+      if (!line) return null;
+      const card = h('section', { class: 'card ov-next', 'data-key': 'next-step', 'aria-labelledby': 'next-title' }, h('h2', { class: 'card-title', id: 'next-title' }, t('board.nextStep.title')), h('p', { 'data-key': 'next-line' }, line));
+      if (def && def.skill) {
+        const cmd = `/focus-blueprint:${def.skill}`;
+        const code = h('code', { class: 'ltr cmd-text', 'data-key': 'next-command' }, cmd);
+        const label = h('span', {}, t('board.nextStep.copy'));
+        let timer = null;
+        const btn = h('button', { type: 'button', class: 'btn cmd-copy', 'data-key': 'next-copy' }, icon('copy'), label);
+        btn.addEventListener('click', async () => {
+          let ok = false;
+          try { await navigator.clipboard.writeText(cmd); ok = true; } catch { /* no clipboard permission: select the text instead */ }
+          if (!ok) {
+            try { const r = document.createRange(); r.selectNodeContents(code); const sel = window.getSelection(); sel.removeAllRanges(); sel.addRange(r); } catch { /* nothing to select */ }
+            return;
+          }
+          label.textContent = t('board.nextStep.copied');
+          clearTimeout(timer);
+          timer = setTimeout(() => { label.textContent = t('board.nextStep.copy'); }, 2000);
+        });
+        card.append(h('div', { class: 'cmd-box' }, code, btn));
+        const tl = taskLink(d.task);
+        if (tl) card.append(h('a', { class: 'btn primary task-continue', 'data-key': 'task-continue', href: tl.href }, tl.cont));
+      } else {
+        const tl = taskLink(d.task);
+        if (tl) card.append(h('a', { class: 'btn primary task-continue', 'data-key': 'task-continue', href: tl.href }, tl.cont));
+      }
       return card;
     }
     function prototypeCard(d) {
@@ -1142,16 +1162,15 @@
     function overviewPanel(d) {
       const out = h('div', { class: 'overview' });
       const waiting = waitingRows(d);
+      const next = nextStepCard(d);
+      if (next) out.append(next);
       if (d.st.stage != null) {
         const def = d.defs.find((x) => x.n === d.st.stage);
-        const tl = taskLink(d.task);
-        const taskBtn = tl ? h('a', { class: 'btn primary task-continue', 'data-key': 'task-continue', href: tl.href }, tl.cont) : null;
         const ch = def ? d.chapters.findIndex((c) => c.name === def.chapter) : -1;
         out.append(h('section', { class: `card ov-stage${waiting.length ? ' with-waiting' : ''}` },
           h('p', { class: 'kicker' }, t('board.currentStage')),
           h('div', { class: 'stage-line' }, h('h2', {}, def ? t('nav.stage', { n: d.st.stage, name: def.name }) : t('board.stageN', { n: d.st.stage })), statusBadge(d.st.status || 'in_progress')),
-          ch >= 0 ? h('p', { class: 'muted' }, t('board.chapterOf', { n: ch + 1, name: def.chapter })) : null,
-          taskBtn));
+          ch >= 0 ? h('p', { class: 'muted' }, t('board.chapterOf', { n: ch + 1, name: def.chapter })) : null));
       }
       if (waiting.length) out.append(h('section', { class: 'card ov-waiting', 'aria-labelledby': 'waiting-title' }, h('h2', { class: 'card-title', id: 'waiting-title' }, t('board.waiting')), h('ul', { class: 'rows' }, waiting.map((w) => h('li', {}, w)))));
       out.append(...[tilesNode(d), prototypeCard(d), lastStopNode()].filter(Boolean));
@@ -1467,7 +1486,8 @@
     root.addEventListener('focusout', hideTip);
     window.addEventListener('scroll', hideTip, true);
 
-    const legend = () => h('div', { class: 'legend', 'aria-label': t('process.legend') },
+    const legend = () => h('div', { class: 'legend-wrap' }, h('p', { class: 'muted small', 'data-key': 'legend-note' }, t('process.legendNote')), legendRow());
+    const legendRow = () => h('div', { class: 'legend', 'aria-label': t('process.legend') },
       Object.keys(KIND_COLORS).map((k) => h('span', { class: 'sw' }, h('i', { style: `background:${KIND_COLORS[k][0]};border-color:${KIND_COLORS[k][1]}` }), t(`process.kinds.${k}`))),
       h('span', { class: 'sep', 'aria-hidden': 'true' }),
       Object.keys(SRC_COLORS).map((k) => h('span', { class: 'sw' }, h('i', { class: 'round', style: `background:${SRC_COLORS[k][0]};color:${SRC_COLORS[k][1]};border-color:${SRC_COLORS[k][2]}${k === 'assumed' ? ';border-style:dashed' : ''}` }, t(`process.srcLetter.${k}`)), t(`process.src.${k}`))));

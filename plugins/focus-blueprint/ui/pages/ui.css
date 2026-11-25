@@ -1,4 +1,6 @@
 /* Focus Blueprint local pages. One accent colour, day by default with a night mode, Hebrew RTL. */
+/* Heebo (SIL Open Font License, see fonts/OFL.txt), variable weight, Hebrew and Latin subset, served by this same server so the pages look the same offline. */
+@font-face { font-family: Heebo; font-style: normal; font-weight: 100 900; font-display: swap; src: url(fonts/Heebo-var.woff2) format('woff2'); }
 :root {
   color-scheme: light;
   --bg: #f6f5fa; --surface: #ffffff; --surface-2: #faf9fd; --fg: #1c1a27; --muted: #5d5970;
@@ -109,11 +111,12 @@ button.icon-btn:hover:not(:disabled) { background: var(--tint); color: var(--fg)
 /* ---------------------------------------------------------------- choices (questionnaire) */
 .choice {
   display: flex; align-items: center; gap: 12px; min-height: 48px; padding: 10px 14px; font-weight: 500;
-  background: var(--surface); border: 1px solid var(--line-strong); border-radius: 10px; cursor: pointer;
+  background: var(--surface); border: 1px solid var(--field); border-radius: 10px; cursor: pointer; /* --field is 3.3:1 on white, 3.7:1 in night (WCAG 1.4.11) */
 }
-.choice:hover { border-color: var(--field); background: var(--surface-2); }
+.choice:hover { border-color: var(--fg); background: var(--surface-2); }
 .choice:has(input:checked) { border-color: var(--accent); background: var(--accent-soft); }
 .choice input { width: 22px; height: 22px; margin: 0; accent-color: var(--accent-solid); flex: none; cursor: pointer; }
+.choice input[type="radio"], .choice input[type="checkbox"] { width: 24px; height: 24px; min-width: 24px; min-height: 24px; } /* WCAG 2.5.8 */
 .choice.other-field input[type="text"] { margin-inline-start: 4px; cursor: text; }
 .choice .opt { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
 .choice .hint { font-size: 14px; font-weight: 400; line-height: 1.45; color: var(--muted); }
@@ -263,9 +266,6 @@ button.tile:hover:not(:disabled) { border-color: var(--line-strong); background:
 .md ul, .md ol { margin: 0; padding-inline-start: 20px; display: flex; flex-direction: column; gap: 4px; }
 .md li::marker { color: var(--muted); }
 .md code { background: var(--surface-2); border: 1px solid var(--line); border-radius: 5px; padding: 0 4px; }
-.clamp-box { position: relative; overflow: hidden; }
-.clamp-box.is-clamped { max-height: 214px; }
-.clamp-box.is-clamped::after { content: ""; position: absolute; inset-inline: 0; bottom: 0; height: 56px; background: linear-gradient(to bottom, transparent, var(--surface)); pointer-events: none; }
 .more-btn .i { width: 16px; height: 16px; }
 .more-btn[aria-expanded="true"] .i { transform: rotate(180deg); }
 
@@ -479,7 +479,6 @@ button.case-text:hover:not(:disabled) { color: var(--accent); }
   .acc-inner { transition: visibility 0s linear var(--dur-3); }
   .acc.is-open .acc-inner { transition-delay: 0s; }
   .acc-chev, .more-btn .i, .qlist-btn .i { transition: transform var(--dur-3) var(--ease); }
-  .clamp-box.is-animating { transition: max-height var(--dur-3) var(--ease); }
   .backdrop { transition: opacity var(--dur-3) var(--ease); }
   .backdrop[data-state="enter"], .backdrop[data-state="leave"] { opacity: 0; }
   .drawer { transition: transform var(--dur-3) var(--ease), opacity var(--dur-3) var(--ease); }
@@ -576,3 +575,12 @@ a.task-continue { min-height: 44px; padding: 0 20px; margin-top: 12px; max-width
 @media (max-width: 639.98px) and (prefers-reduced-motion: no-preference) {
   .drawer[data-state="enter"], .drawer[data-state="leave"] { transform: translateY(32px); opacity: 0; }
 }
+
+/* ---------------------------------------------------------------- next step card */
+.cmd-box { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-top: 12px; padding: 10px 12px; background: var(--surface-2); border: 1px solid var(--line-strong); border-radius: 10px; }
+.cmd-box .cmd-text { flex: 1; min-width: 0; font-size: 16px; user-select: all; overflow-wrap: anywhere; }
+.cmd-copy { min-height: 36px; padding: 0 14px; display: inline-flex; align-items: center; gap: 6px; background: var(--surface); color: var(--fg); border: 1px solid var(--line-strong); border-radius: 8px; font: inherit; font-weight: 600; cursor: pointer; }
+.cmd-copy:hover { background: var(--accent-soft); }
+.last-session > summary { cursor: pointer; font-weight: 600; padding: 6px 0; }
+.last-session .last-md { margin-top: 8px; }
+.legend-wrap { display: flex; flex-direction: column; gap: 8px; }

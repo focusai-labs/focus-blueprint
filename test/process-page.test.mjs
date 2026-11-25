@@ -24,10 +24,8 @@ test('process page, svg module and strings are served', async () => {
     assert.equal(page.status, 200);
     assert.match(page.text, /<html lang="he" dir="rtl">/);
     assert.match(page.text, /data-page="process"/);
-    // the Heebo font is the only thing that loads from outside
-    const outside = [...page.text.matchAll(/https?:\/\/[^\s"'<>)]+/g)].map((m) => m[0]).filter((u) => !/^https:\/\/fonts\.(googleapis|gstatic)\.com(\/|$)/.test(u));
-    assert.deepEqual(outside, []);
-    assert.match(page.text, /family=Heebo/);
+    // nothing loads from outside: the Heebo font is served by the same server
+    assert.deepEqual([...page.text.matchAll(/https?:\/\/[^\s"'<>)]+/g)].map((m) => m[0]), []);
     const mod = await get('process-svg.mjs');
     assert.equal(mod.status, 200);
     assert.match(mod.type, /javascript/);

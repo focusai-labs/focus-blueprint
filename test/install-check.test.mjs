@@ -32,3 +32,33 @@ test('install-check reports unknown, not a hang, when claude is missing', () => 
   assert.equal(out.playwrightMcp, 'unknown');
   assert.equal(out.superpowers.installed, 'unknown');
 });
+
+test('install-check parses claude --version and compares it with 2.1.277', async () => {
+  const { parseClaudeVersion, versionAtLeast } = await import('../plugins/focus-blueprint/scripts/install-check.mjs');
+  assert.equal(parseClaudeVersion('2.1.283 (Claude Code)\n'), '2.1.283');
+  assert.equal(parseClaudeVersion('Claude Code v2.1.277'), '2.1.277');
+  assert.equal(parseClaudeVersion(''), 'unknown');
+  assert.equal(parseClaudeVersion('command not found'), 'unknown');
+  assert.equal(parseClaudeVersion(null), 'unknown');
+  assert.equal(versionAtLeast('2.1.277'), true);
+  assert.equal(versionAtLeast('2.1.278'), true);
+  assert.equal(versionAtLeast('2.2.0'), true);
+  assert.equal(versionAtLeast('10.0.0'), true);
+  assert.equal(versionAtLeast('2.1.276'), false);
+  assert.equal(versionAtLeast('2.0.999'), false);
+  assert.equal(versionAtLeast('unknown'), false);
+});
+
+test('install-check reports claudeCli, a fake claude is read, a missing one is unknown', () => {
+  const bin = fs.mkdtempSync(path.join(os.tmpdir(), 'bp-bin-'));
+  fs.symlinkSync(process.execPath, path.join(bin, 'node'));
+  const run = () => JSON.parse(spawnSync(process.execPath, [path.join(PLUGIN, 'scripts', 'install-check.mjs')], { encoding: 'utf8', timeout: 60000, env: { ...process.env, PATH: bin } }).stdout);
+  let out = run();
+  assert.deepEqual(out.claudeCli, { version: 'unknown', ok: null });
+  if (process.platform !== 'win32') {
+    fs.writeFileSync(path.join(bin, 'claude'), '#!/bin/sh\n[ "$1" = "--version" ] && echo "2.1.290 (Claude Code)"\n', { mode: 0o755 });
+    out = run();
+    assert.deepEqual(out.claudeCli, { version: '2.1.290', ok: true });
+  }
+  fs.rmSync(bin, { recursive: true, force: true });
+});

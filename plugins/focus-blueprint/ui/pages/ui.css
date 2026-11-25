@@ -271,6 +271,14 @@ button.tile:hover:not(:disabled) { border-color: var(--line-strong); background:
 
 .toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 12px; padding: 14px 16px; border-bottom: 1px solid var(--line); }
 .toolbar h2 { font-size: 16px; margin-inline-end: auto; }
+.term-head { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; min-width: 0; }
+.toolbar .term-head { margin-inline-end: auto; }
+.toolbar .term-head h2 { margin-inline-end: 0; }
+.term-line { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; }
+.term > summary { cursor: pointer; color: var(--muted); font-size: 13px; line-height: 1.5; padding: 2px 0; width: fit-content; }
+.term > summary:hover { color: var(--fg); }
+.term[open] > summary { color: var(--fg); }
+.term-body { margin: 4px 0 6px; padding: 8px 12px; max-width: 62ch; font-size: 14px; line-height: 1.6; color: var(--fg); background: var(--surface-2); border: 1px solid var(--line); border-radius: 8px; }
 .toolbar .count-text { color: var(--muted); font-size: 14px; }
 .table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 15px; }
 .table th { font-size: 13px; font-weight: 600; color: var(--muted); text-align: start; padding: 10px 16px; border-bottom: 1px solid var(--line); white-space: nowrap; }

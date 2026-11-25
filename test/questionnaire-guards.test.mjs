@@ -21,3 +21,11 @@ test('F12: the counter has a status note that shows only when the total changed'
   assert.match(js, /if \(was && list\.length !== was\) noteCountChange\(\)/);
   assert.match(js, /setTimeout\(\(\) => \{ el\.textContent = ''; \}, 4000\)/);
 });
+
+test('E7: every board term has its text, and the board attaches each to its heading', () => {
+  const keys = ['summary', 'rulings', 'later', 'evals', 'drift', 'changes', 'mock', 'git', 'prd'];
+  for (const k of keys) assert.ok(typeof strings.terms[k] === 'string' && strings.terms[k].length > 0, k);
+  assert.equal(strings.terms.summary, 'מה זה?');
+  for (const k of ['rulings', 'later', 'evals', 'drift', 'changes', 'mock', 'git']) assert.match(js, new RegExp(`withTerm\\([^\\n]*'${k}'\\)`), k);
+  assert.doesNotMatch(js, /withTerm\([^\n]*'prd'\)/, 'the board shows no PRD, so no PRD term is attached');
+});

@@ -1190,13 +1190,16 @@
       return out;
     }
 
+    /** A heading with a small "what is this?" note under it: summary, then the plain-words text. */
+    const withTerm = (heading, key) => h('div', { class: 'term-head' }, heading, h('details', { class: 'term', 'data-key': `term-${key}` }, h('summary', {}, t('terms.summary')), h('p', { class: 'term-body' }, t(`terms.${key}`))));
+
     // ---- rulings
     function rulingsPanel(d) {
       const stages = [...new Set(d.rulings.map((r) => r.stage).filter((x) => x != null))].sort((a, b) => a - b);
       if (ui.rulingStage !== 'all' && !stages.some((n) => String(n) === String(ui.rulingStage))) ui.rulingStage = 'all';
       const list = [...d.rulings].reverse().filter((r) => (ui.rulingStage === 'all' || String(r.stage) === String(ui.rulingStage)) && (!ui.onlyNew || !r.reported));
       const toolbar = h('div', { class: 'toolbar' },
-        h('h2', {}, t('board.rulings')),
+        withTerm(h('h2', {}, t('board.rulings')), 'rulings'),
         selectNode({ key: 'sel-ruling-stage', label: t('board.rulingsCols.stage'), value: ui.rulingStage, options: [['all', t('board.allStages')], ...stages.map((n) => [n, t('board.stageN', { n })])], onchange: (v) => { ui.rulingStage = v; fillPanel('rulings'); focusKey('sel-ruling-stage'); } }),
         h('button', { type: 'button', class: 'toggle', 'aria-pressed': ui.onlyNew ? 'true' : 'false', 'data-key': 'only-new', onclick: () => { ui.onlyNew = !ui.onlyNew; fillPanel('rulings'); focusKey('only-new'); } }, icon('check'), t('board.onlyNew')),
         h('span', { class: 'count-text', role: 'status' }, t('board.rulingsCount', { n: list.length })));
@@ -1218,7 +1221,7 @@
     function changesPanel(d) {
       const all = arr(s.changes).map((c, i) => ({ c, key: `change-${i}` })).reverse();
       const list = all.filter(({ c }) => ui.changeFilter === 'all' || c.decision === ui.changeFilter);
-      const head = h('div', { class: 'toolbar' }, h('h2', { id: 'changes-title' }, t('board.changes')),
+      const head = h('div', { class: 'toolbar' }, withTerm(h('h2', { id: 'changes-title' }, t('board.changes')), 'changes'),
         selectNode({ key: 'sel-change', labelledBy: 'changes-title', value: ui.changeFilter, options: [['all', t('board.filterAll')], ['now', decisionWord('now')], ['later', decisionWord('later')]], onchange: (v) => { ui.changeFilter = v; fillPanel('changes'); focusKey('sel-change'); } }));
       let body;
       if (!list.length) body = h('p', { class: 'empty table-empty' }, t('board.noChanges'));
@@ -1250,7 +1253,7 @@
       const later = d.map.later;
       return [
         h('section', { class: 'card flush' }, head, body),
-        h('section', { class: 'card' }, h('h2', { class: 'card-title' }, t('board.later')), later.length ? h('ul', { class: 'later' }, later.map((l) => h('li', {}, l.text))) : h('p', { class: 'empty' }, t('common.empty'))),
+        h('section', { class: 'card' }, withTerm(h('h2', { class: 'card-title' }, t('board.later')), 'later'), later.length ? h('ul', { class: 'later' }, later.map((l) => h('li', {}, l.text))) : h('p', { class: 'empty' }, t('common.empty'))),
       ];
     }
 
@@ -1268,7 +1271,7 @@
       const { map } = d;
       const real = map.capabilities.filter((c) => c.status === 'real').length;
       const out = [map.capabilities.length
-        ? h('p', { class: 'cap-sum' }, t('board.capabilities', { real, total: map.capabilities.length, mock: map.capabilities.length - real }))
+        ? h('div', { class: 'term-line' }, h('p', { class: 'cap-sum' }, t('board.capabilities', { real, total: map.capabilities.length, mock: map.capabilities.length - real })), withTerm(null, 'mock'))
         : h('p', { class: 'empty' }, t('board.capabilitiesEmpty'))];
       if (map.capabilities.length) {
         const col = (text) => h('th', { scope: 'col' }, text);
@@ -1286,7 +1289,7 @@
           })))));
       }
       const evals = arr(s.evals);
-      out.push(h('section', { class: 'card' }, h('h2', { class: 'card-title' }, t('board.evals')),
+      out.push(h('section', { class: 'card' }, withTerm(h('h2', { class: 'card-title' }, t('board.evals')), 'evals'),
         evals.length ? h('ul', { class: 'evals' }, evals.map((e) => h('li', {}, h('a', { class: 'link ext', href: `api/eval?path=${encodeURIComponent(e.file)}`, target: '_blank', rel: 'noopener' }, h('bdi', { dir: 'ltr' }, e.file), icon('ext'))))) : h('p', { class: 'empty' }, t('common.empty'))));
       return out;
     }
@@ -1325,7 +1328,7 @@
     // ---- technical details
     function techPanel(d) {
       const g = (s && s.git) || {};
-      const git = h('section', { class: 'card' }, h('h2', { class: 'card-title' }, t('board.git')),
+      const git = h('section', { class: 'card' }, withTerm(h('h2', { class: 'card-title' }, t('board.git')), 'git'),
         g.available
           ? [h('dl', { class: 'kv' }, h('dt', {}, t('board.branch')), h('dd', {}, h('bdi', { class: 'mono', dir: 'ltr' }, g.branch || '-'))),
             h('p', { class: 'small' }, g.changed ? t('board.changedFiles', { n: g.changed }) : t('board.clean')),
@@ -1340,7 +1343,7 @@
           h('bdi', { class: 'c-name', dir: 'ltr' }, CONNECTION_NAMES[k] || k),
           v && v.ok ? h('span', { class: 'status ok' }, icon('check'), t('board.connected')) : h('span', { class: 'status off' }, icon('x'), t('board.notConnected')),
           v && v.note ? h('p', { class: 'c-note' }, v.note) : null))) : h('p', { class: 'empty' }, t('common.empty')));
-      const drift = h('section', { class: 'card' }, h('h2', { class: 'card-title' }, t('board.drift')), h('p', {}, d.st.lastDriftCheck ? fmtDate(d.st.lastDriftCheck) : t('common.never')));
+      const drift = h('section', { class: 'card' }, withTerm(h('h2', { class: 'card-title' }, t('board.drift')), 'drift'), h('p', {}, d.st.lastDriftCheck ? fmtDate(d.st.lastDriftCheck) : t('common.never')));
       return h('div', { class: 'cols-2' }, h('div', { class: 'col' }, git, whereCard), h('div', { class: 'col' }, connCard, drift));
     }
 

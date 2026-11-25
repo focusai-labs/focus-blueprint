@@ -558,3 +558,12 @@ test('--project must contain or be inside the project', () => {
   fs.mkdirSync(path.join(dir, 'spec', 'deep'), { recursive: true });
   assert.equal(bp(path.join(dir, 'spec', 'deep'), ['state', 'get', 'schema']).json, 2);
 });
+
+test('init creates CLAUDE.md importing AGENTS.md, and leaves an existing CLAUDE.md alone', () => {
+  const fresh = setup();
+  assert.equal(read(fresh, 'CLAUDE.md'), '@AGENTS.md\n');
+  const dir = tmpProject();
+  fs.writeFileSync(path.join(dir, 'CLAUDE.md'), '# mine\n');
+  bp(dir, ['init', '--name', 'x']);
+  assert.equal(read(dir, 'CLAUDE.md'), '# mine\n');
+});

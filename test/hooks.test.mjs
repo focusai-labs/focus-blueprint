@@ -469,3 +469,13 @@ test('stop: a corrupt rulings file does not crash and is not rewritten', () => {
   assert.match(ctx(r), /אין הכרעות חדשות/);
   assert.equal(fs.readFileSync(path.join(dir, '.blueprint', 'rulings.json'), 'utf8'), '{broken');
 });
+
+test('session-start: warns when CLAUDE.md does not import AGENTS.md, silent otherwise', () => {
+  const warn = /CLAUDE\.md שלא מייבא את AGENTS\.md.*@AGENTS\.md/;
+  const dir = repo();
+  assert.doesNotMatch(ctx(hook('session-start', { cwd: dir })), warn);
+  fs.writeFileSync(path.join(dir, 'CLAUDE.md'), '# mine\n');
+  assert.match(ctx(hook('session-start', { cwd: dir })), warn);
+  fs.writeFileSync(path.join(dir, 'CLAUDE.md'), '# mine\n@AGENTS.md\n');
+  assert.doesNotMatch(ctx(hook('session-start', { cwd: dir })), warn);
+});

@@ -282,6 +282,10 @@ export const commands = {
     if (!cur.includes('<!-- focus-blueprint -->')) {
       writeTextAtomic(agents, cur ? cur.replace(/\s*$/, '\n\n') + rules : rules);
     }
+    // Claude Code reads AGENTS.md only when no CLAUDE.md exists, so a new CLAUDE.md imports it.
+    // An existing CLAUDE.md is left unchanged (the session-start hook warns when it lacks the import).
+    const claudeMd = path.join(dir, 'CLAUDE.md');
+    if (!fs.existsSync(claudeMd)) writeTextAtomic(claudeMd, '@AGENTS.md\n');
     // .gitignore
     const gi = path.join(dir, '.gitignore');
     const have = fs.existsSync(gi) ? fs.readFileSync(gi, 'utf8') : '';

@@ -1,6 +1,6 @@
 {
   "name": "focus-blueprint",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "From an idea to a live system, stage by stage: specification, mockup, data, build and launch, with Git and schema guards.",
   "author": {
     "name": "Focus AI"

@@ -246,3 +246,27 @@ test('api/state carries the task the server was started for', async () => {
   assert.equal((await stateOf({ page: 'brain-dump' })).task.done, true);
   assert.equal((await stateOf({ page: 'questionnaire', round: 'a' })).task.done, false);
 });
+
+test('every response carries the security headers; tool pages forbid framing, project files stay frameable', async () => {
+  const dir = project();
+  fs.mkdirSync(path.join(dir, 'mockup'), { recursive: true });
+  fs.writeFileSync(path.join(dir, 'mockup', 'prototype.html'), '<!doctype html><script>1</script>');
+  await withUi(dir, async ({ ui }) => {
+    const need = { 'x-content-type-options': 'nosniff', 'referrer-policy': 'no-referrer', 'cross-origin-opener-policy': 'same-origin', 'cache-control': 'no-store' };
+    for (const route of ['board', 'ui.js', 'api/state', 'nothing', 'files/mockup/prototype.html', 'api/file?path=mockup/prototype.html']) {
+      const r = await fetch(ui.url + route);
+      for (const [k, v] of Object.entries(need)) assert.equal(r.headers.get(k), v, `${route} ${k}`);
+      assert.ok(r.headers.get('content-security-policy'), route);
+    }
+    const page = (await fetch(ui.url + 'board')).headers.get('content-security-policy');
+    assert.match(page, /frame-ancestors 'none'/);
+    assert.match(page, /script-src 'self'(;|$)/);
+    const proto = (await fetch(ui.url + 'files/mockup/prototype.html')).headers.get('content-security-policy');
+    assert.match(proto, /^sandbox allow-scripts/);
+    assert.doesNotMatch(proto, /frame-ancestors/);
+    // a token of the wrong length or value is refused the same way
+    const wrong = ui.url.replace(/[0-9a-f]{32}/, 'f'.repeat(32));
+    assert.equal((await fetch(wrong + 'board')).status, 404);
+    assert.equal((await fetch(ui.url.replace(/[0-9a-f]{32}/, 'abc') + 'board')).status, 404);
+  });
+});

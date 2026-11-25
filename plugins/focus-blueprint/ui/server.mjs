@@ -15,8 +15,17 @@ import { answersFile, directionScreenDocument, directionsSummary, loadBank, load
 const here = path.dirname(fileURLToPath(import.meta.url));
 const MAX_BODY = 1024 * 1024;
 
+// Sent on every response. The page CSP only goes with the tool's own pages and answers: the
+// project's files (the prototype, screens) carry their own sandbox policy further down.
+const BASE_HEADERS = { 'X-Content-Type-Options': 'nosniff', 'Referrer-Policy': 'no-referrer', 'Cross-Origin-Opener-Policy': 'same-origin', 'Cache-Control': 'no-store' };
+// Scripts, styles, fonts and data only from this server; no inline script. Inline style attributes are in use, so style-src allows them. Frames are our own sandboxed screens.
+const PAGE_CSP = "default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data:; connect-src 'self'; frame-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'";
+
+// Mockup screens and the prototype run in sandboxed frames with their own inline scripts, fonts and photos: sandbox, no frame-ancestors (the tool's pages frame them).
+const SCREEN_CSP = "sandbox allow-scripts; default-src * data: blob: 'unsafe-inline' 'unsafe-eval'";
+
 function send(res, status, body, type = 'application/json; charset=utf-8', extra = {}) {
-  res.writeHead(status, { 'Content-Type': type || 'application/json; charset=utf-8', 'Cache-Control': 'no-store', ...extra });
+  res.writeHead(status, { ...BASE_HEADERS, 'Content-Security-Policy': PAGE_CSP, 'Content-Type': type || 'application/json; charset=utf-8', ...extra });
   res.end(typeof body === 'string' ? body : JSON.stringify(body));
 }
 
@@ -59,7 +68,7 @@ export function openBrowser(url) {
  * once: stop shortly after the first saved answer.
  */
 const PAGES = new Set(['brain-dump', 'questionnaire', 'directions', 'board', 'process']);
-const STATIC = { 'ui.css': 'text/css; charset=utf-8', 'ui.js': 'text/javascript; charset=utf-8', 'directions.js': 'text/javascript; charset=utf-8', 'directions.css': 'text/css; charset=utf-8', 'strings.he.json': 'application/json; charset=utf-8' };
+const STATIC = { 'theme.js': 'text/javascript; charset=utf-8', 'ui.css': 'text/css; charset=utf-8', 'ui.js': 'text/javascript; charset=utf-8', 'directions.js': 'text/javascript; charset=utf-8', 'directions.css': 'text/css; charset=utf-8', 'strings.he.json': 'application/json; charset=utf-8' };
 const PROTOTYPE_SEGS = ['mockup', 'prototype.html'];
 // The prototype sits in a sandboxed page with no origin of its own, so its notes routes answer cross-origin (the token in the path is the key).
 const CORS = { 'Access-Control-Allow-Origin': '*' };
@@ -383,6 +392,12 @@ export async function startUi({ projectDir, once = false, idleMinutes = 30, page
 
   const PLACEHOLDER_PAGE = '<!doctype html><html lang="he" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>הממשק המקומי</title></head><body><p>הממשק המקומי עובד</p></body></html>';
 
+  const tokenBuf = Buffer.from(token);
+  const tokenMatches = (given) => {
+    const b = Buffer.from(String(given ?? ''));
+    return b.length === tokenBuf.length && crypto.timingSafeEqual(b, tokenBuf);
+  };
+
   const server = http.createServer(async (req, res) => {
     touch();
     // Only this machine, by its own name. A page on another site that points a
@@ -391,7 +406,7 @@ export async function startUi({ projectDir, once = false, idleMinutes = 30, page
     if (host !== `127.0.0.1:${port}` && host !== `localhost:${port}`) return send(res, 403, { error: 'forbidden' });
 
     const parts = new URL(req.url, 'http://local').pathname.split('/').filter(Boolean);
-    if (parts[0] !== token) return send(res, 404, { error: 'not found' });
+    if (!tokenMatches(parts[0])) return send(res, 404, { error: 'not found' });
     const route = parts.slice(1).join('/');
 
     const query = new URL(req.url, 'http://local').searchParams;
@@ -430,7 +445,7 @@ export async function startUi({ projectDir, once = false, idleMinutes = 30, page
         if (route === 'api/file') {
           const hit = safeProjectFile(projectDir, query.get('path'));
           if (!hit) return send(res, 404, { error: 'not found' });
-          res.writeHead(200, { 'Content-Type': hit.type, 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff', 'Content-Security-Policy': 'sandbox allow-scripts allow-forms; default-src * data: blob: \'unsafe-inline\' \'unsafe-eval\'', 'Referrer-Policy': 'no-referrer' });
+          res.writeHead(200, { ...BASE_HEADERS, 'Content-Type': hit.type, 'Content-Security-Policy': 'sandbox allow-scripts allow-forms; default-src * data: blob: \'unsafe-inline\' \'unsafe-eval\'' });
           return res.end(fs.readFileSync(hit.file));
         }
         if (route === 'api/state') return send(res, 200, { ...boardState(projectDir), task: taskFor(projectDir, { page, round, screens }) });
@@ -440,7 +455,7 @@ export async function startUi({ projectDir, once = false, idleMinutes = 30, page
           const key = String(query.get('screen') || '');
           const doc = Number.isInteger(n) && /^[A-Za-z0-9_-]{1,40}$/.test(key) ? directionScreenDocument(projectDir, n, key, `/${token}/files/mockup/`) : null;
           if (!doc) return send(res, 404, { error: 'not found' });
-          return send(res, 200, doc, 'text/html; charset=utf-8');
+          return send(res, 200, doc, 'text/html; charset=utf-8', { 'Content-Security-Policy': SCREEN_CSP });
         }
         if (route === 'api/prototype-notes') {
           const screen = query.get('screen');
@@ -450,10 +465,10 @@ export async function startUi({ projectDir, once = false, idleMinutes = 30, page
         if (parts[1] === 'files' && parts.length > 2) {
           const hit = safeAssetFile(projectDir, parts.slice(2));
           if (!hit) return send(res, 404, { error: 'not found' });
-          const headers = { 'Content-Type': hit.type, 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff', 'Referrer-Policy': 'no-referrer' };
+          const headers = { ...BASE_HEADERS, 'Content-Type': hit.type };
           // The screens sit in sandboxed frames with an opaque origin, so fonts need an explicit allowance.
           if (FONT_EXT.has(hit.ext)) headers['Access-Control-Allow-Origin'] = '*';
-          if (hit.ext === '.html' || hit.ext === '.svg') headers['Content-Security-Policy'] = "sandbox allow-scripts; default-src * data: blob: 'unsafe-inline' 'unsafe-eval'";
+          if (hit.ext === '.html' || hit.ext === '.svg') headers['Content-Security-Policy'] = SCREEN_CSP;
           res.writeHead(200, headers);
           return res.end(fs.readFileSync(hit.file));
         }

@@ -51,7 +51,8 @@ test('every page carries the app bar; task pages keep their save status in it', 
     assert.match(page, /<header class="appbar" id="appbar">/, name);
     assert.match(page, /family=Heebo/, `${name} loads Heebo`);
     assert.match(page, /<script src="ui\.js" defer><\/script>/, name);
-    assert.match(page, /localStorage\.getItem\('bp-theme'\)/, `${name} applies night mode before paint`);
+    assert.match(page, /<script src="theme\.js"><\/script>/, `${name} applies night mode before paint`);
+    assert.match(fs.readFileSync(path.join(pages, 'theme.js'), 'utf8'), /localStorage\.getItem\('bp-theme'\)/);
     assert.ok(page.indexOf('id="appbar"') < page.indexOf('<main'), `${name}: the bar comes first`);
   }
   for (const name of ['questionnaire', 'brain-dump']) {

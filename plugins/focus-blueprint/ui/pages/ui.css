@@ -265,9 +265,6 @@ button.tile:hover:not(:disabled) { border-color: var(--line-strong); background:
 .md ul, .md ol { margin: 0; padding-inline-start: 20px; display: flex; flex-direction: column; gap: 4px; }
 .md li::marker { color: var(--muted); }
 .md code { background: var(--surface-2); border: 1px solid var(--line); border-radius: 5px; padding: 0 4px; }
-.clamp-box { position: relative; overflow: hidden; }
-.clamp-box.is-clamped { max-height: 214px; }
-.clamp-box.is-clamped::after { content: ""; position: absolute; inset-inline: 0; bottom: 0; height: 56px; background: linear-gradient(to bottom, transparent, var(--surface)); pointer-events: none; }
 .more-btn .i { width: 16px; height: 16px; }
 .more-btn[aria-expanded="true"] .i { transform: rotate(180deg); }
 
@@ -481,7 +478,6 @@ button.case-text:hover:not(:disabled) { color: var(--accent); }
   .acc-inner { transition: visibility 0s linear var(--dur-3); }
   .acc.is-open .acc-inner { transition-delay: 0s; }
   .acc-chev, .more-btn .i, .qlist-btn .i { transition: transform var(--dur-3) var(--ease); }
-  .clamp-box.is-animating { transition: max-height var(--dur-3) var(--ease); }
   .backdrop { transition: opacity var(--dur-3) var(--ease); }
   .backdrop[data-state="enter"], .backdrop[data-state="leave"] { opacity: 0; }
   .drawer { transition: transform var(--dur-3) var(--ease), opacity var(--dur-3) var(--ease); }
@@ -578,3 +574,11 @@ a.task-continue { min-height: 44px; padding: 0 20px; margin-top: 12px; max-width
 @media (max-width: 639.98px) and (prefers-reduced-motion: no-preference) {
   .drawer[data-state="enter"], .drawer[data-state="leave"] { transform: translateY(32px); opacity: 0; }
 }
+
+/* ---------------------------------------------------------------- next step card */
+.cmd-box { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-top: 12px; padding: 10px 12px; background: var(--surface-2); border: 1px solid var(--line-strong); border-radius: 10px; }
+.cmd-box .cmd-text { flex: 1; min-width: 0; font-size: 16px; user-select: all; overflow-wrap: anywhere; }
+.cmd-copy { min-height: 36px; padding: 0 14px; display: inline-flex; align-items: center; gap: 6px; background: var(--surface); color: var(--fg); border: 1px solid var(--line-strong); border-radius: 8px; font: inherit; font-weight: 600; cursor: pointer; }
+.cmd-copy:hover { background: var(--accent-soft); }
+.last-session > summary { cursor: pointer; font-weight: 600; padding: 6px 0; }
+.last-session .last-md { margin-top: 8px; }

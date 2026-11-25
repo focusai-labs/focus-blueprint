@@ -233,7 +233,7 @@ function boardState(projectDir) {
   const closes = {};
   for (const [n, st] of Object.entries(state?.stages || {})) if (st && st.close) closes[n] = st.close;
   let stagesDef = [];
-  try { stagesDef = readJsonStrict(dataPath('stages.json'), []).map((s) => ({ n: s.n, chapter: s.chapter, name: s.name })); } catch { /* optional */ }
+  try { stagesDef = readJsonStrict(dataPath('stages.json'), []).map((s) => ({ n: s.n, chapter: s.chapter, name: s.name, skill: s.skill })); } catch { /* optional */ }
   let lastSession = '';
   try { lastSession = fs.readFileSync(p('.blueprint', 'last-session.md'), 'utf8'); } catch { /* optional */ }
   // which screen files exist, so the board links only to pages that open

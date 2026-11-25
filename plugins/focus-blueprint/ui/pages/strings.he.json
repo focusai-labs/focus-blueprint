@@ -208,7 +208,16 @@
     "screensList": "המסכים",
     "capabilitiesTile": "{real} אמיתיות מתוך {total}",
     "capabilitiesLabel": "יכולות",
-    "realOne": "אמיתית"
+    "realOne": "אמיתית",
+    "nextStep": {
+      "title": "הצעד הבא",
+      "continue": "ממשיכים בשלב {n}, {name}, בשיחה חדשה עם הפקודה הזו.",
+      "next": "השלב הבא הוא שלב {n}, {name}. פותחים אותו בשיחה חדשה עם הפקודה הזו.",
+      "complete": "כל 15 השלבים הושלמו.",
+      "copy": "העתקה",
+      "copied": "הועתק"
+    },
+    "lastSummary": "הסיכום של השיחה האחרונה"
   },
   "process": {
     "title": "מפת התהליכים",

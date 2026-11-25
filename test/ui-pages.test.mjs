@@ -130,7 +130,7 @@ test('the way back to the waiting page: strings, the bar and the board card', ()
   assert.match(js, /taskEl = h\('a', \{ class: 'task-link'/, 'the bar builds the item');
   assert.match(js, /link\.page !== page/, 'only while the student is on another page');
   assert.match(js, /a', \{ class: 'btn primary task-continue'/, 'the board card has the primary button');
-  assert.match(js, /const taskBtn = tl \?/);
+  assert.match(js, /const tl = taskLink\(d\.task\);\n        if \(tl\) card\.append/, 'the continue item sits inside the next step card');
 });
 
 test('no possibly-null child is appended raw', () => {
